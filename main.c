@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include "miniprot.h"
 #include "ketopt.h"
 
@@ -13,6 +14,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Usage: miniprot [options] <ref.fa>\n");
 		return 1;
 	}
+	mp_make_tables(0);
 	db = mp_ntseq_read(argv[o.ind]);
 	return 0;
 }
