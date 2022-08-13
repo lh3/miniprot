@@ -55,7 +55,7 @@ int64_t mp_ntseq_get(const mp_ntdb_t *db, int32_t cid, int64_t st, int64_t en, i
 {
 	int64_t i, s, e, k;
 	if (cid >= db->n_ctg || cid < 0) return -1;
-	if (en > db->ctg[cid].len) en = db->ctg[cid].len;
+	if (en < 0 || en > db->ctg[cid].len) en = db->ctg[cid].len;
 	s = db->ctg[cid].off + st;
 	e = db->ctg[cid].off + en;
 	if (!rev) {
@@ -68,4 +68,36 @@ int64_t mp_ntseq_get(const mp_ntdb_t *db, int32_t cid, int64_t st, int64_t en, i
 		}
 	}
 	return k;
+}
+
+static inline void mp_ntseq_process_orf(uint8_t phase, int64_t st, int64_t en)
+{
+	if (en - st >= 50)
+		printf("%ld\t%ld\n", (long)st, (long)en);
+}
+
+void mp_ntseq_get_orf(int64_t len, const uint8_t *seq)
+{
+	uint8_t codon[3], p;
+	int64_t i, e[3], k[3], l[3];
+	for (i = 0; i < 3; ++i)
+		e[i] = -1, k[i] = l[i] = 0, codon[i] = 0;
+	for (i = 0, p = 0; i < len; ++i, ++p) {
+		if (p == 3) p = 0;
+		if (seq[i] < 4) {
+			codon[p] = (codon[p] << 2 | seq[i]) & 0x3f;
+			if (++l[p] >= 3) {
+				uint8_t aa = mp_tab_codon[(uint8_t)codon[p]];
+				if (aa >= 20) {
+					mp_ntseq_process_orf(p, e[p] + 1 - k[p] * 3, e[p] + 1);
+					k[p] = l[p] = 0, e[p] = -1;
+				} else e[p] = i, ++k[p];
+			}
+		} else {
+			mp_ntseq_process_orf(p, e[p] + 1 - k[p] * 3, e[p] + 1);
+			k[p] = l[p] = 0, e[p] = -1;
+		}
+	}
+	for (i = 0; i < 3; ++i)
+		mp_ntseq_process_orf(i, e[p] + 1 - k[p] * 3, e[p] + 1);
 }

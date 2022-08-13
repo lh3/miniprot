@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include "miniprot.h"
 #include "ketopt.h"
 
@@ -16,9 +17,12 @@ int main(int argc, char *argv[])
 	}
 	mp_make_tables(0);
 	db = mp_ntseq_read(argv[o.ind]);
-	int64_t i, l;
-	uint8_t seq[100];
-	l = mp_ntseq_get(db, 1, 1000, 1010, 0, seq);
-	for (i = 0; i < l; ++i) putchar("ACGTN"[seq[i]]); putchar('\n');
+
+	int32_t cid = 0;
+	int64_t len;
+	uint8_t *seq;
+	seq = (uint8_t*)malloc(db->ctg[cid].len);
+	len = mp_ntseq_get(db, cid, 0, -1, 0, seq);
+	mp_ntseq_get_orf(len, seq);
 	return 0;
 }
