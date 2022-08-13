@@ -28,6 +28,7 @@ extern char *mp_tab_nt_i2c, *mp_tab_aa_i2c;
 extern uint8_t mp_tab_a2r[22], mp_tab_nt4[256], mp_tab_aa20[256];
 
 void mp_make_tables(int codon_type);
+int64_t mp_ntseq_get(const mp_ntdb_t *db, int32_t cid, int64_t st, int64_t en, int32_t rev, uint8_t *seq);
 
 /*
  * ntseq.c

@@ -53,5 +53,19 @@ mp_ntdb_t *mp_ntseq_read(const char *fn)
 
 int64_t mp_ntseq_get(const mp_ntdb_t *db, int32_t cid, int64_t st, int64_t en, int32_t rev, uint8_t *seq)
 {
-	return 0;
+	int64_t i, s, e, k;
+	if (cid >= db->n_ctg || cid < 0) return -1;
+	if (en > db->ctg[cid].len) en = db->ctg[cid].len;
+	s = db->ctg[cid].off + st;
+	e = db->ctg[cid].off + en;
+	if (!rev) {
+		for (i = s, k = 0; i < e; ++i)
+			seq[k++] = db->seq[i>>1] >> ((i&1) * 4) & 0xf;
+	} else {
+		for (i = e - 1, k = 0; i >= s; --i) {
+			uint8_t c = db->seq[i>>1] >> ((i&1) * 4) & 0xf;
+			seq[k++] = c >= 4? c : 3 - c;
+		}
+	}
+	return k;
 }
