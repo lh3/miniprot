@@ -53,7 +53,7 @@ mp_ntdb_t *mp_ntseq_read(const char *fn)
 			int64_t oldm = d->m_seq;
 			d->m_seq = ltmp;
 			kroundup64(d->m_seq);
-			d->seq = Krealloc(0, uint8_t, d->seq, d->m_seq);
+			d->seq = Krealloc(0, uint8_t, d->seq, d->m_seq >> 1);
 			memset(&d->seq[oldm>>1], 0, (d->m_seq - oldm) >> 1);
 		}
 		for (i = 0; i < ks->seq.l; ++i, ++off) {
@@ -97,3 +97,43 @@ int64_t mp_ntseq_get(const mp_ntdb_t *db, int32_t cid, int64_t st, int64_t en, i
 	return k;
 }
 
+void mp_ntseq_dump(FILE *fp, const mp_ntdb_t *nt)
+{
+	int32_t i, x[2];
+	int64_t l = (nt->l_seq + 1) >> 1 << 1;
+	x[0] = nt->n_ctg, x[1] = nt->l_name;
+	fwrite(x, 4, 2, fp);
+	fwrite(&nt->l_seq, 8, 1, fp);
+	for (i = 0; i < nt->n_ctg; ++i)
+		fwrite(&nt->ctg[i].len, 8, 1, fp);
+	fwrite(&nt->seq, 1, l, fp);
+	fwrite(&nt->name, 1, nt->l_name, fp);
+}
+
+mp_ntdb_t *mp_ntseq_restore(FILE *fp)
+{
+	int32_t i, x[2];
+	int64_t off = 0, l;
+	mp_ntdb_t *nt;
+	char *p;
+
+	nt = Kcalloc(0, mp_ntdb_t, 1);
+	fread(x, 4, 2, fp);
+	fread(&nt->l_seq, 8, 1, fp);
+	nt->n_ctg = nt->m_ctg = x[0];
+	nt->m_seq = nt->l_seq;
+	l = (nt->l_seq + 1) >> 1 << 1;
+	nt->ctg = Kcalloc(0, mp_ctg_t, nt->n_ctg);
+	for (i = 0; i < nt->n_ctg; ++i) {
+		fread(&nt->ctg[i].len, 8, 1, fp);
+		nt->ctg[i].off = off;
+		off += nt->ctg[i].len;
+	}
+	fwrite(&nt->seq, 1, l, fp);
+	fwrite(&nt->name, 1, nt->l_name, fp);
+	for (i = 0, p = nt->name; i < nt->n_ctg; ++i) {
+		nt->ctg[i].name = p;
+		p += strlen(p) + 1;
+	}
+	return nt;
+}

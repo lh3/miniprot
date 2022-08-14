@@ -1,6 +1,7 @@
 #ifndef MPPRIV_H
 #define MPPRIV_H
 
+#include <stdio.h>
 #include "miniprot.h"
 
 #ifndef kroundup64
@@ -31,6 +32,8 @@ char *mp_strdup(const char *src);
 
 mp_ntdb_t *mp_ntseq_read(const char *fn);
 void mp_ntseq_destroy(mp_ntdb_t *db);
+void mp_ntseq_dump(FILE *fp, const mp_ntdb_t *nt);
+mp_ntdb_t *mp_ntseq_restore(FILE *fp);
 int64_t mp_ntseq_get(const mp_ntdb_t *db, int32_t cid, int64_t st, int64_t en, int32_t rev, uint8_t *seq);
 
 #ifdef __cplusplus

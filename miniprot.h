@@ -5,6 +5,8 @@
 
 #define MP_CODON_STD 0
 
+#define MP_MAGIC "MPI\1"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -34,8 +36,9 @@ typedef struct {
 } mp_ntdb_t;
 
 typedef struct {
-	mp_ntdb_t *nt;
+	int32_t bbit, kmer, smer;
 	uint32_t n_block;
+	mp_ntdb_t *nt;
 	int64_t n_kb, *ki;
 	uint32_t *bo, *kb;
 } mp_idx_t;

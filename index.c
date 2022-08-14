@@ -144,6 +144,7 @@ mp_idx_t *mp_idx_build(const mp_idxopt_t *io, const char *fn, int32_t n_threads)
 	if (nt == 0) return 0;
 
 	mi = Kcalloc(0, mp_idx_t, 1);
+	mi->bbit = io->bbit, mi->kmer = io->kmer, mi->smer = io->smer;
 	mi->nt = nt;
 	mi->bo = mp_idx_boff(mi->nt, io->bbit, &mi->n_block);
 
@@ -170,4 +171,36 @@ void mp_idx_destroy(mp_idx_t *mi)
 	mp_ntseq_destroy(mi->nt);
 	free(mi->ki); free(mi->bo); free(mi->kb);
 	free(mi);
+}
+
+void mp_idx_dump(FILE *fp, const mp_idx_t *mi)
+{
+	int32_t x[3];
+	x[0] = mi->bbit, x[1] = mi->kmer, x[2] = mi->smer;
+	fwrite(MP_MAGIC, 1, 4, fp);
+	fwrite(x, 4, 3, fp);
+	fwrite(&mi->n_kb, 8, 1, fp);
+	mp_ntseq_dump(fp, mi->nt);
+	fwrite(mi->ki, 8, 1U<<mi->kmer*4, fp);
+	fwrite(mi->kb, 4, mi->n_kb, fp);
+}
+
+mp_idx_t *mp_idx_restore(FILE *fp)
+{
+	char magic[4];
+	int32_t x[3];
+	mp_idx_t *mi;
+	fread(magic, 1, 4, fp);
+	if (strncmp(magic, MP_MAGIC, 4) != 0)
+		return 0;
+	mi = Kcalloc(0, mp_idx_t, 1);
+	fread(x, 4, 3, fp);
+	mi->bbit = x[0], mi->kmer = x[1], mi->smer = x[2];
+	fread(&mi->n_kb, 8, 1, fp);
+	mi->nt = mp_ntseq_restore(fp);
+	mi->ki = Kmalloc(0, int64_t, 1U<<mi->kmer*4);
+	mi->kb = Kmalloc(0, uint32_t, mi->n_kb);
+	fread(mi->ki, 8, 1U<<mi->kmer*4, fp);
+	fread(mi->kb, 4, mi->n_kb, fp);
+	return mi;
 }
