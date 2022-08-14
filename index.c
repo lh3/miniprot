@@ -1,6 +1,7 @@
 #include <string.h>
 #include <assert.h>
 #include <stdio.h>
+#include <fcntl.h>
 #include <zlib.h>
 #include "mppriv.h"
 #include "kalloc.h"
@@ -88,7 +89,6 @@ void mp_idx_proc_seq(void *km, int64_t len, const uint8_t *seq, int32_t min_aa_l
 }
 
 typedef struct {
-	const mp_idxopt_t *io;
 	const mp_idx_t *mi;
 	void **km;
 	mp64_v *a;
@@ -98,7 +98,7 @@ static void build_worker(void *data, long j, int tid)
 {
 	worker_aux_t *aux = (worker_aux_t*)data;
 	const mp_ntdb_t *nt = aux->mi->nt;
-	const mp_idxopt_t *io = aux->io;
+	const mp_idxopt_t *io = &aux->mi->opt;
 	void *km = aux->km[tid];
 	int64_t len;
 	uint8_t *seq;
@@ -133,7 +133,7 @@ static void build_bidx(const mp_idxopt_t *io, mp_idx_t *mi, const mp64_v *a)
 	}
 }
 
-mp_idx_t *mp_idx_build(const mp_idxopt_t *io, const char *fn, int32_t n_threads)
+mp_idx_t *mp_idx_build(const char *fn, const mp_idxopt_t *io, int32_t n_threads)
 {
 	mp_ntdb_t *nt;
 	mp_idx_t *mi;
@@ -144,12 +144,11 @@ mp_idx_t *mp_idx_build(const mp_idxopt_t *io, const char *fn, int32_t n_threads)
 	if (nt == 0) return 0;
 
 	mi = Kcalloc(0, mp_idx_t, 1);
-	mi->bbit = io->bbit, mi->kmer = io->kmer, mi->smer = io->smer;
+	mi->opt = *io;
 	mi->nt = nt;
 	mi->bo = mp_idx_boff(mi->nt, io->bbit, &mi->n_block);
 
 	memset(&aux, 0, sizeof(aux));
-	aux.io = io;
 	aux.mi = mi;
 	aux.km = Kcalloc(0, void*, n_threads);
 	aux.a = Kcalloc(0, mp64_v, nt->n_ctg * 2);
@@ -173,34 +172,78 @@ void mp_idx_destroy(mp_idx_t *mi)
 	free(mi);
 }
 
-void mp_idx_dump(FILE *fp, const mp_idx_t *mi)
+/*
+ * Index I/O
+ */
+
+int mp_idx_dump(const char *fn, const mp_idx_t *mi)
 {
-	int32_t x[3];
-	x[0] = mi->bbit, x[1] = mi->kmer, x[2] = mi->smer;
+	FILE *fp;
+	fp = strcmp(fn, "-") == 0? stdout : fopen(fn, "wb");
+	if (fp == 0) return -1;
 	fwrite(MP_MAGIC, 1, 4, fp);
-	fwrite(x, 4, 3, fp);
+	fwrite(&mi->opt, sizeof(mi->opt), 1, fp);
 	fwrite(&mi->n_kb, 8, 1, fp);
 	mp_ntseq_dump(fp, mi->nt);
-	fwrite(mi->ki, 8, 1U<<mi->kmer*4, fp);
+	fwrite(mi->ki, 8, 1U<<mi->opt.kmer*4, fp);
 	fwrite(mi->kb, 4, mi->n_kb, fp);
+	if (fp != stdout) fclose(fp);
+	return 0;
 }
 
-mp_idx_t *mp_idx_restore(FILE *fp)
+static int64_t mp_idx_is_idx(const char *fn)
 {
+	int fd, is_idx = 0;
+	int64_t ret, off_end;
 	char magic[4];
-	int32_t x[3];
+
+	if (strcmp(fn, "-") == 0) return 0; // read from pipe; not an index
+	fd = open(fn, O_RDONLY);
+	if (fd < 0) return -1; // error
+#ifdef WIN32
+	if ((off_end = _lseeki64(fd, 0, SEEK_END)) >= 4) {
+		_lseeki64(fd, 0, SEEK_SET);
+#else
+	if ((off_end = lseek(fd, 0, SEEK_END)) >= 4) {
+		lseek(fd, 0, SEEK_SET);
+#endif // WIN32
+		ret = read(fd, magic, 4);
+		if (ret == 4 && strncmp(magic, MP_MAGIC, 4) == 0)
+			is_idx = 1;
+	}
+	close(fd);
+	return is_idx? off_end : 0;
+}
+
+mp_idx_t *mp_idx_restore(const char *fn)
+{
+	FILE *fp;
+	char magic[4];
 	mp_idx_t *mi;
+
+	fp = strcmp(fn, "-") == 0? stdin : fopen(fn, "rb");
+	if (fp == 0) return 0;
 	fread(magic, 1, 4, fp);
 	if (strncmp(magic, MP_MAGIC, 4) != 0)
 		return 0;
 	mi = Kcalloc(0, mp_idx_t, 1);
-	fread(x, 4, 3, fp);
-	mi->bbit = x[0], mi->kmer = x[1], mi->smer = x[2];
+	fread(&mi->opt, sizeof(mi->opt), 1, fp);
 	fread(&mi->n_kb, 8, 1, fp);
 	mi->nt = mp_ntseq_restore(fp);
-	mi->ki = Kmalloc(0, int64_t, 1U<<mi->kmer*4);
+	mi->ki = Kmalloc(0, int64_t, 1U<<mi->opt.kmer*4);
 	mi->kb = Kmalloc(0, uint32_t, mi->n_kb);
-	fread(mi->ki, 8, 1U<<mi->kmer*4, fp);
+	fread(mi->ki, 8, 1U<<mi->opt.kmer*4, fp);
 	fread(mi->kb, 4, mi->n_kb, fp);
+	if (fp != stdin) fclose(fp);
+	mi->bo = mp_idx_boff(mi->nt, mi->opt.bbit, &mi->n_block);
 	return mi;
+}
+
+mp_idx_t *mp_idx_read(const char *fn, const mp_idxopt_t *io, int32_t n_threads)
+{
+	int64_t is_idx;
+	is_idx = mp_idx_is_idx(fn);
+	if (is_idx < 0) return 0;
+	if (is_idx != 0) return mp_idx_build(fn, io, n_threads);
+	else return mp_idx_restore(fn);
 }
