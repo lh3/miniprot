@@ -112,9 +112,13 @@ long mp_peakrss(void)
 
 double mp_realtime(void)
 {
+	static double realtime0 = -1.0;
 	struct timeval tp;
+	double t;
 	gettimeofday(&tp, NULL);
-	return tp.tv_sec + tp.tv_usec * 1e-6;
+	t = tp.tv_sec + tp.tv_usec * 1e-6;
+	if (realtime0 < 0.0) realtime0 = t;
+	return t - realtime0;
 }
 
 char *mp_strdup(const char *src)

@@ -37,8 +37,15 @@ typedef struct {
 } mp_idx_t;
 
 /*
+ * misc.c
+ */
+void mp_start(void);
+
+/*
  * options.c
  */
+extern int32_t mp_verbose;
+
 void mp_idxopt_init(mp_idxopt_t *io);
 
 /*

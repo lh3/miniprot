@@ -10,6 +10,7 @@ int main(int argc, char *argv[])
 	mp_idxopt_t io;
 	mp_idx_t *mi;
 
+	mp_start();
 	mp_idxopt_init(&io);
 	while ((c = ketopt(&o, argc, argv, 1, "k:s:b:", 0)) >= 0) {
 		if (c == 'k') io.kmer = atoi(o.arg);
@@ -20,7 +21,6 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "Usage: miniprot [options] <ref.fa>\n");
 		return 1;
 	}
-	mp_make_tables(0);
 	mi = mp_index(&io, argv[o.ind]);
 
 	int32_t cid = 0;

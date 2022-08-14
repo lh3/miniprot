@@ -155,6 +155,8 @@ mp_idx_t *mp_index(const mp_idxopt_t *io, const char *fn)
 	mp_idx_t *mi;
 	nt = mp_ntseq_read(fn);
 	if (nt == 0) return 0;
+	if (mp_verbose >= 3)
+		fprintf(stderr, "[M::%s@%.3f] read %ld bases in %d contigs\n", __func__, mp_realtime(), (long)nt->l_seq, nt->n_ctg);
 	mi = Kcalloc(0, mp_idx_t, 1);
 	mi->nt = nt;
 	mi->boff = mp_idx_boff(mi->nt, io->bbit);
