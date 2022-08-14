@@ -3,6 +3,12 @@
 #include "miniprot.h"
 #include "ketopt.h"
 
+static int usage(FILE *fp, const mp_idxopt_t *io)
+{
+	fprintf(fp, "Usage: miniprot [options] <ref.fa>\n");
+	return 1;
+}
+
 int main(int argc, char *argv[])
 {
 	int32_t c, n_threads = 4;
@@ -18,21 +24,9 @@ int main(int argc, char *argv[])
 		else if (c == 'b') io.bbit = atoi(o.arg);
 		else if (c == 't') n_threads = atoi(o.arg);
 	}
-	if (argc - o.ind < 1) {
-		fprintf(stderr, "Usage: miniprot [options] <ref.fa>\n");
-		return 1;
-	}
+	if (argc - o.ind < 1)
+		return usage(stderr, &io);
 	mi = mp_idx_build(&io, argv[o.ind], n_threads);
-
-	/*
-	int32_t cid = 0;
-	int64_t len;
-	uint8_t *seq;
-	mp64_v a = {0,0,0};
-	seq = (uint8_t*)malloc(mi->nt->ctg[cid].len);
-	len = mp_ntseq_get(mi->nt, cid, 0, -1, 0, seq);
-	mp_idx_proc_seq(0, len, seq, io.min_aa_len, io.kmer, io.smer, io.bbit, 0, &a);
-	*/
 
 	mp_idx_destroy(mi);
 	return 0;

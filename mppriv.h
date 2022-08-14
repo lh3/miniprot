@@ -13,11 +13,11 @@ extern "C" {
 
 static inline uint32_t mp_hash32_mask(uint32_t key, uint32_t mask)
 {
-	key += ~(key << 15) & mask;
+	key  = (key + ~(key << 15)) & mask;
 	key ^=  (key >> 10);
-	key +=  (key << 3) & mask;
+	key  =  (key + (key <<  3)) & mask;
 	key ^=  (key >> 6);
-	key += ~(key << 11) & mask;
+	key  = (key + ~(key << 11)) & mask;
 	key ^=  (key >> 16);
 	return key;
 }

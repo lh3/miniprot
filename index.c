@@ -47,10 +47,13 @@ mp_ntdb_t *mp_ntseq_read(const char *fn)
 			uint8_t b = mp_tab_nt4[(uint8_t)ks->seq.s[i]];
 			d->seq[off >> 1] |= b << (off&1) * 4;
 		}
+		d->l_seq += ks->seq.l;
 	}
 
 	kseq_destroy(ks);
 	gzclose(fp);
+	if (mp_verbose >= 3)
+		fprintf(stderr, "[M::%s@%.3f] read %ld bases in %d contigs\n", __func__, mp_realtime(), (long)d->l_seq, d->n_ctg);
 	return d;
 }
 
@@ -107,6 +110,7 @@ void mp_idx_proc_orf(void *km, const uint8_t *seq, int64_t st, int64_t en, int32
 		if (++l >= kmer) {
 			int32_t sel = 0;
 			uint32_t y = mp_hash32_mask(x, mask_k);
+			assert(y <= mask_k);
 			if (kmer > smer) {
 				int32_t j;
 				uint32_t m = UINT32_MAX;
@@ -128,8 +132,8 @@ void mp_idx_proc_seq(void *km, int64_t len, const uint8_t *seq, int32_t min_aa_l
 	int64_t i, j, e[3], k[3], l[3];
 	kv_resize(uint64_t, km, *a, len>>2);
 	a->n = 0;
-	for (i = 0; i < 3; ++i)
-		e[i] = -1, k[i] = l[i] = 0, codon[i] = 0;
+	for (p = 0; p < 3; ++p)
+		e[p] = -1, k[p] = l[p] = 0, codon[p] = 0;
 	for (i = 0, p = 0; i < len; ++i, ++p) {
 		if (p == 3) p = 0;
 		if (seq[i] < 4) {
@@ -148,7 +152,7 @@ void mp_idx_proc_seq(void *km, int64_t len, const uint8_t *seq, int32_t min_aa_l
 			k[p] = l[p] = 0, e[p] = -1;
 		}
 	}
-	for (i = 0; i < 3; ++i)
+	for (p = 0; p < 3; ++p)
 		if (k[p] >= min_aa_len)
 			mp_idx_proc_orf(km, seq, e[p] + 1 - k[p] * 3, e[p] + 1, kmer, smer, bbit, boff, a);
 	radix_sort_mp64(a->a, a->a + a->n);
@@ -213,8 +217,6 @@ mp_idx_t *mp_idx_build(const mp_idxopt_t *io, const char *fn, int32_t n_threads)
 
 	nt = mp_ntseq_read(fn);
 	if (nt == 0) return 0;
-	if (mp_verbose >= 3)
-		fprintf(stderr, "[M::%s@%.3f] read %ld bases in %d contigs\n", __func__, mp_realtime(), (long)nt->l_seq, nt->n_ctg);
 
 	mi = Kcalloc(0, mp_idx_t, 1);
 	mi->nt = nt;
@@ -222,12 +224,14 @@ mp_idx_t *mp_idx_build(const mp_idxopt_t *io, const char *fn, int32_t n_threads)
 
 	memset(&aux, 0, sizeof(aux));
 	aux.io = io;
+	aux.mi = mi;
 	aux.km = Kcalloc(0, void*, n_threads);
 	aux.a = Kcalloc(0, mp64_v, nt->n_ctg * 2);
 	for (i = 0; i < n_threads; ++i)
 		aux.km[i] = km_init();
 	kt_for(n_threads, build_worker, &aux, nt->n_ctg * 2);
 	build_bidx(io, mi, aux.a);
+	fprintf(stderr, "[M::%s] %d blocks and %ld kmer-block pairs\n", __func__, mi->n_block, (long)mi->n_kb);
 
 	for (i = 0; i < n_threads; ++i)
 		km_destroy(aux.km[i]);
