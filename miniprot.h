@@ -26,9 +26,11 @@ typedef struct {
 
 typedef struct {
 	int32_t n_ctg, m_ctg;
+	int32_t l_name;
 	int64_t l_seq, m_seq;
 	uint8_t *seq; // TODO: separate this into multiple blocks; low priority
 	mp_ctg_t *ctg;
+	char *name;
 } mp_ntdb_t;
 
 typedef struct {

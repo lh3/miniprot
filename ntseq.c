@@ -6,6 +6,21 @@
 #include "kseq.h"
 KSEQ_INIT(gzFile, gzread)
 
+static void mp_ntseq_merge_name(mp_ntdb_t *nt)
+{
+	int32_t i;
+	char *p;
+	nt->l_name = 0;
+	for (i = 0; i < nt->n_ctg; ++i)
+		nt->l_name += strlen(nt->ctg[i].name) + 1;
+	nt->name = Kmalloc(0, char, nt->l_name);
+	for (i = 0, p = nt->name; i < nt->n_ctg; ++i) {
+		memcpy(p, nt->ctg[i].name, strlen(nt->ctg[i].name) + 1);
+		free(nt->ctg[i].name);
+		nt->ctg[i].name = p;
+	}
+}
+
 mp_ntdb_t *mp_ntseq_read(const char *fn)
 {
 	gzFile fp;
@@ -50,6 +65,7 @@ mp_ntdb_t *mp_ntseq_read(const char *fn)
 
 	kseq_destroy(ks);
 	gzclose(fp);
+	mp_ntseq_merge_name(d);
 	if (mp_verbose >= 3)
 		fprintf(stderr, "[M::%s@%.3f] read %ld bases in %d contigs\n", __func__, mp_realtime(), (long)d->l_seq, d->n_ctg);
 	return d;
@@ -58,7 +74,8 @@ mp_ntdb_t *mp_ntseq_read(const char *fn)
 void mp_ntseq_destroy(mp_ntdb_t *db)
 {
 	if (db == 0) return;
-	free(db->ctg); free(db->seq); free(db);
+	free(db->ctg); free(db->seq); free(db->name);
+	free(db);
 }
 
 int64_t mp_ntseq_get(const mp_ntdb_t *db, int32_t cid, int64_t st, int64_t en, int32_t rev, uint8_t *seq)
