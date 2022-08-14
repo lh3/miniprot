@@ -176,21 +176,6 @@ void mp_idx_destroy(mp_idx_t *mi)
  * Index I/O
  */
 
-int mp_idx_dump(const char *fn, const mp_idx_t *mi)
-{
-	FILE *fp;
-	fp = strcmp(fn, "-") == 0? stdout : fopen(fn, "wb");
-	if (fp == 0) return -1;
-	fwrite(MP_MAGIC, 1, 4, fp);
-	fwrite(&mi->opt, sizeof(mi->opt), 1, fp);
-	fwrite(&mi->n_kb, 8, 1, fp);
-	mp_ntseq_dump(fp, mi->nt);
-	fwrite(mi->ki, 8, 1U<<mi->opt.kmer*4, fp);
-	fwrite(mi->kb, 4, mi->n_kb, fp);
-	if (fp != stdout) fclose(fp);
-	return 0;
-}
-
 static int64_t mp_idx_is_idx(const char *fn)
 {
 	int fd, is_idx = 0;
@@ -208,11 +193,26 @@ static int64_t mp_idx_is_idx(const char *fn)
 		lseek(fd, 0, SEEK_SET);
 #endif // WIN32
 		ret = read(fd, magic, 4);
-		if (ret == 4 && strncmp(magic, MP_MAGIC, 4) == 0)
+		if (ret == 4 && strncmp(magic, MP_IDX_MAGIC, 4) == 0)
 			is_idx = 1;
 	}
 	close(fd);
 	return is_idx? off_end : 0;
+}
+
+int mp_idx_dump(const char *fn, const mp_idx_t *mi)
+{
+	FILE *fp;
+	fp = strcmp(fn, "-") == 0? stdout : fopen(fn, "wb");
+	if (fp == 0) return -1;
+	fwrite(MP_IDX_MAGIC, 1, 4, fp);
+	fwrite(&mi->opt, sizeof(mi->opt), 1, fp);
+	fwrite(&mi->n_kb, 8, 1, fp);
+	mp_ntseq_dump(fp, mi->nt);
+	fwrite(mi->ki, 8, 1U<<mi->opt.kmer*4, fp);
+	fwrite(mi->kb, 4, mi->n_kb, fp);
+	if (fp != stdout) fclose(fp);
+	return 0;
 }
 
 mp_idx_t *mp_idx_restore(const char *fn)
@@ -224,7 +224,7 @@ mp_idx_t *mp_idx_restore(const char *fn)
 	fp = strcmp(fn, "-") == 0? stdin : fopen(fn, "rb");
 	if (fp == 0) return 0;
 	fread(magic, 1, 4, fp);
-	if (strncmp(magic, MP_MAGIC, 4) != 0)
+	if (strncmp(magic, MP_IDX_MAGIC, 4) != 0)
 		return 0;
 	mi = Kcalloc(0, mp_idx_t, 1);
 	fread(&mi->opt, sizeof(mi->opt), 1, fp);
@@ -239,11 +239,11 @@ mp_idx_t *mp_idx_restore(const char *fn)
 	return mi;
 }
 
-mp_idx_t *mp_idx_read(const char *fn, const mp_idxopt_t *io, int32_t n_threads)
+mp_idx_t *mp_idx_load(const char *fn, const mp_idxopt_t *io, int32_t n_threads)
 {
 	int64_t is_idx;
 	is_idx = mp_idx_is_idx(fn);
 	if (is_idx < 0) return 0;
-	if (is_idx != 0) return mp_idx_build(fn, io, n_threads);
-	else return mp_idx_restore(fn);
+	if (is_idx != 0) return mp_idx_restore(fn);
+	return mp_idx_build(fn, io, n_threads);
 }

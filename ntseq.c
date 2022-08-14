@@ -18,6 +18,7 @@ static void mp_ntseq_merge_name(mp_ntdb_t *nt)
 		memcpy(p, nt->ctg[i].name, strlen(nt->ctg[i].name) + 1);
 		free(nt->ctg[i].name);
 		nt->ctg[i].name = p;
+		p += strlen(nt->ctg[i].name) + 1;
 	}
 }
 
@@ -100,14 +101,14 @@ int64_t mp_ntseq_get(const mp_ntdb_t *db, int32_t cid, int64_t st, int64_t en, i
 void mp_ntseq_dump(FILE *fp, const mp_ntdb_t *nt)
 {
 	int32_t i, x[2];
-	int64_t l = (nt->l_seq + 1) >> 1 << 1;
+	int64_t l = (nt->l_seq + 1) >> 1;
 	x[0] = nt->n_ctg, x[1] = nt->l_name;
 	fwrite(x, 4, 2, fp);
 	fwrite(&nt->l_seq, 8, 1, fp);
 	for (i = 0; i < nt->n_ctg; ++i)
 		fwrite(&nt->ctg[i].len, 8, 1, fp);
-	fwrite(&nt->seq, 1, l, fp);
-	fwrite(&nt->name, 1, nt->l_name, fp);
+	fwrite(nt->seq, 1, l, fp);
+	fwrite(nt->name, 1, nt->l_name, fp);
 }
 
 mp_ntdb_t *mp_ntseq_restore(FILE *fp)
@@ -121,16 +122,19 @@ mp_ntdb_t *mp_ntseq_restore(FILE *fp)
 	fread(x, 4, 2, fp);
 	fread(&nt->l_seq, 8, 1, fp);
 	nt->n_ctg = nt->m_ctg = x[0];
+	nt->l_name = x[1];
 	nt->m_seq = nt->l_seq;
-	l = (nt->l_seq + 1) >> 1 << 1;
+	l = (nt->l_seq + 1) >> 1;
 	nt->ctg = Kcalloc(0, mp_ctg_t, nt->n_ctg);
 	for (i = 0; i < nt->n_ctg; ++i) {
 		fread(&nt->ctg[i].len, 8, 1, fp);
 		nt->ctg[i].off = off;
 		off += nt->ctg[i].len;
 	}
-	fwrite(&nt->seq, 1, l, fp);
-	fwrite(&nt->name, 1, nt->l_name, fp);
+	nt->seq = Kmalloc(0, uint8_t, l);
+	nt->name = Kmalloc(0, char, nt->l_name);
+	fread(nt->seq, 1, l, fp);
+	fread(nt->name, 1, nt->l_name, fp);
 	for (i = 0, p = nt->name; i < nt->n_ctg; ++i) {
 		nt->ctg[i].name = p;
 		p += strlen(p) + 1;

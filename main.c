@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 	}
 	if (argc - o.ind < 1)
 		return usage(stderr, &io, n_threads);
-	mi = mp_idx_read(argv[o.ind], &io, n_threads);
+	mi = mp_idx_load(argv[o.ind], &io, n_threads);
 	if (fn_idx != 0) mp_idx_dump(fn_idx, mi);
 
 	mp_idx_destroy(mi);

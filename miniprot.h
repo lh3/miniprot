@@ -5,7 +5,7 @@
 
 #define MP_CODON_STD 0
 
-#define MP_MAGIC "MPI\1"
+#define MP_IDX_MAGIC "MPI\1"
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,7 +54,7 @@ void mp_idxopt_init(mp_idxopt_t *io);
 
 int64_t mp_ntseq_get(const mp_ntdb_t *db, int32_t cid, int64_t st, int64_t en, int32_t rev, uint8_t *seq);
 mp_idx_t *mp_idx_build(const char *fn, const mp_idxopt_t *io, int32_t n_threads);
-mp_idx_t *mp_idx_read(const char *fn, const mp_idxopt_t *io, int32_t n_threads);
+mp_idx_t *mp_idx_load(const char *fn, const mp_idxopt_t *io, int32_t n_threads);
 void mp_idx_destroy(mp_idx_t *mi);
 
 int mp_idx_dump(const char *fn, const mp_idx_t *mi);
