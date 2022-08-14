@@ -38,29 +38,15 @@ typedef struct {
 	uint32_t *bo, *kb;
 } mp_idx_t;
 
-/*
- * misc.c
- */
 extern int32_t mp_verbose;
-
-void mp_start(void);
-
-/*
- * options.c
- */
-void mp_idxopt_init(mp_idxopt_t *io);
-
-/*
- * table.c
- */
 extern char *mp_tab_nt_i2c, *mp_tab_aa_i2c;
 extern uint8_t mp_tab_a2r[22], mp_tab_nt4[256], mp_tab_aa20[256], mp_tab_codon[64], mp_tab_codon13[64];
 
+void mp_start(void);
 void mp_make_tables(int codon_type);
 
-/*
- * ntseq.c
- */
+void mp_idxopt_init(mp_idxopt_t *io);
+
 int64_t mp_ntseq_get(const mp_ntdb_t *db, int32_t cid, int64_t st, int64_t en, int32_t rev, uint8_t *seq);
 void mp_idx_proc_seq(void *km, int64_t len, const uint8_t *seq, int32_t min_aa_len, int32_t kmer, int32_t smer, int32_t bbit, int64_t boff, mp64_v *a);
 mp_idx_t *mp_idx_build(const mp_idxopt_t *io, const char *fn, int32_t n_threads);

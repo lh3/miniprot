@@ -29,7 +29,9 @@ double mp_cputime(void);
 long mp_peakrss(void);
 char *mp_strdup(const char *src);
 
-void mp_idx_proc_seq(void *km, int64_t len, const uint8_t *seq, int32_t min_aa_len, int32_t kmer, int32_t smer, int32_t bbit, int64_t boff, mp64_v *a);
+mp_ntdb_t *mp_ntseq_read(const char *fn);
+void mp_ntseq_destroy(mp_ntdb_t *db);
+int64_t mp_ntseq_get(const mp_ntdb_t *db, int32_t cid, int64_t st, int64_t en, int32_t rev, uint8_t *seq);
 
 #ifdef __cplusplus
 }
