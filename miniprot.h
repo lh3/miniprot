@@ -33,19 +33,21 @@ typedef struct {
 
 typedef struct {
 	mp_ntdb_t *nt;
-	uint32_t *boff;
+	uint32_t n_block;
+	int64_t n_kb, *ki;
+	uint32_t *bo, *kb;
 } mp_idx_t;
 
 /*
  * misc.c
  */
+extern int32_t mp_verbose;
+
 void mp_start(void);
 
 /*
  * options.c
  */
-extern int32_t mp_verbose;
-
 void mp_idxopt_init(mp_idxopt_t *io);
 
 /*
@@ -61,7 +63,8 @@ void mp_make_tables(int codon_type);
  */
 int64_t mp_ntseq_get(const mp_ntdb_t *db, int32_t cid, int64_t st, int64_t en, int32_t rev, uint8_t *seq);
 void mp_idx_proc_seq(void *km, int64_t len, const uint8_t *seq, int32_t min_aa_len, int32_t kmer, int32_t smer, int32_t bbit, int64_t boff, mp64_v *a);
-mp_idx_t *mp_index(const mp_idxopt_t *io, const char *fn);
+mp_idx_t *mp_idx_build(const mp_idxopt_t *io, const char *fn, int32_t n_threads);
+void mp_idx_destroy(mp_idx_t *mi);
 
 #ifdef __cplusplus
 }

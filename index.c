@@ -4,6 +4,7 @@
 #include "mppriv.h"
 #include "kalloc.h"
 #include "kvec-km.h"
+#include "kthread.h"
 #include "kseq.h"
 KSEQ_INIT(gzFile, gzread)
 
@@ -53,20 +54,10 @@ mp_ntdb_t *mp_ntseq_read(const char *fn)
 	return d;
 }
 
-uint32_t *mp_idx_boff(const mp_ntdb_t *db, int32_t bbit)
+void mp_ntseq_destroy(mp_ntdb_t *db)
 {
-	int32_t i;
-	int64_t boff = 0;
-	uint32_t *bo;
-	bo = Kmalloc(0, uint32_t, db->n_ctg * 2);
-	for (i = 0; i < db->n_ctg; ++i) {
-		bo[i<<1|0] = boff;
-		boff += (db->ctg[i].len + (1<<bbit) - 1) >> bbit;
-		bo[i<<1|1] = boff;
-		boff += (db->ctg[i].len + (1<<bbit) - 1) >> bbit;
-	}
-	assert(boff < UINT32_MAX);
-	return bo;
+	if (db == 0) return;
+	free(db->ctg); free(db->seq); free(db);
 }
 
 int64_t mp_ntseq_get(const mp_ntdb_t *db, int32_t cid, int64_t st, int64_t en, int32_t rev, uint8_t *seq)
@@ -86,6 +77,23 @@ int64_t mp_ntseq_get(const mp_ntdb_t *db, int32_t cid, int64_t st, int64_t en, i
 		}
 	}
 	return k;
+}
+
+uint32_t *mp_idx_boff(const mp_ntdb_t *db, int32_t bbit, uint32_t *n_boff)
+{
+	int32_t i;
+	int64_t boff = 0;
+	uint32_t *bo;
+	bo = Kmalloc(0, uint32_t, db->n_ctg * 2);
+	for (i = 0; i < db->n_ctg; ++i) {
+		bo[i<<1|0] = boff;
+		boff += (db->ctg[i].len + (1<<bbit) - 1) >> bbit;
+		bo[i<<1|1] = boff;
+		boff += (db->ctg[i].len + (1<<bbit) - 1) >> bbit;
+	}
+	assert(boff < UINT32_MAX);
+	*n_boff = boff;
+	return bo;
 }
 
 void mp_idx_proc_orf(void *km, const uint8_t *seq, int64_t st, int64_t en, int32_t kmer, int32_t smer, int32_t bbit, int64_t boff, mp64_v *a)
@@ -118,6 +126,7 @@ void mp_idx_proc_seq(void *km, int64_t len, const uint8_t *seq, int32_t min_aa_l
 {
 	uint8_t codon[3], p;
 	int64_t i, j, e[3], k[3], l[3];
+	kv_resize(uint64_t, km, *a, len>>2);
 	a->n = 0;
 	for (i = 0; i < 3; ++i)
 		e[i] = -1, k[i] = l[i] = 0, codon[i] = 0;
@@ -149,16 +158,87 @@ void mp_idx_proc_seq(void *km, int64_t len, const uint8_t *seq, int32_t min_aa_l
 	a->n = ++j;
 }
 
-mp_idx_t *mp_index(const mp_idxopt_t *io, const char *fn)
+typedef struct {
+	const mp_idxopt_t *io;
+	const mp_idx_t *mi;
+	void **km;
+	mp64_v *a;
+} worker_aux_t;
+
+static void build_worker(void *data, long j, int tid)
+{
+	worker_aux_t *aux = (worker_aux_t*)data;
+	const mp_ntdb_t *nt = aux->mi->nt;
+	const mp_idxopt_t *io = aux->io;
+	void *km = aux->km[tid];
+	int64_t len;
+	uint8_t *seq;
+	seq = Kmalloc(km, uint8_t, nt->ctg[j>>1].len);
+	len = mp_ntseq_get(nt, j>>1, 0, -1, j&1, seq);
+	mp_idx_proc_seq(km, len, seq, io->min_aa_len, io->kmer, io->smer, io->bbit, aux->mi->bo[j], &aux->a[j]);
+	kfree(km, seq);
+}
+
+static void build_bidx(const mp_idxopt_t *io, mp_idx_t *mi, const mp64_v *a)
+{
+	int32_t i, j, n_a = mi->nt->n_ctg * 2;
+	int64_t tmp;
+	uint32_t n_kmer = 1U << io->kmer*4;
+	mi->ki = Kcalloc(0, int64_t, n_kmer);
+	for (i = 0; i < n_a; ++i) { // count
+		const mp64_v *b = &a[i];
+		for (j = 0; j < b->n; ++j)
+			++mi->ki[b->a[j]>>32];
+	}
+	for (i = 0, mi->n_kb = 0; i < n_kmer; ++i)
+		mi->n_kb += mi->ki[i], mi->ki[i] = mi->n_kb - mi->ki[i];
+	mi->kb = Kmalloc(0, uint32_t, mi->n_kb);
+	for (i = 0; i < n_a; ++i) {
+		const mp64_v *b = &a[i];
+		for (j = 0; j < b->n; ++j)
+			mi->kb[mi->ki[b->a[j]>>32]++] = (uint32_t)b->a[j];
+	}
+	for (i = 0, tmp = 0; i < n_kmer; ++i) {
+		int64_t t = tmp;
+		tmp = mi->ki[i], mi->ki[i] -= tmp - t;
+	}
+}
+
+mp_idx_t *mp_idx_build(const mp_idxopt_t *io, const char *fn, int32_t n_threads)
 {
 	mp_ntdb_t *nt;
 	mp_idx_t *mi;
+	worker_aux_t aux;
+	int32_t i;
+
 	nt = mp_ntseq_read(fn);
 	if (nt == 0) return 0;
 	if (mp_verbose >= 3)
 		fprintf(stderr, "[M::%s@%.3f] read %ld bases in %d contigs\n", __func__, mp_realtime(), (long)nt->l_seq, nt->n_ctg);
+
 	mi = Kcalloc(0, mp_idx_t, 1);
 	mi->nt = nt;
-	mi->boff = mp_idx_boff(mi->nt, io->bbit);
+	mi->bo = mp_idx_boff(mi->nt, io->bbit, &mi->n_block);
+
+	memset(&aux, 0, sizeof(aux));
+	aux.io = io;
+	aux.km = Kcalloc(0, void*, n_threads);
+	aux.a = Kcalloc(0, mp64_v, nt->n_ctg * 2);
+	for (i = 0; i < n_threads; ++i)
+		aux.km[i] = km_init();
+	kt_for(n_threads, build_worker, &aux, nt->n_ctg * 2);
+	build_bidx(io, mi, aux.a);
+
+	for (i = 0; i < n_threads; ++i)
+		km_destroy(aux.km[i]);
+	free(aux.a); free(aux.km);
 	return mi;
+}
+
+void mp_idx_destroy(mp_idx_t *mi)
+{
+	if (mi == 0) return;
+	mp_ntseq_destroy(mi->nt);
+	free(mi->ki); free(mi->bo); free(mi->kb);
+	free(mi);
 }
