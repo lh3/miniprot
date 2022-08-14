@@ -4,7 +4,7 @@ CFLAGS=		-g -Wall -O3
 CXXFLAGS=	$(CFLAGS)
 CPPFLAGS=
 INCLUDES=
-OBJS=		kalloc.o sys.o misc.o table.o options.o ntseq.o
+OBJS=		kalloc.o sys.o misc.o table.o options.o index.o
 PROG=		miniprot
 LIBS=		-lz
 
@@ -34,3 +34,11 @@ depend:
 		(LC_ALL=C; export LC_ALL; makedepend -Y -- $(CFLAGS) $(DFLAGS) -- *.c *.cpp)
 
 # DO NOT DELETE
+
+index.o: mppriv.h miniprot.h kalloc.h kvec-km.h kseq.h
+kalloc.o: kalloc.h
+main.o: miniprot.h ketopt.h
+misc.o: ksort.h
+options.o: miniprot.h
+sys.o: mppriv.h miniprot.h
+table.o: miniprot.h
