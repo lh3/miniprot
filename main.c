@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 		else if (c == 't') n_threads = atoi(o.arg);
 		else if (c == 'd') fn_idx = o.arg;
 	}
-	if (argc - o.ind < 2) {
+	if (argc - o.ind == 0 || (argc - o.ind == 1 && fn_idx == 0)) {
 		print_usage(stderr, &io, n_threads);
 		return 1;
 	}
