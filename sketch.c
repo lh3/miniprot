@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdio.h>
 #include "mppriv.h"
 #include "kalloc.h"
 #include "kvec-km.h"
@@ -69,28 +70,29 @@ void mp_sketch_clean_orf(void *km, const uint8_t *seq, int64_t st, int64_t en, i
 
 void mp_sketch_nt4(void *km, const uint8_t *seq, int64_t len, int32_t min_aa_len, int32_t kmer, int32_t smer, int32_t bbit, int64_t boff, mp64_v *a)
 {
-	uint8_t codon[3], p;
-	int64_t i, j, e[3], k[3], l[3];
+	uint8_t codon, p;
+	int64_t i, j, l, e[3], k[3];
 	kv_resize(uint64_t, km, *a, len>>2);
 	a->n = 0;
 	for (p = 0; p < 3; ++p)
-		e[p] = -1, k[p] = l[p] = 0, codon[p] = 0;
-	for (i = 0, p = 0; i < len; ++i, ++p) {
+		e[p] = -1, k[p] = 0;
+	for (i = 0, p = 1, codon = 0, l = 0; i < len; ++i, ++p) {
 		if (p == 3) p = 0;
 		if (seq[i] < 4) {
-			codon[p] = (codon[p] << 2 | seq[i]) & 0x3f;
-			if (++l[p] >= 3) {
-				uint8_t aa = mp_tab_codon[(uint8_t)codon[p]];
+			codon = (codon << 2 | seq[i]) & 0x3f;
+			if (++l >= 3) {
+				uint8_t aa = mp_tab_codon[codon];
 				if (aa >= 20) {
 					if (k[p] >= min_aa_len)
 						mp_sketch_clean_orf(km, seq, e[p] + 1 - k[p] * 3, e[p] + 1, kmer, smer, bbit, boff, a);
-					k[p] = l[p] = 0, e[p] = -1;
+					k[p] = 0, e[p] = -1;
 				} else e[p] = i, ++k[p];
 			}
 		} else {
+			abort();
 			if (k[p] >= min_aa_len)
 				mp_sketch_clean_orf(km, seq, e[p] + 1 - k[p] * 3, e[p] + 1, kmer, smer, bbit, boff, a);
-			k[p] = l[p] = 0, e[p] = -1;
+			k[p] = 0, e[p] = -1, l = 0, codon = 0;
 		}
 	}
 	for (p = 0; p < 3; ++p)

@@ -35,10 +35,23 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_regs, mp
 	mp64_v a = {0,0,0};
 	*n_regs = 0;
 	mp_sketch_prot(km, seq, qlen, io->kmer, io->smer, &a);
+
 	int32_t i;
-	for (i = 0; i < a.n; ++i) {
-		printf("%s\t%d\t%ld\n", qname, (int32_t)a.a[i], (long)(mi->ki[(a.a[i]>>32) + 1] - mi->ki[a.a[i]>>32]));
+	int64_t k, tot = 0;
+	for (i = 0; i < a.n; ++i)
+		tot += mi->ki[(a.a[i]>>32) + 1] - mi->ki[a.a[i]>>32];
+	uint64_t *t;
+	t = Kmalloc(km, uint64_t, tot);
+	for (i = 0, k = 0; i < a.n; ++i) {
+		int64_t j;
+//		printf("%s\t%d\t%ld\n", qname, (int32_t)a.a[i], (long)(mi->ki[(a.a[i]>>32) + 1] - mi->ki[a.a[i]>>32]));
+		for (j = mi->ki[a.a[i]>>32]; j < mi->ki[(a.a[i]>>32) + 1]; ++j)
+			t[k++] = (uint64_t)mi->kb[j] << 32 | (uint32_t)a.a[i];
 	}
+	radix_sort_mp64(t, t + tot);
+	for (k = 0; k < tot; ++k)
+		printf("%s\t%d\t%d\t%d\n", qname, (uint32_t)(t[k]>>32)<<mi->opt.bbit, (uint32_t)(t[k]>>32), (uint32_t)t[k]);
+	kfree(km, t);
 	kfree(km, a.a);
 	return 0;
 }
