@@ -30,6 +30,12 @@ void mp_tbuf_destroy(mp_tbuf_t *b)
 
 mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_regs, mp_tbuf_t *b, const mp_mapopt_t *opt, const char *qname)
 {
+	void *km = b->km;
+	const mp_idxopt_t *io = &mi->opt;
+	mp64_v a = {0,0,0};
+	*n_regs = 0;
+	mp_sketch_prot(km, seq, qlen, io->kmer, io->smer, io->bbit, &a);
+	kfree(km, a.a);
 	return 0;
 }
 
@@ -57,7 +63,9 @@ typedef struct {
 static void worker_for(void *_data, long i, int tid) // kt_for() callback
 {
     step_t *s = (step_t*)_data;
+	mp_bseq1_t *seq = &s->seq[i];
 	fprintf(stderr, "QR\t%s\t%d\t%d\n", s->seq[i].name, s->seq[i].l_seq, tid);
+	s->reg[i] = mp_map(s->p->mi, seq->l_seq, seq->seq, &s->n_reg[i], s->buf[i], s->p->opt, seq->name);
 }
 
 static void *worker_pipeline(void *shared, int step, void *in)

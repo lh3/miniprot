@@ -41,6 +41,8 @@ void mp_ntseq_dump(FILE *fp, const mp_ntdb_t *nt);
 mp_ntdb_t *mp_ntseq_restore(FILE *fp);
 int64_t mp_ntseq_get(const mp_ntdb_t *db, int32_t cid, int64_t st, int64_t en, int32_t rev, uint8_t *seq);
 
+void mp_sketch_prot(void *km, const char *seq, int32_t len, int32_t kmer, int32_t smer, int32_t bbit, mp64_v *a);
+
 static inline uint32_t mp_hash32_mask(uint32_t key, uint32_t mask)
 {
 	key  = (key + ~(key << 15)) & mask;

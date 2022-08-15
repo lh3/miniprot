@@ -14,7 +14,7 @@ uint8_t mp_tab_a2r[22] = { 0, 2, 4, 4, 6, 5, 5, 8, 3, 10, 11, 2, 11, 12, 7, 1, 1
 char *mp_tab_codon_std = "KKNNRRSSTTTTIMIIEEDDGGGGAAAAVVVVQQHHRRRRPPPPLLLL**YY*WCCSSSSLLFFX";
 					   // 01234567890123456789012345678901234567890123456789012345678901234
 
-uint8_t mp_tab_nt4[256], mp_tab_aa20[256], mp_tab_codon[64], mp_tab_codon13[64];
+uint8_t mp_tab_nt4[256], mp_tab_aa20[256], mp_tab_aa13[256], mp_tab_codon[64], mp_tab_codon13[64];
 
 void mp_make_tables(int codon_type)
 {
@@ -26,6 +26,9 @@ void mp_make_tables(int codon_type)
 	memset(mp_tab_aa20, 21, 256);
 	for (p = mp_tab_aa_i2c; *p; ++p)
 		mp_tab_aa20[(uint8_t)toupper(*p)] = mp_tab_aa20[(uint8_t)tolower(*p)] = p - mp_tab_aa_i2c;
+	memset(mp_tab_aa13, 15, 256);
+	for (p = mp_tab_aa_i2c; *p; ++p)
+		mp_tab_aa13[(uint8_t)toupper(*p)] = mp_tab_aa13[(uint8_t)tolower(*p)] = p - mp_tab_aa_i2c;
 	for (i = 0; i < 64; ++i) {
 		mp_tab_codon[i] = mp_tab_aa20[(uint8_t)mp_tab_codon_std[i]];
 		mp_tab_codon13[i] = mp_tab_a2r[mp_tab_codon[i]];
