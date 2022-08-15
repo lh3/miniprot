@@ -26,6 +26,7 @@ typedef struct {
 typedef struct {
 	uint64_t flag;
 	int64_t mini_batch_size;
+	int32_t max_occ;
 } mp_mapopt_t;
 
 typedef struct {

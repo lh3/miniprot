@@ -178,6 +178,8 @@ mp_idx_t *mp_idx_restore(const char *fn)
 	fread(mi->kb, 4, mi->n_kb, fp);
 	if (fp != stdin) fclose(fp);
 	mi->bo = mp_idx_boff(mi->nt, mi->opt.bbit, &mi->n_block);
+	if (mp_verbose >= 3)
+		fprintf(stderr, "[M::%s@%.3f*%.2f] loaded the index\n", __func__, mp_realtime(), mp_percent_cpu());
 	return mi;
 }
 
