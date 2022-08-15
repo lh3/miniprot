@@ -23,7 +23,7 @@ static int64_t mp_chain_bk_end(int32_t max_drop, const mp128_t *z, const int32_t
 	return max_i;
 }
 
-uint64_t *mp_chain_backtrack(void *km, int64_t n, const int32_t *f, const int64_t *p, int32_t *v, int32_t *t, int32_t min_cnt, int32_t min_sc, int32_t max_drop, int32_t *n_u_, int32_t *n_v_)
+static uint64_t *mp_chain_backtrack(void *km, int64_t n, const int32_t *f, const int64_t *p, int32_t *v, int32_t *t, int32_t min_cnt, int32_t min_sc, int32_t max_drop, int32_t *n_u_, int32_t *n_v_)
 {
 	mp128_t *z;
 	uint64_t *u;
@@ -118,6 +118,7 @@ static inline int32_t comput_sc_block(uint64_t ai, uint64_t aj, int32_t max_dist
 	if (dq3 >= dr3 - bs && dq3 <= dr3 + bs) dd = 0;
 	else if (dq3 < dr3 - bs) dd = dr3 - bs - dq3;
 	else dd = dq3 - (dr3 + bs);
+//	if (ai>>32 == 25318 && (uint32_t)ai == 96 && aj>>32 == 25306 && (uint32_t)aj == 87) printf("here: %d,%d\n", dd, bw);
 	if (dd > bw) return INT32_MIN; // dd is the min possible gap size
 	sc = kmer < dq? kmer : dq;
 	if (dd > 0) {

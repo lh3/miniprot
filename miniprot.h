@@ -27,6 +27,10 @@ typedef struct {
 	uint64_t flag;
 	int64_t mini_batch_size;
 	int32_t max_occ;
+	int32_t max_gap; // max gap on the query protein, in aa
+	int32_t max_intron;
+	int32_t bw; // bandwidth, in aa
+	int32_t min_chn_cnt;
 } mp_mapopt_t;
 
 typedef struct {

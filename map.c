@@ -32,29 +32,40 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_regs, mp
 {
 	void *km = b->km;
 	const mp_idxopt_t *io = &mi->opt;
-	mp64_v a = {0,0,0};
+	mp64_v sd = {0,0,0};
 	*n_regs = 0;
-	mp_sketch_prot(km, seq, qlen, io->kmer, io->smer, &a);
+	mp_sketch_prot(km, seq, qlen, io->kmer, io->smer, &sd);
 
 	int32_t i;
-	int64_t k, tot = 0;
-	for (i = 0; i < a.n; ++i) { // TODO: sorting might help to reduce cache misses, but probably doesn't matter in practice
-		int64_t n = mi->ki[(a.a[i]>>32) + 1] - mi->ki[a.a[i]>>32];
-		if (n <= opt->max_occ) tot += n;
+	int64_t k, n_a = 0;
+	for (i = 0; i < sd.n; ++i) { // TODO: sorting might help to reduce cache misses, but probably doesn't matter in practice
+		int64_t n = mi->ki[(sd.a[i]>>32) + 1] - mi->ki[sd.a[i]>>32];
+		if (n <= opt->max_occ) n_a += n;
 	}
-	uint64_t *t;
-	t = Kmalloc(km, uint64_t, tot);
-	for (i = 0, k = 0; i < a.n; ++i) {
-		int64_t j, st = mi->ki[a.a[i]>>32], en = mi->ki[(a.a[i]>>32) + 1];
+	uint64_t *a;
+	a = Kmalloc(km, uint64_t, n_a);
+	for (i = 0, k = 0; i < sd.n; ++i) {
+		int64_t j, st = mi->ki[sd.a[i]>>32], en = mi->ki[(sd.a[i]>>32) + 1];
 		if (en - st <= opt->max_occ)
 			for (j = st; j < en; ++j)
-				t[k++] = (uint64_t)mi->kb[j] << 32 | (uint32_t)a.a[i];
+				a[k++] = (uint64_t)mi->kb[j] << 32 | (uint32_t)sd.a[i];
 	}
-	radix_sort_mp64(t, t + tot);
-	for (k = 0; k < tot; ++k)
-		printf("%s\t%d\t%d\t%d\n", qname, (uint32_t)(t[k]>>32)<<mi->opt.bbit, (uint32_t)(t[k]>>32), (uint32_t)t[k]);
-	kfree(km, t);
-	kfree(km, a.a);
+	radix_sort_mp64(a, a + n_a);
+
+	int32_t n_u;
+	uint64_t *u;
+	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, 25, 1000000, opt->min_chn_cnt, 0, 1, mi->opt.kmer, mi->opt.bbit, n_a, a, &n_u, &u, km);
+	if (1) {
+		fprintf(stderr, "NC\t%d\n", n_u);
+		for (i = 0, n_a = 0; i < n_u; ++i) {
+			n_a += (int32_t)u[i];
+			fprintf(stderr, "CN\t%d\t%d\t%d\n", i, (int32_t)(u[i]>>32), (int32_t)u[i]);
+		}
+	}
+	for (k = 0; k < n_a; ++k)
+		printf("%s\t%d\t%d\t%d\n", qname, (uint32_t)(a[k]>>32)<<mi->opt.bbit, (uint32_t)(a[k]>>32), (uint32_t)a[k]);
+	kfree(km, a);
+	kfree(km, sd.a);
 	return 0;
 }
 
