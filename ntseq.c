@@ -4,7 +4,7 @@
 #include "mppriv.h"
 #include "kalloc.h"
 #include "kseq.h"
-KSEQ_INIT(gzFile, gzread)
+KSEQ_INIT2(, gzFile, gzread)
 
 static void mp_ntseq_merge_name(mp_ntdb_t *nt)
 {

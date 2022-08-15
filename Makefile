@@ -4,7 +4,8 @@ CFLAGS=		-g -Wall -O3
 CXXFLAGS=	$(CFLAGS)
 CPPFLAGS=
 INCLUDES=
-OBJS=		kalloc.o kthread.o sys.o misc.o table.o options.o ntseq.o index.o
+OBJS=		kalloc.o kthread.o sys.o misc.o table.o options.o ntseq.o index.o \
+			bseq.o map.o
 PROG=		miniprot
 LIBS=		-lz
 
@@ -35,10 +36,12 @@ depend:
 
 # DO NOT DELETE
 
+bseq.o: kvec-km.h kalloc.h mppriv.h miniprot.h kseq.h
 index.o: mppriv.h miniprot.h kalloc.h kvec-km.h kthread.h
 kalloc.o: kalloc.h
 kthread.o: kthread.h
-main.o: miniprot.h ketopt.h
+main.o: mppriv.h miniprot.h ketopt.h
+map.o: mppriv.h miniprot.h kthread.h kvec-km.h kalloc.h kseq.h
 misc.o: mppriv.h miniprot.h ksort.h
 ntseq.o: mppriv.h miniprot.h kalloc.h kseq.h
 options.o: miniprot.h
