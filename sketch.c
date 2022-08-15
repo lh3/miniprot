@@ -14,7 +14,7 @@ static inline uint32_t mp_hash32_mask(uint32_t key, uint32_t mask)
 	return key;
 }
 
-void mp_sketch_prot(void *km, const char *seq, int32_t len, int32_t kmer, int32_t smer, int32_t bbit, mp64_v *a)
+void mp_sketch_prot(void *km, const char *seq, int32_t len, int32_t kmer, int32_t smer, mp64_v *a)
 {
 	int32_t i, j, l = 0;
 	uint32_t x = 0, y, mask_k = (1U<<kmer*4) - 1, mask_s = (1U<<smer*4) - 1;
@@ -67,7 +67,7 @@ void mp_sketch_clean_orf(void *km, const uint8_t *seq, int64_t st, int64_t en, i
 	}
 }
 
-void mp_sketch_nt4(void *km, int64_t len, const uint8_t *seq, int32_t min_aa_len, int32_t kmer, int32_t smer, int32_t bbit, int64_t boff, mp64_v *a)
+void mp_sketch_nt4(void *km, const uint8_t *seq, int64_t len, int32_t min_aa_len, int32_t kmer, int32_t smer, int32_t bbit, int64_t boff, mp64_v *a)
 {
 	uint8_t codon[3], p;
 	int64_t i, j, e[3], k[3], l[3];

@@ -41,7 +41,7 @@ static void build_worker(void *data, long j, int tid)
 	uint8_t *seq;
 	seq = Kmalloc(km, uint8_t, nt->ctg[j>>1].len);
 	len = mp_ntseq_get(nt, j>>1, 0, -1, j&1, seq);
-	mp_sketch_nt4(km, len, seq, io->min_aa_len, io->kmer, io->smer, io->bbit, aux->mi->bo[j], &aux->a[j]);
+	mp_sketch_nt4(km, seq, len, io->min_aa_len, io->kmer, io->smer, io->bbit, aux->mi->bo[j], &aux->a[j]);
 	kfree(km, seq);
 }
 

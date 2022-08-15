@@ -34,7 +34,11 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_regs, mp
 	const mp_idxopt_t *io = &mi->opt;
 	mp64_v a = {0,0,0};
 	*n_regs = 0;
-	mp_sketch_prot(km, seq, qlen, io->kmer, io->smer, io->bbit, &a);
+	mp_sketch_prot(km, seq, qlen, io->kmer, io->smer, &a);
+	int32_t i;
+	for (i = 0; i < a.n; ++i) {
+		printf("%s\t%d\t%ld\n", qname, (int32_t)a.a[i], (long)(mi->ki[(a.a[i]>>32) + 1] - mi->ki[a.a[i]>>32]));
+	}
 	kfree(km, a.a);
 	return 0;
 }
@@ -65,7 +69,7 @@ static void worker_for(void *_data, long i, int tid) // kt_for() callback
     step_t *s = (step_t*)_data;
 	mp_bseq1_t *seq = &s->seq[i];
 	fprintf(stderr, "QR\t%s\t%d\t%d\n", s->seq[i].name, s->seq[i].l_seq, tid);
-	s->reg[i] = mp_map(s->p->mi, seq->l_seq, seq->seq, &s->n_reg[i], s->buf[i], s->p->opt, seq->name);
+	s->reg[i] = mp_map(s->p->mi, seq->l_seq, seq->seq, &s->n_reg[i], s->buf[tid], s->p->opt, seq->name);
 }
 
 static void *worker_pipeline(void *shared, int step, void *in)

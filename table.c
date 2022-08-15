@@ -28,7 +28,7 @@ void mp_make_tables(int codon_type)
 		mp_tab_aa20[(uint8_t)toupper(*p)] = mp_tab_aa20[(uint8_t)tolower(*p)] = p - mp_tab_aa_i2c;
 	memset(mp_tab_aa13, 15, 256);
 	for (p = mp_tab_aa_i2c; *p; ++p)
-		mp_tab_aa13[(uint8_t)toupper(*p)] = mp_tab_aa13[(uint8_t)tolower(*p)] = p - mp_tab_aa_i2c;
+		mp_tab_aa13[(uint8_t)toupper(*p)] = mp_tab_aa13[(uint8_t)tolower(*p)] = mp_tab_a2r[p - mp_tab_aa_i2c];
 	for (i = 0; i < 64; ++i) {
 		mp_tab_codon[i] = mp_tab_aa20[(uint8_t)mp_tab_codon_std[i]];
 		mp_tab_codon13[i] = mp_tab_a2r[mp_tab_codon[i]];
