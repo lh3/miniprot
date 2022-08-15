@@ -28,6 +28,7 @@ mp_bseq1_t *mp_bseq_read(mp_bseq_file_t *fp, int64_t chunk_size, int with_commen
 // from misc.c
 char *mp_strdup(const char *src);
 void radix_sort_mp64(uint64_t *st, uint64_t *en);
+void radix_sort_mp128x(mp128_t *st, mp128_t *en);
 
 // from sys.c
 double mp_realtime(void);
@@ -44,6 +45,16 @@ int64_t mp_ntseq_get(const mp_ntdb_t *db, int32_t cid, int64_t st, int64_t en, i
 
 void mp_sketch_nt4(void *km, const uint8_t *seq, int64_t len, int32_t min_aa_len, int32_t kmer, int32_t smer, int32_t bbit, int64_t boff, mp64_v *a);
 void mp_sketch_prot(void *km, const char *seq, int32_t len, int32_t kmer, int32_t smer, mp64_v *a);
+
+static inline float mp_log2(float x) // NB: this doesn't work when x<2
+{
+	union { float f; uint32_t i; } z = { x };
+	float log_2 = ((z.i >> 23) & 255) - 128;
+	z.i &= ~(255 << 23);
+	z.i += 127 << 23;
+	log_2 += (-0.34484843f * z.f + 2.02466578f) * z.f - 0.67487759f;
+	return log_2;
+}
 
 #ifdef __cplusplus
 }
