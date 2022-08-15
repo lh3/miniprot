@@ -20,17 +20,21 @@ typedef struct {
 	char *name, *seq, *comment;
 } mp_bseq1_t;
 
+// from bseq.c
 mp_bseq_file_t *mp_bseq_open(const char *fn);
 void mp_bseq_close(mp_bseq_file_t *fp);
 mp_bseq1_t *mp_bseq_read(mp_bseq_file_t *fp, int64_t chunk_size, int with_comment, int *n_);
 
+// from misc.c
+char *mp_strdup(const char *src);
 void radix_sort_mp64(uint64_t *st, uint64_t *en);
 
+// from sys.c
 double mp_realtime(void);
 double mp_cputime(void);
 long mp_peakrss(void);
-char *mp_strdup(const char *src);
 
+// from ntseq.c
 mp_ntdb_t *mp_ntseq_read(const char *fn);
 void mp_ntseq_destroy(mp_ntdb_t *db);
 void mp_ntseq_dump(FILE *fp, const mp_ntdb_t *nt);

@@ -11,3 +11,13 @@ void mp_start(void)
 	mp_make_tables(MP_CODON_STD);
 	mp_realtime();
 }
+
+char *mp_strdup(const char *src)
+{
+	int32_t len;
+	char *dst;
+	len = strlen(src);
+	dst = (char*)malloc(len + 1);
+	memcpy(dst, src, len + 1);
+	return dst;
+}

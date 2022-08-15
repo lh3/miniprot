@@ -120,13 +120,3 @@ double mp_realtime(void)
 	if (realtime0 < 0.0) realtime0 = t;
 	return t - realtime0;
 }
-
-char *mp_strdup(const char *src)
-{
-	int32_t len;
-	char *dst;
-	len = strlen(src);
-	dst = (char*)malloc(len + 1);
-	memcpy(dst, src, len + 1);
-	return dst;
-}

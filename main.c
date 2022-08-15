@@ -9,7 +9,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, int n_threads)
 	fprintf(fp, "Options:\n");
 	fprintf(fp, "  Indexing:\n");
 	fprintf(fp, "    -k INT       k-mer size [%d]\n", io->kmer);
-	fprintf(fp, "    -s INT       submer size [%d]\n", io->smer);
+	fprintf(fp, "    -s INT       submer size (density: 1/(2*(k-s)+1)) [%d]\n", io->smer);
 	fprintf(fp, "    -b INT       bits per block [%d]\n", io->bbit);
 	fprintf(fp, "    -d FILE      save index to FILE []\n");
 	fprintf(fp, "  Input/output:\n");
