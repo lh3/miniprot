@@ -33,6 +33,7 @@ void radix_sort_mp64(uint64_t *st, uint64_t *en);
 double mp_realtime(void);
 double mp_cputime(void);
 long mp_peakrss(void);
+double mp_percent_cpu(void);
 
 // from ntseq.c
 mp_ntdb_t *mp_ntseq_read(const char *fn);

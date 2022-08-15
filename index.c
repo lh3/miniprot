@@ -84,6 +84,8 @@ mp_idx_t *mp_idx_build(const char *fn, const mp_idxopt_t *io, int32_t n_threads)
 	mi->opt = *io;
 	mi->nt = nt;
 	mi->bo = mp_idx_boff(mi->nt, io->bbit, &mi->n_block);
+	if (mp_verbose >= 3)
+		fprintf(stderr, "[M::%s@%.3f*%.2f] %d blocks\n", __func__, mp_realtime(), mp_percent_cpu(), mi->n_block);
 
 	memset(&aux, 0, sizeof(aux));
 	aux.mi = mi;
@@ -92,8 +94,11 @@ mp_idx_t *mp_idx_build(const char *fn, const mp_idxopt_t *io, int32_t n_threads)
 	for (i = 0; i < n_threads; ++i)
 		aux.km[i] = km_init();
 	kt_for(n_threads, build_worker, &aux, nt->n_ctg * 2);
+	if (mp_verbose >= 3)
+		fprintf(stderr, "[M::%s@%.3f*%.2f] collected syncmers\n", __func__, mp_realtime(), mp_percent_cpu());
 	build_bidx(io, mi, aux.a);
-	fprintf(stderr, "[M::%s] %d blocks and %ld kmer-block pairs\n", __func__, mi->n_block, (long)mi->n_kb);
+	if (mp_verbose >= 3)
+		fprintf(stderr, "[M::%s@%.3f*%.2f] %ld kmer-block pairs\n", __func__, mp_realtime(), mp_percent_cpu(), (long)mi->n_kb);
 
 	for (i = 0; i < n_threads; ++i)
 		km_destroy(aux.km[i]);

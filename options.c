@@ -7,7 +7,7 @@ void mp_idxopt_init(mp_idxopt_t *io)
 	io->bbit = 8;
 	io->min_aa_len = 15;
 	io->kmer = 6;
-	io->smer = 5;
+	io->smer = 4;
 }
 
 void mp_mapopt_init(mp_mapopt_t *mo)

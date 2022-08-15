@@ -120,3 +120,8 @@ double mp_realtime(void)
 	if (realtime0 < 0.0) realtime0 = t;
 	return t - realtime0;
 }
+
+double mp_percent_cpu(void)
+{
+	return (mp_cputime() + 1e-6) / (mp_realtime() + 1e-6);
+}

@@ -68,7 +68,7 @@ mp_ntdb_t *mp_ntseq_read(const char *fn)
 	gzclose(fp);
 	mp_ntseq_merge_name(d);
 	if (mp_verbose >= 3)
-		fprintf(stderr, "[M::%s@%.3f] read %ld bases in %d contigs\n", __func__, mp_realtime(), (long)d->l_seq, d->n_ctg);
+		fprintf(stderr, "[M::%s@%.3f*%.2f] read %ld bases in %d contigs\n", __func__, mp_realtime(), mp_percent_cpu(), (long)d->l_seq, d->n_ctg);
 	return d;
 }
 

@@ -7,7 +7,7 @@ INCLUDES=
 OBJS=		kalloc.o kthread.o sys.o misc.o table.o options.o ntseq.o sketch.o \
 			index.o bseq.o map.o
 PROG=		miniprot
-LIBS=		-lz
+LIBS=		-lpthread -lz
 
 ifneq ($(asan),)
 	CFLAGS+=-fsanitize=address

@@ -89,7 +89,6 @@ void mp_sketch_nt4(void *km, const uint8_t *seq, int64_t len, int32_t min_aa_len
 				} else e[p] = i, ++k[p];
 			}
 		} else {
-			abort();
 			if (k[p] >= min_aa_len)
 				mp_sketch_clean_orf(km, seq, e[p] + 1 - k[p] * 3, e[p] + 1, kmer, smer, bbit, boff, a);
 			k[p] = 0, e[p] = -1, l = 0, codon = 0;
