@@ -63,6 +63,12 @@ int main(int argc, char *argv[])
 	}
 
 	mi = mp_idx_load(argv[o.ind], &io, n_threads);
+	if (mi == 0) {
+		if (mp_verbose >= 1)
+			fprintf(stderr, "[ERROR]\033[1;31m failed to open/build the index\033[0m\n");
+		return 1;
+	}
+	if (mp_verbose >= 3) mp_idx_print_stat(mi, mo.max_occ);
 	if (fn_idx != 0) mp_idx_dump(fn_idx, mi);
 	for (i = o.ind + 1; i < argc; ++i)
 		mp_map_file(mi, argv[i], &mo, n_threads);

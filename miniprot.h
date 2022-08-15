@@ -73,6 +73,7 @@ mp_idx_t *mp_idx_load(const char *fn, const mp_idxopt_t *io, int32_t n_threads);
 void mp_idx_destroy(mp_idx_t *mi);
 int mp_idx_dump(const char *fn, const mp_idx_t *mi);
 mp_idx_t *mp_idx_restore(const char *fn);
+void mp_idx_print_stat(const mp_idx_t *mi, int32_t max_occ);
 
 int32_t mp_map_file(const mp_idx_t *idx, const char *fn, const mp_mapopt_t *opt, int n_threads);
 

@@ -106,19 +106,18 @@ mp_idx_t *mp_idx_build(const char *fn, const mp_idxopt_t *io, int32_t n_threads)
 	return mi;
 }
 
-void mp_idx_print_stat(const mp_idx_t *mi)
+void mp_idx_print_stat(const mp_idx_t *mi, int32_t max_occ)
 {
-	int64_t max = 0, tot = 0;
-	uint32_t i, n = 1U<<mi->opt.kmer*4, n_occupied = 0;
+	int64_t tot = 0, sum_large = 0;
+	uint32_t i, n = 1U<<mi->opt.kmer*4, n_occupied = 0, n_large = 0;
 	for (i = 0; i < n - 1; ++i) {
 		int64_t c = mi->ki[i+1] - mi->ki[i];
 		if (c > 0) ++n_occupied;
-		tot += c;
-		max = max > c? max : c;
+		if (c > max_occ) ++n_large, sum_large += c;
+		else tot += c;
 	}
-	assert(tot == mi->n_kb);
-	fprintf(stderr, "[M::%s] %d distinct k-mers present; mean occ: %.2f; max occ: %ld\n", __func__,
-			n_occupied, n_occupied > 0? (double)tot / n_occupied : -1, (long)max);
+	fprintf(stderr, "[M::%s] %d distinct k-mers; mean occ of infrequent k-mers: %.2f; %d frequent k-mers accounting for %ld occurrences\n", __func__,
+			n_occupied, (double)tot / (n_occupied - n_large), n_large, (long)sum_large);
 }
 
 void mp_idx_destroy(mp_idx_t *mi)
@@ -200,11 +199,8 @@ mp_idx_t *mp_idx_restore(const char *fn)
 
 mp_idx_t *mp_idx_load(const char *fn, const mp_idxopt_t *io, int32_t n_threads)
 {
-	mp_idx_t *mi;
 	int64_t is_idx;
 	is_idx = mp_idx_is_idx(fn);
 	if (is_idx < 0) return 0;
-	mi = is_idx? mp_idx_restore(fn) : mp_idx_build(fn, io, n_threads);
-	mp_idx_print_stat(mi);
-	return mi;
+	return is_idx? mp_idx_restore(fn) : mp_idx_build(fn, io, n_threads);
 }
