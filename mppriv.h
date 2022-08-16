@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include "miniprot.h"
+#include "kseq.h"
 
 #define MP_DBG_CHAIN1   0x1
 
@@ -57,6 +58,8 @@ uint64_t *mp_chain(int32_t max_dist_x, int32_t max_dist_y, int32_t bw, int32_t m
 				   int32_t is_spliced, int32_t kmer, int32_t bbit, int64_t n, uint64_t *a, int32_t *n_u_, uint64_t **_u, void *km);
 
 mp_reg1_t *mp_reg_gen_from_block(void *km, const mp_idx_t *mi, int32_t n_u, const uint64_t *u, const uint64_t *a, int32_t *n_reg);
+
+void mp_write_paf(kstring_t *s, const mp_idx_t *mi, const mp_bseq1_t *seq, const mp_reg1_t *r);
 
 static inline float mp_log2(float x) // NB: this doesn't work when x<2
 {

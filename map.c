@@ -57,7 +57,8 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	int32_t n_u;
 	uint64_t *u;
 	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, 25, 1000000, opt->min_chn_cnt, 0, 1, mi->opt.kmer, mi->opt.bbit, n_a, a, &n_u, &u, km);
-	reg = mp_reg_gen_from_block(km, mi, n_u, u, a, n_reg);
+	reg = mp_reg_gen_from_block(0, mi, n_u, u, a, n_reg);
+	/*
 	for (i = 0; i < *n_reg; ++i) {
 		mp_reg1_t *r = &reg[i];
 		fprintf(stderr, "%s\t%ld\t%ld\t%s\t%d\t%c\n", mi->nt->ctg[r->vid>>1].name, (long)r->vs, (long)r->ve, qname, r->chn_sc, "+-"[r->vid&1]);
@@ -69,10 +70,11 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 			fprintf(stderr, "CN\t%d\t%d\t%d\n", i, (int32_t)(u[i]>>32), (int32_t)u[i]);
 		}
 	}
+	*/
 	//for (k = 0; k < n_a; ++k) printf("%s\t%d\t%d\t%d\n", qname, (uint32_t)(a[k]>>32)<<mi->opt.bbit, (uint32_t)(a[k]>>32), (uint32_t)a[k]);
 	kfree(km, a);
 	kfree(km, sd.a);
-	return 0;
+	return reg;
 }
 
 /**************************
@@ -126,9 +128,15 @@ static void *worker_pipeline(void *shared, int step, void *in)
 		return in;
     } else if (step == 2) { // step 2: output
         step_t *s = (step_t*)in;
+		int32_t j;
 		for (i = 0; i < p->n_threads; ++i) mp_tbuf_destroy(s->buf[i]);
 		free(s->buf);
 		for (i = 0; i < s->n_seq; ++i) {
+			for (j = 0; j < s->n_reg[i]; ++j) {
+				p->str.l = 0;
+				mp_write_paf(&p->str, p->mi, &s->seq[i], &s->reg[i][j]);
+				fwrite(p->str.s, 1, p->str.l, stdout);
+			}
 			free(s->reg[i]);
 			free(s->seq[i].seq); free(s->seq[i].name);
 			if (s->seq[i].comment) free(s->seq[i].comment);
