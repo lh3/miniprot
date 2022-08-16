@@ -59,7 +59,8 @@ typedef struct {
 	int32_t off, cnt;
 	uint32_t vid;
 	int32_t chn_sc;
-	int64_t st, en;
+	int32_t qs, qe;
+	int64_t vs, ve;
 } mp_reg1_t;
 
 struct mp_tbuf_s;

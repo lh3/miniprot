@@ -16,8 +16,10 @@ mp_reg1_t *mp_reg_gen_from_block(void *km, const mp_idx_t *mi, int32_t n_u, cons
 		te = mp_idx_block2pos(mi, a[k+n-1]>>32);
 		if (ts == te) { // on the same contig
 			r->vid = ts;
-			r->st = ((a[k]>>32) - mi->bo[ts]) << mi->opt.bbit;
-			r->en = ((a[k+n-1]>>32) - mi->bo[ts] + 1) << mi->opt.bbit;
+			r->vs = ((a[k]>>32) - mi->bo[ts]) << mi->opt.bbit;
+			r->ve = ((a[k+n-1]>>32) - mi->bo[ts] + 1) << mi->opt.bbit;
+			r->qs = (uint32_t)a[k];
+			r->qe = (uint32_t)a[k+n-1];
 		} else { // on different contigs
 			fprintf(stderr, "ERROR: not implemented yet\n");
 			--nr;

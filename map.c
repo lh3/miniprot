@@ -60,7 +60,7 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	reg = mp_reg_gen_from_block(km, mi, n_u, u, a, n_reg);
 	for (i = 0; i < *n_reg; ++i) {
 		mp_reg1_t *r = &reg[i];
-		fprintf(stderr, "%s\t%ld\t%ld\t%s\t%d\t%c\n", mi->nt->ctg[r->vid>>1].name, (long)r->st, (long)r->en, qname, r->chn_sc, "+-"[r->vid&1]);
+		fprintf(stderr, "%s\t%ld\t%ld\t%s\t%d\t%c\n", mi->nt->ctg[r->vid>>1].name, (long)r->vs, (long)r->ve, qname, r->chn_sc, "+-"[r->vid&1]);
 	}
 	if (0) {
 		fprintf(stderr, "NC\t%d\n", n_u);
