@@ -45,11 +45,18 @@ void mp_ntseq_dump(FILE *fp, const mp_ntdb_t *nt);
 mp_ntdb_t *mp_ntseq_restore(FILE *fp);
 int64_t mp_ntseq_get(const mp_ntdb_t *db, int32_t cid, int64_t st, int64_t en, int32_t rev, uint8_t *seq);
 
+// from sketch.c
 void mp_sketch_nt4(void *km, const uint8_t *seq, int64_t len, int32_t min_aa_len, int32_t kmer, int32_t smer, int32_t bbit, int64_t boff, mp64_v *a);
 void mp_sketch_prot(void *km, const char *seq, int32_t len, int32_t kmer, int32_t smer, mp64_v *a);
 
+// from index.c
+int32_t mp_idx_block2pos(const mp_idx_t *mi, uint32_t b);
+
+// from chain.c
 uint64_t *mp_chain(int32_t max_dist_x, int32_t max_dist_y, int32_t bw, int32_t max_skip, int32_t max_iter, int32_t min_cnt, int32_t min_sc,
 				   int32_t is_spliced, int32_t kmer, int32_t bbit, int64_t n, uint64_t *a, int32_t *n_u_, uint64_t **_u, void *km);
+
+mp_reg1_t *mp_reg_gen_from_block(void *km, const mp_idx_t *mi, int32_t n_u, const uint64_t *u, const uint64_t *a, int32_t *n_reg);
 
 static inline float mp_log2(float x) // NB: this doesn't work when x<2
 {

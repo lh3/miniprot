@@ -19,5 +19,5 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 	mo->max_gap = 1000;
 	mo->max_intron = 200000;
 	mo->bw = mo->max_intron;
-	mo->min_chn_cnt = 5;
+	mo->min_chn_cnt = 10;
 }

@@ -56,7 +56,10 @@ typedef struct {
 } mp_idx_t;
 
 typedef struct {
-	int32_t foo;
+	int32_t off, cnt;
+	uint32_t vid;
+	int32_t chn_sc;
+	int64_t st, en;
 } mp_reg1_t;
 
 struct mp_tbuf_s;

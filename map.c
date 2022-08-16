@@ -28,12 +28,14 @@ void mp_tbuf_destroy(mp_tbuf_t *b)
 	free(b);
 }
 
-mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_regs, mp_tbuf_t *b, const mp_mapopt_t *opt, const char *qname)
+mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_tbuf_t *b, const mp_mapopt_t *opt, const char *qname)
 {
 	void *km = b->km;
 	const mp_idxopt_t *io = &mi->opt;
 	mp64_v sd = {0,0,0};
-	*n_regs = 0;
+	mp_reg1_t *reg;
+
+	*n_reg = 0;
 	mp_sketch_prot(km, seq, qlen, io->kmer, io->smer, &sd);
 
 	int32_t i;
@@ -55,15 +57,19 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_regs, mp
 	int32_t n_u;
 	uint64_t *u;
 	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, 25, 1000000, opt->min_chn_cnt, 0, 1, mi->opt.kmer, mi->opt.bbit, n_a, a, &n_u, &u, km);
-	if (1) {
+	reg = mp_reg_gen_from_block(km, mi, n_u, u, a, n_reg);
+	for (i = 0; i < *n_reg; ++i) {
+		mp_reg1_t *r = &reg[i];
+		fprintf(stderr, "%s\t%ld\t%ld\t%s\t%d\t%c\n", mi->nt->ctg[r->vid>>1].name, (long)r->st, (long)r->en, qname, r->chn_sc, "+-"[r->vid&1]);
+	}
+	if (0) {
 		fprintf(stderr, "NC\t%d\n", n_u);
 		for (i = 0, n_a = 0; i < n_u; ++i) {
 			n_a += (int32_t)u[i];
 			fprintf(stderr, "CN\t%d\t%d\t%d\n", i, (int32_t)(u[i]>>32), (int32_t)u[i]);
 		}
 	}
-	for (k = 0; k < n_a; ++k)
-		printf("%s\t%d\t%d\t%d\n", qname, (uint32_t)(a[k]>>32)<<mi->opt.bbit, (uint32_t)(a[k]>>32), (uint32_t)a[k]);
+	//for (k = 0; k < n_a; ++k) printf("%s\t%d\t%d\t%d\n", qname, (uint32_t)(a[k]>>32)<<mi->opt.bbit, (uint32_t)(a[k]>>32), (uint32_t)a[k]);
 	kfree(km, a);
 	kfree(km, sd.a);
 	return 0;

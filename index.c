@@ -13,7 +13,7 @@ uint32_t *mp_idx_boff(const mp_ntdb_t *db, int32_t bbit, uint32_t *n_boff)
 	int32_t i;
 	int64_t boff = 0;
 	uint32_t *bo;
-	bo = Kmalloc(0, uint32_t, db->n_ctg * 2);
+	bo = Kmalloc(0, uint32_t, db->n_ctg * 2 + 1);
 	for (i = 0; i < db->n_ctg; ++i) {
 		bo[i<<1|0] = boff;
 		boff += (db->ctg[i].len + (1<<bbit) - 1) >> bbit;
@@ -21,8 +21,26 @@ uint32_t *mp_idx_boff(const mp_ntdb_t *db, int32_t bbit, uint32_t *n_boff)
 		boff += (db->ctg[i].len + (1<<bbit) - 1) >> bbit;
 	}
 	assert(boff < UINT32_MAX);
-	*n_boff = boff;
+	bo[db->n_ctg*2] = *n_boff = boff;
 	return bo;
+}
+
+static int32_t mp_idx_block2pos_core(const uint32_t *a, uint32_t n_a, uint32_t b)
+{
+	int32_t st = 0, en = n_a - 1;
+	if (b >= a[n_a]) return -1;
+	while (st <= en) {
+		int32_t mid = (st + en) / 2;
+		if (a[mid] <= b && b < a[mid+1]) return mid;
+		else if (b < a[mid]) en = mid - 1;
+		else st = mid + 1;
+	}
+	return -2;
+}
+
+int32_t mp_idx_block2pos(const mp_idx_t *mi, uint32_t b)
+{
+	return mp_idx_block2pos_core(mi->bo, mi->nt->n_ctg * 2, b);
 }
 
 typedef struct {

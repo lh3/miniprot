@@ -5,7 +5,7 @@ CXXFLAGS=	$(CFLAGS)
 CPPFLAGS=
 INCLUDES=
 OBJS=		kalloc.o kthread.o sys.o misc.o table.o options.o ntseq.o sketch.o \
-			index.o bseq.o chain.o map.o
+			index.o bseq.o chain.o hit.o map.o
 PROG=		miniprot
 LIBS=		-lpthread -lz
 
@@ -37,6 +37,8 @@ depend:
 # DO NOT DELETE
 
 bseq.o: kvec-km.h kalloc.h mppriv.h miniprot.h kseq.h
+chain.o: mppriv.h miniprot.h kalloc.h
+hit.o: mppriv.h miniprot.h kalloc.h
 index.o: mppriv.h miniprot.h kalloc.h kvec-km.h kthread.h
 kalloc.o: kalloc.h
 kthread.o: kthread.h
