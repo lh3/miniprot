@@ -36,6 +36,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -d FILE      save index to FILE []\n");
 	fprintf(fp, "  Mapping:\n");
 	fprintf(fp, "    -c NUM       max k-mer occurrence [%d]\n", mo->max_occ);
+	fprintf(fp, "    -n NUM       minimum number of syncmers in a chain [%d]\n", mo->min_chn_cnt);
 	fprintf(fp, "  Input/output:\n");
 	fprintf(fp, "    -t INT       number of threads [%d]\n", n_threads);
 	fprintf(fp, "    -K NUM       query batch size [%ld]\n", (long)mo->mini_batch_size);
@@ -53,13 +54,14 @@ int main(int argc, char *argv[])
 	mp_start();
 	mp_mapopt_init(&mo);
 	mp_idxopt_init(&io);
-	while ((c = ketopt(&o, argc, argv, 1, "k:s:b:t:d:c:K:", long_options)) >= 0) {
+	while ((c = ketopt(&o, argc, argv, 1, "k:s:b:t:d:c:n:K:", long_options)) >= 0) {
 		if (c == 'k') io.kmer = atoi(o.arg);
 		else if (c == 's') io.smer = atoi(o.arg);
 		else if (c == 'b') io.bbit = atoi(o.arg);
 		else if (c == 't') n_threads = atoi(o.arg);
 		else if (c == 'd') fn_idx = o.arg;
 		else if (c == 'c') mo.max_occ = mp_parse_num(o.arg);
+		else if (c == 'n') mo.min_chn_cnt = mp_parse_num(o.arg);
 		else if (c == 'K') mo.mini_batch_size = mp_parse_num(o.arg);
 		else if (c == 501) mp_dbg_flag |= MP_DBG_QNAME;
 	}

@@ -58,16 +58,6 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	uint64_t *u;
 	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, 25, 1000000, opt->min_chn_cnt, 0, 1, mi->opt.kmer, mi->opt.bbit, n_a, a, &n_u, &u, km);
 	reg = mp_reg_gen_from_block(0, mi, n_u, u, a, n_reg);
-	/*
-	if (0) {
-		fprintf(stderr, "NC\t%d\n", n_u);
-		for (i = 0, n_a = 0; i < n_u; ++i) {
-			n_a += (int32_t)u[i];
-			fprintf(stderr, "CN\t%d\t%d\t%d\n", i, (int32_t)(u[i]>>32), (int32_t)u[i]);
-		}
-	}
-	*/
-	//for (k = 0; k < n_a; ++k) printf("%s\t%d\t%d\t%d\n", qname, (uint32_t)(a[k]>>32)<<mi->opt.bbit, (uint32_t)(a[k]>>32), (uint32_t)a[k]);
 	kfree(km, a);
 	kfree(km, sd.a);
 	return reg;
