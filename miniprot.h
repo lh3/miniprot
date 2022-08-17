@@ -30,7 +30,11 @@ typedef struct {
 	int32_t max_gap; // max gap on the query protein, in aa
 	int32_t max_intron;
 	int32_t bw; // bandwidth, in aa
+	int32_t max_ext;
+	int32_t max_ava;
 	int32_t min_chn_cnt;
+	int32_t max_chn_max_skip;
+	int32_t max_chn_iter;
 } mp_mapopt_t;
 
 typedef struct {
@@ -57,10 +61,12 @@ typedef struct {
 
 typedef struct {
 	int32_t off, cnt;
-	uint32_t vid;
 	int32_t chn_sc;
+	uint32_t vid;
 	int32_t qs, qe;
 	int64_t vs, ve;
+	int64_t as, ae;
+	uint64_t *a;
 } mp_reg1_t;
 
 struct mp_tbuf_s;

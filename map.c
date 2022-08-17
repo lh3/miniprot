@@ -28,6 +28,81 @@ void mp_tbuf_destroy(mp_tbuf_t *b)
 	free(b);
 }
 
+static void mp_refine_reg(void *km, const mp_idx_t *mi, const mp_mapopt_t *opt, const char *aa, int32_t l_aa, mp_reg1_t *r)
+{
+	const mp_idxopt_t *io = &mi->opt;
+	int32_t i, j, k, n_u, max_sc = 0, max_i, kmer = io->kmer - 1;
+	int64_t as, ae, l_nt, n_a, ctg_len = mi->nt->ctg[r->vid>>1].len;
+	uint8_t *nt;
+	uint64_t *a, *u;
+	mp64_v sd = {0,0,0}, sd_aa = {0,0,0};
+
+	as = r->vs > opt->max_ext? r->vs - opt->max_ext : 0;
+	ae = r->ve + opt->max_ext < ctg_len? r->ve + opt->max_ext : ctg_len;
+	nt = Kmalloc(km, uint8_t, ae - as);
+	l_nt = mp_ntseq_get(mi->nt, r->vid>>1, r->vid&1? ctg_len - ae : as, r->vid&1? ctg_len - as : ae, r->vid&1, nt);
+	mp_sketch_nt4(km, nt, l_nt, io->min_aa_len/2, kmer, kmer, 0, 0, &sd);
+	kfree(km, nt);
+	mp_sketch_prot(km, aa, l_aa, kmer, kmer, &sd_aa);
+	for (i = 0; i < sd_aa.n; ++i)
+		kv_push(uint64_t, km, sd, sd_aa.a[i] | 1ULL<<31);
+	kfree(km, sd_aa.a);
+	radix_sort_mp64(sd.a, sd.a + sd.n);
+
+	for (k = 0, i = 1, n_a = 0; i <= sd.n; ++i) { // precalculate n_a
+		if (i == sd.n || sd.a[k]>>32 != sd.a[i]>>32) {
+			int32_t n1, n2;
+			for (j = k; j < i; ++j)
+				if (sd.a[j]>>31&1) break;
+			n1 = j - k, n2 = i - k - n1;
+			if (n1 > 0 && n2 > 0 && n1 * n2 <= opt->max_ava)
+				n_a += n1 * n2;
+			k = i;
+		}
+	}
+	a = Kmalloc(km, uint64_t, n_a);
+	for (k = 0, i = 1, n_a = 0; i <= sd.n; ++i) { // populate a[]
+		if (i == sd.n || sd.a[k]>>32 != sd.a[i]>>32) {
+			int32_t n1, n2;
+			for (j = k; j < i; ++j)
+				if (sd.a[j]>>31&1) break;
+			n1 = j - k, n2 = i - k - n1;
+			if (n1 > 0 && n2 > 0 && n1 * n2 <= opt->max_ava) {
+				int32_t i1, i2;
+				for (i1 = k; i1 < k + n1; ++i1)
+					for (i2 = k + n1; i2 < i; ++i2)
+						a[n_a++] = (uint64_t)((uint32_t)sd.a[i1])<<32 | ((uint32_t)sd.a[i2]<<1>>1);
+			}
+			k = i;
+		}
+	}
+	kfree(km, sd.a);
+
+	radix_sort_mp64(a, a + n_a);
+	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, opt->max_chn_max_skip, opt->max_chn_iter, opt->min_chn_cnt, 0, 1, kmer, 0, n_a, a, &n_u, &u, km);
+	assert(n_u > 0);
+	if (n_u > 1) {
+		for (i = 0; i < n_u; ++i)
+			if (max_sc < u[i]>>32)
+				max_sc = u[i]>>32, max_i = i;
+		for (i = k = 0; i < n_u; ++i) {
+			if (i == max_i) {
+				n_a = (int32_t)u[i];
+				memmove(a, a + k, sizeof(*a) * n_a);
+				krelocate(km, a, sizeof(*a) * n_a);
+				r->chn_sc = u[i]>>32;
+				break;
+			}
+			k += (uint32_t)u[i];
+		}
+	} else n_a = (uint32_t)u[0], r->chn_sc = u[0]>>32;
+	r->a = a, r->cnt = n_a, r->off = -1, r->as = as, r->ae = ae;
+	r->qs = (uint32_t)a[0] - kmer + 1;
+	r->qe = (uint32_t)a[n_a-1] + 1;
+	r->vs = r->as + (a[0]>>32) - 3 * kmer + 1;
+	r->ve = r->as + (a[n_a-1]>>32) + 1;
+}
+
 mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_tbuf_t *b, const mp_mapopt_t *opt, const char *qname)
 {
 	void *km = b->km;
@@ -56,8 +131,10 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 
 	int32_t n_u;
 	uint64_t *u;
-	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, 25, 1000000, opt->min_chn_cnt, 0, 1, mi->opt.kmer, mi->opt.bbit, n_a, a, &n_u, &u, km);
+	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, opt->max_chn_max_skip, opt->max_chn_iter, opt->min_chn_cnt, 0, 1, mi->opt.kmer, mi->opt.bbit, n_a, a, &n_u, &u, km);
 	reg = mp_reg_gen_from_block(0, mi, n_u, u, a, n_reg);
+	for (i = 0; i < *n_reg; ++i)
+		mp_refine_reg(km, mi, opt, seq, qlen, &reg[i]);
 	kfree(km, a);
 	kfree(km, sd.a);
 	return reg;

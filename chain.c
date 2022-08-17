@@ -109,18 +109,24 @@ static uint64_t *compact_a(void *km, int32_t n_u, uint64_t *u, int32_t n_v, int3
 	return b;
 }
 
-static inline int32_t comput_sc_block(uint64_t ai, uint64_t aj, int32_t max_dist_x, int32_t max_dist_y, int32_t bw, int32_t is_spliced, int32_t bbit, int32_t kmer)
+static inline int32_t comput_sc(uint64_t ai, uint64_t aj, int32_t max_dist_x, int32_t max_dist_y, int32_t bw, int32_t is_spliced, int32_t bbit, int32_t kmer)
 {
-	int32_t dq = (int32_t)ai - (int32_t)aj, dq3 = dq * 3, dr3, dd, sc, bs = 1<<bbit;
+	int32_t dq = (int32_t)ai - (int32_t)aj, dq3 = dq * 3, dr3, dd, sc;
 	if (dq <= 0 || dq3 > max_dist_x) return INT32_MIN;
 	if (dq > max_dist_y) return INT32_MIN;
-	dr3 = ((ai>>32) - (aj>>32)) << bbit;
-	if (dq3 >= dr3 - bs && dq3 <= dr3 + bs) dd = 0;
-	else if (dq3 < dr3 - bs) dd = dr3 - bs - dq3;
-	else dd = dq3 - (dr3 + bs);
+	if (bbit > 0) {
+		int32_t bs = 1<<bbit;
+		dr3 = ((ai>>32) - (aj>>32)) << bbit;
+		if (dq3 >= dr3 - bs && dq3 <= dr3 + bs) dd = 0;
+		else if (dq3 < dr3 - bs) dd = dr3 - bs - dq3;
+		else dd = dq3 - (dr3 + bs);
+	} else {
+		dr3 = (ai>>32) - (aj>>32);
+		dd = dr3 > dq3? dr3 - dq3 : dq3 - dr3;
+	}
 //	if (ai>>32 == 25318 && (uint32_t)ai == 96 && aj>>32 == 25306 && (uint32_t)aj == 87) printf("here: %d,%d\n", dd, bw);
 	if (dd > bw) return INT32_MIN; // dd is the min possible gap size
-	sc = kmer < dq? kmer : dq;
+	sc = kmer < dq? kmer : dq; // FIXME: not always right if bbit==0
 	if (dd > 0) {
 		float lin_pen, log_pen;
 		lin_pen = (float)dd;
@@ -168,7 +174,7 @@ uint64_t *mp_chain(int32_t max_dist_x, int32_t max_dist_y, int32_t bw, int32_t m
 		if (i - st > max_iter) st = i - max_iter;
 		for (j = i - 1; j >= st; --j) {
 			int32_t sc;
-			sc = comput_sc_block(a[i], a[j], max_dist_x, max_dist_y, bw, is_spliced, bbit, kmer);
+			sc = comput_sc(a[i], a[j], max_dist_x, max_dist_y, bw, is_spliced, bbit, kmer);
 			++n_iter;
 			if (sc == INT32_MIN) continue;
 			sc += f[j];
