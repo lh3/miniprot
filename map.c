@@ -59,10 +59,6 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, 25, 1000000, opt->min_chn_cnt, 0, 1, mi->opt.kmer, mi->opt.bbit, n_a, a, &n_u, &u, km);
 	reg = mp_reg_gen_from_block(0, mi, n_u, u, a, n_reg);
 	/*
-	for (i = 0; i < *n_reg; ++i) {
-		mp_reg1_t *r = &reg[i];
-		fprintf(stderr, "%s\t%ld\t%ld\t%s\t%d\t%c\n", mi->nt->ctg[r->vid>>1].name, (long)r->vs, (long)r->ve, qname, r->chn_sc, "+-"[r->vid&1]);
-	}
 	if (0) {
 		fprintf(stderr, "NC\t%d\n", n_u);
 		for (i = 0, n_a = 0; i < n_u; ++i) {
@@ -102,7 +98,8 @@ static void worker_for(void *_data, long i, int tid) // kt_for() callback
 {
     step_t *s = (step_t*)_data;
 	mp_bseq1_t *seq = &s->seq[i];
-	fprintf(stderr, "QR\t%s\t%d\t%d\n", s->seq[i].name, s->seq[i].l_seq, tid);
+	if (mp_dbg_flag & MP_DBG_QNAME)
+		fprintf(stderr, "QR\t%s\t%d\t%d\n", s->seq[i].name, s->seq[i].l_seq, tid);
 	s->reg[i] = mp_map(s->p->mi, seq->l_seq, seq->seq, &s->n_reg[i], s->buf[tid], s->p->opt, seq->name);
 }
 

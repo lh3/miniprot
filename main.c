@@ -3,6 +3,11 @@
 #include "mppriv.h"
 #include "ketopt.h"
 
+static ko_longopt_t long_options[] = {
+	{ "dbg-qname",       ko_no_argument,       501 },
+	{ 0, 0, 0 }
+};
+
 static inline int64_t mp_parse_num2(const char *str, char **q)
 {
 	double x;
@@ -48,7 +53,7 @@ int main(int argc, char *argv[])
 	mp_start();
 	mp_mapopt_init(&mo);
 	mp_idxopt_init(&io);
-	while ((c = ketopt(&o, argc, argv, 1, "k:s:b:t:d:c:K:", 0)) >= 0) {
+	while ((c = ketopt(&o, argc, argv, 1, "k:s:b:t:d:c:K:", long_options)) >= 0) {
 		if (c == 'k') io.kmer = atoi(o.arg);
 		else if (c == 's') io.smer = atoi(o.arg);
 		else if (c == 'b') io.bbit = atoi(o.arg);
@@ -56,6 +61,7 @@ int main(int argc, char *argv[])
 		else if (c == 'd') fn_idx = o.arg;
 		else if (c == 'c') mo.max_occ = mp_parse_num(o.arg);
 		else if (c == 'K') mo.mini_batch_size = mp_parse_num(o.arg);
+		else if (c == 501) mp_dbg_flag |= MP_DBG_QNAME;
 	}
 	if (argc - o.ind == 0 || (argc - o.ind == 1 && fn_idx == 0)) {
 		print_usage(stderr, &io, &mo, n_threads);
