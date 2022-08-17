@@ -81,26 +81,25 @@ static void mp_refine_reg(void *km, const mp_idx_t *mi, const mp_mapopt_t *opt, 
 	radix_sort_mp64(a, a + n_a);
 	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, opt->max_chn_max_skip, opt->max_chn_iter, opt->min_chn_cnt, 0, 1, kmer, 0, n_a, a, &n_u, &u, km);
 	assert(n_u > 0);
-	if (n_u > 1) {
-		for (i = 0; i < n_u; ++i)
-			if (max_sc < u[i]>>32)
-				max_sc = u[i]>>32, max_i = i;
-		for (i = k = 0; i < n_u; ++i) {
-			if (i == max_i) {
-				n_a = (int32_t)u[i];
-				memmove(a, a + k, sizeof(*a) * n_a);
-				krelocate(km, a, sizeof(*a) * n_a);
-				r->chn_sc = u[i]>>32;
-				break;
-			}
-			k += (uint32_t)u[i];
+	max_sc = u[0]>>32, max_i = 0;
+	for (i = 1; i < n_u; ++i)
+		if (max_sc < u[i]>>32)
+			max_sc = u[i]>>32, max_i = i;
+	for (i = k = 0; i < n_u; ++i) {
+		if (i == max_i) {
+			n_a = (int32_t)u[i];
+			memmove(a, a + k, sizeof(*a) * n_a);
+			a = krelocate(km, a, sizeof(*a) * n_a);
+			r->chn_sc = u[i]>>32;
+			break;
 		}
-	} else n_a = (uint32_t)u[0], r->chn_sc = u[0]>>32;
-	r->a = a, r->cnt = n_a, r->off = -1, r->as = as, r->ae = ae;
+		k += (uint32_t)u[i];
+	}
+	r->a = a, r->cnt = n_a, r->off = -1, r->a_off = as;
 	r->qs = (uint32_t)a[0] - kmer + 1;
 	r->qe = (uint32_t)a[n_a-1] + 1;
-	r->vs = r->as + (a[0]>>32) - 3 * kmer + 1;
-	r->ve = r->as + (a[n_a-1]>>32) + 1;
+	r->vs = r->a_off + (a[0]>>32) - 3 * kmer + 1;
+	r->ve = r->a_off + (a[n_a-1]>>32) + 1;
 }
 
 mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_tbuf_t *b, const mp_mapopt_t *opt, const char *qname)
