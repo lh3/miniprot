@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.0.0-dirty"
+#define MP_VERSION "0.0.0-r45-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 
