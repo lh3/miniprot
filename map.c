@@ -31,7 +31,7 @@ void mp_tbuf_destroy(mp_tbuf_t *b)
 static void mp_refine_reg(void *km, const mp_idx_t *mi, const mp_mapopt_t *opt, const char *aa, int32_t l_aa, mp_reg1_t *r)
 {
 	const mp_idxopt_t *io = &mi->opt;
-	int32_t i, j, k, n_u, max_sc = 0, max_i, kmer = io->kmer - 1;
+	int32_t i, j, k, n_u, max_sc = 0, max_i, kmer = io->kmer - 1, smer = kmer;
 	int64_t as, ae, l_nt, n_a, ctg_len = mi->nt->ctg[r->vid>>1].len;
 	uint8_t *nt;
 	uint64_t *a, *u;
@@ -41,9 +41,9 @@ static void mp_refine_reg(void *km, const mp_idx_t *mi, const mp_mapopt_t *opt, 
 	ae = r->ve + opt->max_ext < ctg_len? r->ve + opt->max_ext : ctg_len;
 	nt = Kmalloc(km, uint8_t, ae - as);
 	l_nt = mp_ntseq_get(mi->nt, r->vid>>1, r->vid&1? ctg_len - ae : as, r->vid&1? ctg_len - as : ae, r->vid&1, nt);
-	mp_sketch_nt4(km, nt, l_nt, io->min_aa_len/2, kmer, kmer, 0, 0, &sd);
+	mp_sketch_nt4(km, nt, l_nt, io->min_aa_len/2, kmer, smer, 0, 0, &sd);
 	kfree(km, nt);
-	mp_sketch_prot(km, aa, l_aa, kmer, kmer, &sd_aa);
+	mp_sketch_prot(km, aa, l_aa, kmer, smer, &sd_aa);
 	for (i = 0; i < sd_aa.n; ++i)
 		kv_push(uint64_t, km, sd, sd_aa.a[i] | 1ULL<<31);
 	kfree(km, sd_aa.a);
@@ -81,25 +81,28 @@ static void mp_refine_reg(void *km, const mp_idx_t *mi, const mp_mapopt_t *opt, 
 	radix_sort_mp64(a, a + n_a);
 	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, opt->max_chn_max_skip, opt->max_chn_iter, opt->min_chn_cnt, 0, 1, kmer, 0, n_a, a, &n_u, &u, km);
 	assert(n_u > 0);
+
 	max_sc = u[0]>>32, max_i = 0;
 	for (i = 1; i < n_u; ++i)
 		if (max_sc < u[i]>>32)
 			max_sc = u[i]>>32, max_i = i;
 	for (i = k = 0; i < n_u; ++i) {
-		if (i == max_i) {
-			n_a = (int32_t)u[i];
-			memmove(a, a + k, sizeof(*a) * n_a);
-			a = krelocate(km, a, sizeof(*a) * n_a);
-			r->chn_sc = u[i]>>32;
-			break;
-		}
+		if (i == max_i) break;
 		k += (uint32_t)u[i];
 	}
-	r->a = a, r->cnt = n_a, r->off = -1, r->a_off = as;
+
+	n_a = (int32_t)u[max_i];
+	memmove(a, a + k, sizeof(*a) * n_a);
+	r->a = a = krelocate(km, a, sizeof(*a) * n_a);
+	r->chn_sc = u[max_i]>>32;
+	r->cnt = n_a, r->off = -1;
 	r->qs = (uint32_t)a[0] - kmer + 1;
 	r->qe = (uint32_t)a[n_a-1] + 1;
-	r->vs = r->a_off + (a[0]>>32) - 3 * kmer + 1;
-	r->ve = r->a_off + (a[n_a-1]>>32) + 1;
+	r->vs = as + (a[0]>>32) - 3 * kmer + 1;
+	r->ve = as + (a[n_a-1]>>32) + 1;
+	for (i = 0; i < n_a; ++i)
+		a[i] = ((a[i]>>32) + as - r->vs) << 32 | a[i]<<32>>32;
+	//for (i = 0; i < n_a; ++i) printf("X\t%d\t%d\n", (int32_t)(a[i]>>32), (int32_t)a[i]);
 }
 
 mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_tbuf_t *b, const mp_mapopt_t *opt, const char *qname)
@@ -108,17 +111,17 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	const mp_idxopt_t *io = &mi->opt;
 	mp64_v sd = {0,0,0};
 	mp_reg1_t *reg;
+	int32_t i, n_u;
+	int64_t k, n_a = 0;
+	uint64_t *a, *u;
 
 	*n_reg = 0;
 	mp_sketch_prot(km, seq, qlen, io->kmer, io->smer, &sd);
 
-	int32_t i;
-	int64_t k, n_a = 0;
 	for (i = 0; i < sd.n; ++i) { // TODO: sorting might help to reduce cache misses, but probably doesn't matter in practice
 		int64_t n = mi->ki[(sd.a[i]>>32) + 1] - mi->ki[sd.a[i]>>32];
 		if (n <= opt->max_occ) n_a += n;
 	}
-	uint64_t *a;
 	a = Kmalloc(km, uint64_t, n_a);
 	for (i = 0, k = 0; i < sd.n; ++i) {
 		int64_t j, st = mi->ki[sd.a[i]>>32], en = mi->ki[(sd.a[i]>>32) + 1];
@@ -126,16 +129,16 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 			for (j = st; j < en; ++j)
 				a[k++] = (uint64_t)mi->kb[j] << 32 | (uint32_t)sd.a[i];
 	}
+	kfree(km, sd.a);
 	radix_sort_mp64(a, a + n_a);
 
-	int32_t n_u;
-	uint64_t *u;
 	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, opt->max_chn_max_skip, opt->max_chn_iter, opt->min_chn_cnt, 0, 1, mi->opt.kmer, mi->opt.bbit, n_a, a, &n_u, &u, km);
 	reg = mp_reg_gen_from_block(0, mi, n_u, u, a, n_reg);
 	for (i = 0; i < *n_reg; ++i)
 		mp_refine_reg(km, mi, opt, seq, qlen, &reg[i]);
 	kfree(km, a);
-	kfree(km, sd.a);
+	for (i = 0; i < *n_reg; ++i)
+		kfree(km, reg[i].a);
 	return reg;
 }
 

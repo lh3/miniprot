@@ -65,7 +65,6 @@ typedef struct {
 	uint32_t vid;
 	int32_t qs, qe;
 	int64_t vs, ve;
-	int64_t a_off;
 	uint64_t *a;
 } mp_reg1_t;
 
