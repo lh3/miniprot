@@ -123,3 +123,45 @@ set_parent_test:
 	kfree(km, cov);
 	kfree(km, w);
 }
+
+void mp_sync_regs(void *km, int n_regs, mp_reg1_t *regs) // keep mp_reg1_t::{id,parent} in sync; also reset id
+{
+	int *tmp, i, max_id = -1, n_tmp;
+	if (n_regs <= 0) return;
+	for (i = 0; i < n_regs; ++i) // NB: doesn't work if mp_reg1_t::id is negative
+		max_id = max_id > regs[i].id? max_id : regs[i].id;
+	n_tmp = max_id + 1;
+	tmp = (int*)kmalloc(km, n_tmp * sizeof(int));
+	for (i = 0; i < n_tmp; ++i) tmp[i] = -1;
+	for (i = 0; i < n_regs; ++i)
+		if (regs[i].id >= 0) tmp[regs[i].id] = i;
+	for (i = 0; i < n_regs; ++i) {
+		mp_reg1_t *r = &regs[i];
+		r->id = i;
+		if (r->parent == MP_PARENT_TMP_PRI)
+			r->parent = i;
+		else if (r->parent >= 0 && tmp[r->parent] >= 0)
+			r->parent = tmp[r->parent];
+		else r->parent = MP_PARENT_UNSET;
+	}
+	kfree(km, tmp);
+}
+
+void mp_select_sub(void *km, float pri_ratio, int min_diff, int best_n, int *n_, mp_reg1_t *r)
+{
+	if (pri_ratio > 0.0f && *n_ > 0) {
+		int i, k, n = *n_, n_2nd = 0;
+		for (i = k = 0; i < n; ++i) {
+			int p = r[i].parent;
+			if (p == i) { // primary or inversion
+				r[k++] = r[i];
+			} else if ((r[i].chn_sc >= r[p].chn_sc * pri_ratio || r[i].chn_sc + min_diff >= r[p].chn_sc) && n_2nd < best_n) {
+				if (!(r[i].qs == r[p].qs && r[i].qe == r[p].qe && r[i].vid == r[p].vid && r[i].vs == r[p].vs && r[i].ve == r[p].ve)) // not identical hits
+					r[k++] = r[i], ++n_2nd;
+				else if (r[i].p) free(r[i].p);
+			} else if (r[i].p) free(r[i].p);
+		}
+		if (k != n) mp_sync_regs(km, k, r); // removing hits requires sync()
+		*n_ = k;
+	}
+}

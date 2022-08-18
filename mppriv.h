@@ -8,6 +8,9 @@
 #define MP_DBG_QNAME       0x1
 #define MP_DBG_NO_KALLOC   0x2
 
+#define MP_PARENT_UNSET   (-1)
+#define MP_PARENT_TMP_PRI (-2)
+
 #ifndef kroundup64
 #define kroundup64(x) (--(x), (x)|=(x)>>1, (x)|=(x)>>2, (x)|=(x)>>4, (x)|=(x)>>8, (x)|=(x)>>16, (x)|=(x)>>32, ++(x))
 #endif

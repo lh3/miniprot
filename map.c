@@ -144,6 +144,7 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	for (i = 0; i < *n_reg; ++i)
 		mp_refine_reg(km, mi, opt, seq, qlen, &reg[i]);
 	kfree(km, a);
+	mp_sort_reg(km, n_reg, reg);
 	for (i = 0; i < *n_reg; ++i)
 		kfree(km, reg[i].a);
 	return reg;
