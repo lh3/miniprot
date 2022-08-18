@@ -5,6 +5,7 @@
 
 static ko_longopt_t long_options[] = {
 	{ "dbg-qname",       ko_no_argument,       501 },
+	{ "no-kalloc",       ko_no_argument,       502 },
 	{ 0, 0, 0 }
 };
 
@@ -63,7 +64,8 @@ int main(int argc, char *argv[])
 		else if (c == 'c') mo.max_occ = mp_parse_num(o.arg);
 		else if (c == 'n') mo.min_chn_cnt = mp_parse_num(o.arg);
 		else if (c == 'K') mo.mini_batch_size = mp_parse_num(o.arg);
-		else if (c == 501) mp_dbg_flag |= MP_DBG_QNAME;
+		else if (c == 501) mp_dbg_flag |= MP_DBG_QNAME; // --dbg-qname
+		else if (c == 502) mp_dbg_flag |= MP_DBG_NO_KALLOC; // --no-kalloc
 	}
 	if (argc - o.ind == 0 || (argc - o.ind == 1 && fn_idx == 0)) {
 		print_usage(stderr, &io, &mo, n_threads);

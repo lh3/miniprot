@@ -17,7 +17,8 @@ mp_tbuf_t *mp_tbuf_init(void)
 {
 	mp_tbuf_t *b;
 	b = Kcalloc(0, mp_tbuf_t, 1);
-	if (!(mp_dbg_flag & 1)) b->km = km_init();
+	if (!(mp_dbg_flag & MP_DBG_NO_KALLOC))
+		b->km = km_init();
 	return b;
 }
 
@@ -80,7 +81,10 @@ static void mp_refine_reg(void *km, const mp_idx_t *mi, const mp_mapopt_t *opt, 
 
 	radix_sort_mp64(a, a + n_a);
 	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, opt->max_chn_max_skip, opt->max_chn_iter, opt->min_chn_cnt, 0, 1, kmer, 0, n_a, a, &n_u, &u, km);
-	assert(n_u > 0);
+	if (n_u == 0) {
+		r->cnt = 0, r->off = -1, r->a = 0;
+		return;
+	}
 
 	max_sc = u[0]>>32, max_i = 0;
 	for (i = 1; i < n_u; ++i)
@@ -102,6 +106,7 @@ static void mp_refine_reg(void *km, const mp_idx_t *mi, const mp_mapopt_t *opt, 
 	r->ve = as + (a[n_a-1]>>32) + 1;
 	for (i = 0; i < n_a; ++i)
 		a[i] = ((a[i]>>32) + as - r->vs) << 32 | a[i]<<32>>32;
+	kfree(km, u);
 	// for (i = 0; i < n_a; ++i) printf("X\t%d\t%d\n", (int32_t)(a[i]>>32), (int32_t)a[i]);
 }
 
@@ -134,6 +139,7 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 
 	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, opt->max_chn_max_skip, opt->max_chn_iter, opt->min_chn_cnt, 0, 1, mi->opt.kmer, mi->opt.bbit, n_a, a, &n_u, &u, km);
 	reg = mp_reg_gen_from_block(0, mi, n_u, u, a, n_reg);
+	kfree(km, u);
 	for (i = 0; i < *n_reg; ++i)
 		mp_refine_reg(km, mi, opt, seq, qlen, &reg[i]);
 	kfree(km, a);
