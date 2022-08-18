@@ -144,8 +144,13 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	mp_set_parent(km, opt->mask_level, opt->mask_len, *n_reg, reg, mi->opt.kmer, 0);
 	mp_select_sub(km, opt->pri_ratio, mi->opt.kmer * 2, opt->best_n, n_reg, reg);
 	if (!(mp_dbg_flag & MP_DBG_NO_REFINE)) {
-		for (i = 0; i < *n_reg; ++i)
+		int32_t nr = 0;
+		for (i = 0; i < *n_reg; ++i) {
 			mp_refine_reg(km, mi, opt, seq, qlen, &reg[i]);
+			if (reg[i].cnt > 0)
+				reg[nr++] = reg[i];
+		}
+		*n_reg = nr;
 		mp_sort_reg(km, n_reg, reg);
 		mp_set_parent(km, opt->mask_level, opt->mask_len, *n_reg, reg, mi->opt.kmer, 0);
 		mp_select_sub(km, opt->pri_ratio, mi->opt.kmer * 2, opt->best_n, n_reg, reg);
