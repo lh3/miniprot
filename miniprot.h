@@ -35,6 +35,8 @@ typedef struct {
 	int32_t min_chn_cnt;
 	int32_t max_chn_max_skip;
 	int32_t max_chn_iter;
+	float mask_level;
+	int32_t mask_len;
 } mp_mapopt_t;
 
 typedef struct {
@@ -60,12 +62,19 @@ typedef struct {
 } mp_idx_t;
 
 typedef struct {
+	int32_t dp_max, dp_max2;
+} mp_extra_t;
+
+typedef struct {
 	int32_t off, cnt;
+	int32_t id, parent;
+	int32_t n_sub, subsc;
 	int32_t chn_sc;
 	uint32_t vid;
 	int32_t qs, qe;
 	int64_t vs, ve;
 	uint64_t *a;
+	mp_extra_t *p;
 } mp_reg1_t;
 
 struct mp_tbuf_s;
