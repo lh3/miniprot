@@ -141,6 +141,8 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	reg = mp_reg_gen_from_block(0, mi, n_u, u, a, n_reg);
 	kfree(km, u);
 	mp_sort_reg(km, n_reg, reg);
+	mp_set_parent(km, opt->mask_level, opt->mask_len, *n_reg, reg, mi->opt.kmer, 0);
+	mp_select_sub(km, opt->pri_ratio, mi->opt.kmer * 2, opt->best_n, n_reg, reg);
 	for (i = 0; i < *n_reg; ++i)
 		mp_refine_reg(km, mi, opt, seq, qlen, &reg[i]);
 	kfree(km, a);

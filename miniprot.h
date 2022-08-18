@@ -37,6 +37,8 @@ typedef struct {
 	int32_t max_chn_iter;
 	float mask_level;
 	int32_t mask_len;
+	float pri_ratio;
+	int32_t best_n;
 } mp_mapopt_t;
 
 typedef struct {

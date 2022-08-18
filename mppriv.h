@@ -59,6 +59,8 @@ int32_t mp_idx_block2pos(const mp_idx_t *mi, uint32_t b);
 
 // from hit.c
 void mp_sort_reg(void *km, int *n_regs, mp_reg1_t *r);
+void mp_set_parent(void *km, float mask_level, int mask_len, int n, mp_reg1_t *r, int sub_diff, int hard_mask_level);
+void mp_select_sub(void *km, float pri_ratio, int min_diff, int best_n, int *n_, mp_reg1_t *r);
 
 // from chain.c
 uint64_t *mp_chain(int32_t max_dist_x, int32_t max_dist_y, int32_t bw, int32_t max_skip, int32_t max_iter, int32_t min_cnt, int32_t min_sc,
