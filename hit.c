@@ -10,22 +10,38 @@ mp_reg1_t *mp_reg_gen_from_block(void *km, const mp_idx_t *mi, int32_t n_u, cons
 	reg = Kcalloc(km, mp_reg1_t, n_u);
 	for (i = k = nr = 0; i < n_u; ++i) {
 		uint32_t n = (uint32_t)u[i];
-		int32_t ts, te;
+		int32_t ts, te, is, ie;
 		mp_reg1_t *r = &reg[nr++];
 		r->off = k, r->cnt = n;
-		ts = mp_idx_block2pos(mi, a[k]>>32);
-		te = mp_idx_block2pos(mi, a[k+n-1]>>32);
+		is = k, ie = k + n - 1;
+		ts = mp_idx_block2pos(mi, a[is]>>32);
+		te = mp_idx_block2pos(mi, a[ie]>>32);
+		assert(ts <= te);
 		if (ts == te) { // on the same contig
 			r->vid = ts;
-			r->vs = ((a[k]>>32) - mi->bo[ts]) << mi->opt.bbit;
-			r->ve = ((a[k+n-1]>>32) - mi->bo[ts] + 1) << mi->opt.bbit;
-			r->qs = (uint32_t)a[k];
-			r->qe = (uint32_t)a[k+n-1];
 		} else { // on different contigs
-			fprintf(stderr, "ERROR: not implemented yet\n");
-			--nr;
+			int32_t j, js, je;
+			for (j = k; j < k + n; ++j)
+				if (a[j]>>32 >= mi->bo[ts+1])
+					break;
+			assert(j < k + n);
+			js = j;
+			for (j = k + n - 1; j >= js; --j)
+				if (a[j]>>32 < mi->bo[te])
+					break;
+			je = j + 1;
+			if (js - k > k + n - je) {
+				r->vid = ts, ie = js - 1;
+			} else {
+				r->vid = te, is = je;
+			}
+			//fprintf(stderr, "SPLIT: %d<%d %d<=%d<=%d<=%d\n", ts, te, k, js, je, k + n);
 		}
-		r->chn_sc = u[i] >> 32;
+		r->vs = ((a[is]>>32) - mi->bo[r->vid]) << mi->opt.bbit;
+		r->ve = ((a[ie]>>32) - mi->bo[r->vid] + 1) << mi->opt.bbit;
+		r->qs = (uint32_t)a[is];
+		r->qe = (uint32_t)a[ie] + 0;
+		r->chn_sc = ts == te? u[i]>>32 : (uint32_t)((double)(u[i]>>32) * (ie - is + 1) / n + .499);
 		k += n;
 	}
 	*n_reg = nr;
