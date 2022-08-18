@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <assert.h>
 #include "mppriv.h"
 #include "kalloc.h"
 
@@ -29,6 +30,37 @@ mp_reg1_t *mp_reg_gen_from_block(void *km, const mp_idx_t *mi, int32_t n_u, cons
 	}
 	*n_reg = nr;
 	return reg;
+}
+
+void mp_sort_reg(void *km, int *n_regs, mp_reg1_t *r)
+{
+	int32_t i, n_aux, n = *n_regs, has_cigar = 0, no_cigar = 0;
+	mp128_t *aux;
+	mp_reg1_t *t;
+
+	if (n <= 1) return;
+	aux = (mp128_t*)kmalloc(km, n * 16);
+	t = (mp_reg1_t*)kmalloc(km, n * sizeof(mp_reg1_t));
+	for (i = n_aux = 0; i < n; ++i) {
+		if (r[i].cnt > 0) { // squeeze out elements with cnt==0 (soft deleted)
+			int score;
+			if (r[i].p) score = r[i].p->dp_max, has_cigar = 1;
+			else score = r[i].chn_sc, no_cigar = 1;
+			aux[n_aux].x = (uint64_t)score << 32 | r[i].hash;
+			aux[n_aux++].y = i;
+		} else if (r[i].p) {
+			free(r[i].p);
+			r[i].p = 0;
+		}
+	}
+	assert(has_cigar + no_cigar == 1);
+	radix_sort_mp128x(aux, aux + n_aux);
+	for (i = n_aux - 1; i >= 0; --i)
+		t[n_aux - 1 - i] = r[aux[i].y];
+	memcpy(r, t, sizeof(mp_reg1_t) * n_aux);
+	*n_regs = n_aux;
+	kfree(km, aux);
+	kfree(km, t);
 }
 
 void mp_set_parent(void *km, float mask_level, int mask_len, int n, mp_reg1_t *r, int sub_diff, int hard_mask_level) // and compute mp_reg1_t::subsc

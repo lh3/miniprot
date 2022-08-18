@@ -54,6 +54,9 @@ void mp_sketch_prot(void *km, const char *seq, int32_t len, int32_t kmer, int32_
 // from index.c
 int32_t mp_idx_block2pos(const mp_idx_t *mi, uint32_t b);
 
+// from hit.c
+void mp_sort_reg(void *km, int *n_regs, mp_reg1_t *r);
+
 // from chain.c
 uint64_t *mp_chain(int32_t max_dist_x, int32_t max_dist_y, int32_t bw, int32_t max_skip, int32_t max_iter, int32_t min_cnt, int32_t min_sc,
 				   int32_t is_spliced, int32_t kmer, int32_t bbit, int64_t n, uint64_t *a, int32_t *n_u_, uint64_t **_u, void *km);

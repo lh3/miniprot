@@ -140,6 +140,7 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, opt->max_chn_max_skip, opt->max_chn_iter, opt->min_chn_cnt, 0, 1, mi->opt.kmer, mi->opt.bbit, n_a, a, &n_u, &u, km);
 	reg = mp_reg_gen_from_block(0, mi, n_u, u, a, n_reg);
 	kfree(km, u);
+	mp_sort_reg(km, n_reg, reg);
 	for (i = 0; i < *n_reg; ++i)
 		mp_refine_reg(km, mi, opt, seq, qlen, &reg[i]);
 	kfree(km, a);

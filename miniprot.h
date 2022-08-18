@@ -70,6 +70,7 @@ typedef struct {
 	int32_t id, parent;
 	int32_t n_sub, subsc;
 	int32_t chn_sc;
+	uint32_t hash;
 	uint32_t vid;
 	int32_t qs, qe;
 	int64_t vs, ve;
