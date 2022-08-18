@@ -114,7 +114,7 @@ static inline int32_t comput_sc(uint64_t ai, uint64_t aj, int32_t max_dist_x, in
 	int32_t dq = (int32_t)ai - (int32_t)aj, dq3 = dq * 3, dr3, dd, sc;
 	if (dq <= 0 || dq3 > max_dist_x) return INT32_MIN;
 	if (dq > max_dist_y) return INT32_MIN;
-	if (bbit > 0) {
+	if (bbit > 0) { // calculate the minimum gap size
 		int32_t bs = 1<<bbit;
 		dr3 = ((ai>>32) - (aj>>32)) << bbit;
 		if (dq3 >= dr3 - bs && dq3 <= dr3 + bs) dd = 0;
@@ -125,7 +125,7 @@ static inline int32_t comput_sc(uint64_t ai, uint64_t aj, int32_t max_dist_x, in
 		dd = dr3 > dq3? dr3 - dq3 : dq3 - dr3;
 	}
 //	if (ai>>32 == 25318 && (uint32_t)ai == 96 && aj>>32 == 25306 && (uint32_t)aj == 87) printf("here: %d,%d\n", dd, bw);
-	if (dd > bw) return INT32_MIN; // dd is the min possible gap size
+	if (dd > bw) return INT32_MIN;
 	if (bbit > 0) {
 		sc = kmer < dq? kmer : dq;
 	} else if (kmer <= dq && kmer * 3 <= dr3) {
@@ -136,9 +136,9 @@ static inline int32_t comput_sc(uint64_t ai, uint64_t aj, int32_t max_dist_x, in
 		sc = dg < kmer? dg : kmer;
 		if (q != 0) --sc; // frameshift
 	}
-	if (dd > 0) {
+	if (dd > 0) { // TODO: consider frameshift
 		float lin_pen, log_pen;
-		lin_pen = (float)dd;
+		lin_pen = (float)dd * .33334f;
 		log_pen = dd >= 1? mp_log2(dd + 1) : 0.0f; // mp_log2() only works for dd>=2
 		if (is_spliced) {
 			if (dr3 > dq3) sc -= (int)(lin_pen < log_pen? lin_pen : log_pen);

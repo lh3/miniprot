@@ -63,7 +63,7 @@ void mp_sketch_clean_orf(void *km, const uint8_t *seq, int64_t st, int64_t en, i
 				}
 				sel = (m == (y>>(kmer-smer)*2 & mask_s));
 			} else sel = 1;
-			if (sel) kv_push(uint64_t, km, *a, (uint64_t)y<<32 | ((i>>bbit) + boff));
+			if (sel) kv_push(uint64_t, km, *a, (uint64_t)y<<32 | (((i+2)>>bbit) + boff));
 		}
 	}
 }

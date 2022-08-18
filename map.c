@@ -96,13 +96,13 @@ static void mp_refine_reg(void *km, const mp_idx_t *mi, const mp_mapopt_t *opt, 
 	r->a = a = krelocate(km, a, sizeof(*a) * n_a);
 	r->chn_sc = u[max_i]>>32;
 	r->cnt = n_a, r->off = -1;
-	r->qs = (uint32_t)a[0] - kmer + 1;
+	r->qs = (uint32_t)a[0] - (kmer - 1);
 	r->qe = (uint32_t)a[n_a-1] + 1;
-	r->vs = as + (a[0]>>32) - 3 * kmer + 1;
+	r->vs = as + (a[0]>>32) + 1 - 3 * kmer;
 	r->ve = as + (a[n_a-1]>>32) + 1;
 	for (i = 0; i < n_a; ++i)
 		a[i] = ((a[i]>>32) + as - r->vs) << 32 | a[i]<<32>>32;
-	//for (i = 0; i < n_a; ++i) printf("X\t%d\t%d\n", (int32_t)(a[i]>>32), (int32_t)a[i]);
+	// for (i = 0; i < n_a; ++i) printf("X\t%d\t%d\n", (int32_t)(a[i]>>32), (int32_t)a[i]);
 }
 
 mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_tbuf_t *b, const mp_mapopt_t *opt, const char *qname)
