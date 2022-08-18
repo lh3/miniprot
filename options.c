@@ -22,6 +22,7 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 	mo->min_chn_cnt = 10;
 	mo->max_chn_max_skip = 25;
 	mo->max_chn_iter = 1000000;
+	mo->min_chn_sc = 0;
 	mo->max_ext = 10000;
 	mo->max_ava = 1000;
 	mo->mask_level = 0.5f;

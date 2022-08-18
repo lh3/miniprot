@@ -5,9 +5,10 @@
 
 #define MP_VERSION "0.0.0-dirty"
 
-#define MP_IDX_MAGIC "MPI\1"
+#define MP_F_NO_SPLICE    0x1
 
 #define MP_CODON_STD 0
+#define MP_IDX_MAGIC "MPI\1"
 
 #ifdef __cplusplus
 extern "C" {
@@ -35,6 +36,7 @@ typedef struct {
 	int32_t min_chn_cnt;
 	int32_t max_chn_max_skip;
 	int32_t max_chn_iter;
+	int32_t min_chn_sc;
 	float mask_level;
 	int32_t mask_len;
 	float pri_ratio;

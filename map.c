@@ -32,7 +32,7 @@ void mp_tbuf_destroy(mp_tbuf_t *b)
 static void mp_refine_reg(void *km, const mp_idx_t *mi, const mp_mapopt_t *opt, const char *aa, int32_t l_aa, mp_reg1_t *r)
 {
 	const mp_idxopt_t *io = &mi->opt;
-	int32_t i, j, k, n_u, max_sc = 0, max_i, kmer = io->kmer - 1, smer = kmer;
+	int32_t i, j, k, n_u, max_sc = 0, max_i, kmer = io->kmer - 1, smer = kmer, is_splice = !(opt->flag&MP_F_NO_SPLICE);
 	int64_t as, ae, l_nt, n_a, ctg_len = mi->nt->ctg[r->vid>>1].len;
 	uint8_t *nt;
 	uint64_t *a, *u;
@@ -80,7 +80,7 @@ static void mp_refine_reg(void *km, const mp_idx_t *mi, const mp_mapopt_t *opt, 
 	kfree(km, sd.a);
 
 	radix_sort_mp64(a, a + n_a);
-	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, opt->max_chn_max_skip, opt->max_chn_iter, opt->min_chn_cnt, 0, 1, kmer, 0, n_a, a, &n_u, &u, km);
+	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, opt->max_chn_max_skip, opt->max_chn_iter, opt->min_chn_cnt, opt->min_chn_sc, is_splice, kmer, 0, n_a, a, &n_u, &u, km);
 	if (n_u == 0) {
 		r->cnt = 0, r->off = -1, r->a = 0;
 		return;
@@ -116,7 +116,7 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	const mp_idxopt_t *io = &mi->opt;
 	mp64_v sd = {0,0,0};
 	mp_reg1_t *reg;
-	int32_t i, n_u;
+	int32_t i, n_u, is_splice = !(opt->flag&MP_F_NO_SPLICE);
 	int64_t k, n_a = 0;
 	uint64_t *a, *u;
 
@@ -137,14 +137,19 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	kfree(km, sd.a);
 	radix_sort_mp64(a, a + n_a);
 
-	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, opt->max_chn_max_skip, opt->max_chn_iter, opt->min_chn_cnt, 0, 1, mi->opt.kmer, mi->opt.bbit, n_a, a, &n_u, &u, km);
+	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, opt->max_chn_max_skip, opt->max_chn_iter, opt->min_chn_cnt, opt->min_chn_sc, is_splice, mi->opt.kmer, mi->opt.bbit, n_a, a, &n_u, &u, km);
 	reg = mp_reg_gen_from_block(0, mi, n_u, u, a, n_reg);
 	kfree(km, u);
 	mp_sort_reg(km, n_reg, reg);
 	mp_set_parent(km, opt->mask_level, opt->mask_len, *n_reg, reg, mi->opt.kmer, 0);
 	mp_select_sub(km, opt->pri_ratio, mi->opt.kmer * 2, opt->best_n, n_reg, reg);
-	for (i = 0; i < *n_reg; ++i)
-		mp_refine_reg(km, mi, opt, seq, qlen, &reg[i]);
+	if (!(mp_dbg_flag & MP_DBG_NO_REFINE)) {
+		for (i = 0; i < *n_reg; ++i)
+			mp_refine_reg(km, mi, opt, seq, qlen, &reg[i]);
+		mp_sort_reg(km, n_reg, reg);
+		mp_set_parent(km, opt->mask_level, opt->mask_len, *n_reg, reg, mi->opt.kmer, 0);
+		mp_select_sub(km, opt->pri_ratio, mi->opt.kmer * 2, opt->best_n, n_reg, reg);
+	}
 	kfree(km, a);
 	mp_sort_reg(km, n_reg, reg);
 	for (i = 0; i < *n_reg; ++i)
