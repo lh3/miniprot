@@ -20,6 +20,8 @@
 extern "C" {
 #endif
 
+extern int8_t mp_mat_blosum62[484];
+
 struct mp_bseq_file_s;
 typedef struct mp_bseq_file_s mp_bseq_file_t;
 

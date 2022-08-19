@@ -5,7 +5,7 @@ CXXFLAGS=	$(CFLAGS)
 CPPFLAGS=
 INCLUDES=
 OBJS=		kalloc.o kthread.o sys.o misc.o table.o options.o ntseq.o sketch.o \
-			index.o bseq.o chain.o hit.o format.o map.o
+			index.o bseq.o chain.o dp-slow.o hit.o format.o map.o
 PROG=		miniprot
 LIBS=		-lpthread -lz
 
