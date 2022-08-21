@@ -4,6 +4,65 @@
 #define MP_NEG_INF (-0x40000000)
 #define mp_max(x, y) ((x) >= (y)? (x) : (y))
 
+#define MP_CIGAR_M	0
+#define MP_CIGAR_I	1
+#define MP_CIGAR_D	2
+#define MP_CIGAR_N	3
+#define MP_CIGAR_F	10 // 1bp frameshift
+#define MP_CIGAR_G	11 // 2bp frameshift
+#define MP_CIGAR_U	12
+#define MP_CIGAR_V	13
+
+typedef struct {
+	int32_t n_cigar, m_cigar;
+	int32_t score;
+	uint32_t *cigar;
+} mp_dpsr_t;
+
+static inline uint32_t *mp_push_cigar(void *km, int32_t *n_cigar, int32_t *m_cigar, uint32_t *cigar, uint32_t op, int32_t len)
+{
+	if (*n_cigar == 0 || op != (cigar[(*n_cigar) - 1]&0xf)) {
+		if (*n_cigar == *m_cigar) {
+			(*m_cigar) += ((*m_cigar)>>1) + 8;
+			cigar = Krealloc(km, uint32_t, cigar, *m_cigar);
+		}
+		cigar[(*n_cigar)++] = len<<4 | op;
+	} else cigar[(*n_cigar)-1] += len<<4;
+	return cigar;
+}
+
+static void mp_dps_backtrack(void *km, const uint8_t *bk, int32_t nal, int32_t aal, uint32_t **cigar_, int32_t *n_cigar, int32_t *m_cigar)
+{
+	int32_t i = nal - 1, j = aal - 1, last = 0;
+	uint32_t *cigar = *cigar_;
+	while (i >= 0 && j >= 0) {
+		int32_t x = bk[j * nal + i], state, ext;
+		state = last == 0? x&7 : last;
+		ext = state >= 1 && state <= 5? x>>(state+2)&1 : 0;
+		if (state == 0) {
+			cigar = mp_push_cigar(km, n_cigar, m_cigar, cigar, MP_CIGAR_M, 1), i -= 3, --j;
+		} else if (state == 1) {
+			cigar = mp_push_cigar(km, n_cigar, m_cigar, cigar, MP_CIGAR_I, 1), --j;
+		} else if (state == 2) {
+			cigar = mp_push_cigar(km, n_cigar, m_cigar, cigar, MP_CIGAR_D, 1), i -= 3;
+		} else if (state == 3) {
+			cigar = mp_push_cigar(km, n_cigar, m_cigar, cigar, MP_CIGAR_N, 1), --i;
+		} else if (state == 4) {
+			cigar = mp_push_cigar(km, n_cigar, m_cigar, cigar, MP_CIGAR_N, 1), --i;
+			if (!ext) --j;
+		} else if (state == 5) {
+			cigar = mp_push_cigar(km, n_cigar, m_cigar, cigar, MP_CIGAR_N, 1), --i;
+			if (!ext) --j;
+		} else if (state == 6) {
+			cigar = mp_push_cigar(km, n_cigar, m_cigar, cigar, MP_CIGAR_F, 1), --i;
+		} else if (state == 7) {
+			cigar = mp_push_cigar(km, n_cigar, m_cigar, cigar, MP_CIGAR_G, 1), i -= 2;
+		}
+		last = state >= 1 && state <= 5 && ext? state : 0;
+	}
+	*cigar_ = cigar;
+}
+
 /*
  * M(i,j) = max{ M(i-3,j-1), I(i-3,j-1), D(i-3,j-1), A(i-1,j-1)-a(i-1), B(i-3,j-1)-a(i-3), C(i-2,j-1)-a(i-2) } + s(i,j)
  *
@@ -16,9 +75,9 @@
  * H(i,j)   = max{ H(i-3,j-1) + s(i,j), I(i,j), D(i,j), H(i-2,j)-f, H(i-1,j)-f, A(i,j)-a(i), B(i,j)-a(i-2), C(i,j)-a(i-1) }
  * I(i,j+1) = max{ H(i,j) - q, I(i,j) } - e
  * D(i+3,j) = max{ H(i,j) - q, D(i,j) } - e
- * A(i+1,j) = max{ H(i,j)     - r - d(i), A(i,j) }
- * B(i+1,j) = max{ H(i-1,j-1) - r - d(i), B(i,j) }
- * C(i+1,j) = max{ H(i-2,j-1) - r - d(i), C(i,j) }
+ * A(i+1,j) = max{ H(i,j)   - r - d(i),   A(i,j) }
+ * B(i+1,j) = max{ H(i,j-1) - r - d(i+1), B(i,j) }
+ * C(i+1,j) = max{ H(i,j-1) - r - d(i+2), C(i,j) }
  */
 void mp_dps_align_splice(void *km, const char *ns, int32_t nl, const char *as, int32_t al, int32_t asize, const int8_t *mat, int32_t q, int32_t e, int32_t r, int32_t f, int32_t cp)
 {
@@ -70,14 +129,14 @@ void mp_dps_align_splice(void *km, const char *ns, int32_t nl, const char *as, i
 		}
 	}
 
-/*
- * I(i,j) = max{ H(i,j-1) - q, I(i,j-1) } - e
- * D(i,j) = max{ H(i-3,j) - q, D(i-3,j) } - e
- * A(i,j) = max{ H(i-1,j)   - r - d(i-1), A(i-1,j) }
- * B(i,j) = max{ H(i-2,j-1) - r - d(i-1), B(i-1,j) }
- * C(i,j) = max{ H(i-3,j-1) - r - d(i-1), C(i-1,j) }
- * H(i,j) = max{ H(i-3,j-1) + s(i,j), I(i,j), D(i,j), H(i-2,j)-f, H(i-1,j)-f, A(i,j)-a(i), B(i,j)-a(i-2), C(i,j)-a(i-1) }
- */
+	/*
+	 * I(i,j) = max{ H(i,j-1) - q, I(i,j-1) } - e
+	 * D(i,j) = max{ H(i-3,j) - q, D(i-3,j) } - e
+	 * A(i,j) = max{ H(i-1,j)   - r - d(i-1), A(i-1,j) }
+	 * B(i,j) = max{ H(i-1,j-1) - r - d(i),   B(i-1,j) }
+	 * C(i,j) = max{ H(i-1,j-1) - r - d(i+1), C(i-1,j) }
+	 * H(i,j) = max{ H(i-3,j-1) + s(i,j), I(i,j), D(i,j), H(i-2,j)-f, H(i-1,j)-f, A(i,j)-a(i), B(i,j)-a(i-2), C(i,j)-a(i-1) }
+	 */
 	{ // initialization
 		int32_t A;
 		H = Kmalloc(km, int32_t, nal * 4);
@@ -91,32 +150,58 @@ void mp_dps_align_splice(void *km, const char *ns, int32_t nl, const char *as, i
 		}
 	}
 	{ // core loop
+		bk = Kmalloc(km, uint8_t, nal * aal);
 		for (j = 0; j < aal; ++j) {
+			uint8_t *bkj = &bk[j * nal];
 			int8_t *ms = &nap[aas[j] * nal];
 			int32_t A, B, C, *swap;
 			A = B = C = D[0] = D[1] = D[2] = MP_NEG_INF; // FIXME: this is not correct
 			for (i = 3; i < nal; ++i) {
-				int32_t M, rd = r - donor[i], gp, sl, fs;
+				uint8_t z = 0, y = 0;
+				int32_t h = G[i-3] + ms[i], tmp;
+
+				z |= G[i] - q >= I[i]? 0 : 1<<3;
 				I[i] = mp_max(G[i] - q, I[i]) - e;
+				y = h >= I[i]? y : 1;
+				h = mp_max(h, I[i]);
+
+				z |= H[i-3] - q >= D[i-3]? 0 : 1<<4;
 				D[i] = mp_max(H[i-3] - q, D[i-3]) - e;
-				A = mp_max(H[i-1] - rd, A);
-				B = mp_max(G[i-2] - rd, B);
-				C = mp_max(G[i-3] - rd, C);
-				M = G[i-3] + ms[i];
-				gp = mp_max(I[i], D[i]);
-				sl = mp_max(A - acceptor[i], B - acceptor[i-2]);
-				sl = mp_max(sl, C - acceptor[i-1]);
-				fs = mp_max(H[i-2], H[i-1]) - f;
-				M = mp_max(M, gp);
-				M = mp_max(M, sl);
-				M = mp_max(M, fs);
-				H[i] = M;
+				y = h >= D[i]? y : 2;
+				h = mp_max(h, D[i]);
+
+				tmp = H[i-1] - r - donor[i-1];
+				z |= tmp >= A? 0 : 1<<5;
+				A = mp_max(tmp, A);
+				y = h >= A - acceptor[i]? y : 3;
+				h = mp_max(h, A - acceptor[i]);
+
+				tmp = G[i-2] - r - donor[i];
+				z |= tmp >= B? 0 : 1<<6;
+				B = mp_max(tmp, B);
+				y = h >= B - acceptor[i-2]? y : 4;
+				h = mp_max(h, B - acceptor[i-2]);
+
+				tmp = G[i-1] - r - donor[i+1];
+				z |= tmp >= C? 0 : 1<<7;
+				C = mp_max(tmp, C);
+				y = h >= C - acceptor[i-1]? y : 5;
+				h = mp_max(h, C - acceptor[i-1]);
+
+				y = h >= H[i-2] - f? y : 6;
+				h = mp_max(h, H[i-2] - f);
+
+				y = h >= H[i-1] - f? y : 7;
+				h = mp_max(h, H[i-1] - f);
+
+				H[i] = h, bkj[i] = z | y;
 			}
 			swap = G, G = H, H = swap;
 		}
 	}
 
 	// free
+	kfree(km, bk);
 	kfree(km, H);   // along with G[], D[] and I[]
 	kfree(km, nap); // along with donor[] and acceptor[]
 	kfree(km, nas); // along with aas[]
