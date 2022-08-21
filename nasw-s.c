@@ -1,25 +1,12 @@
-#include "mppriv.h"
+#include <string.h>
+#include "nasw.h"
 #include "kalloc.h"
+#include "mppriv.h"
 
-#define MP_NEG_INF (-0x40000000)
-#define mp_max(x, y) ((x) >= (y)? (x) : (y))
+#define NS_NEG_INF (-0x40000000)
+#define ns_max(x, y) ((x) >= (y)? (x) : (y))
 
-#define MP_CIGAR_M	0
-#define MP_CIGAR_I	1
-#define MP_CIGAR_D	2
-#define MP_CIGAR_N	3
-#define MP_CIGAR_F	10 // 1bp frameshift
-#define MP_CIGAR_G	11 // 2bp frameshift
-#define MP_CIGAR_U	12
-#define MP_CIGAR_V	13
-
-typedef struct {
-	int32_t n_cigar, m_cigar;
-	int32_t score;
-	uint32_t *cigar;
-} mp_dpsr_t;
-
-static inline uint32_t *mp_push_cigar(void *km, int32_t *n_cigar, int32_t *m_cigar, uint32_t *cigar, uint32_t op, int32_t len)
+static inline uint32_t *ns_push_cigar(void *km, int32_t *n_cigar, int32_t *m_cigar, uint32_t *cigar, uint32_t op, int32_t len)
 {
 	if (*n_cigar == 0 || op != (cigar[(*n_cigar) - 1]&0xf)) {
 		if (*n_cigar == *m_cigar) {
@@ -31,7 +18,7 @@ static inline uint32_t *mp_push_cigar(void *km, int32_t *n_cigar, int32_t *m_cig
 	return cigar;
 }
 
-static void mp_dps_backtrack(void *km, const uint8_t *bk, int32_t nal, int32_t aal, uint32_t **cigar_, int32_t *n_cigar, int32_t *m_cigar)
+static void ns_dps_backtrack(void *km, const uint8_t *bk, int32_t nal, int32_t aal, uint32_t **cigar_, int32_t *n_cigar, int32_t *m_cigar)
 {
 	int32_t i = nal - 1, j = aal - 1, last = 0;
 	uint32_t *cigar = *cigar_;
@@ -40,23 +27,23 @@ static void mp_dps_backtrack(void *km, const uint8_t *bk, int32_t nal, int32_t a
 		state = last == 0? x&7 : last;
 		ext = state >= 1 && state <= 5? x>>(state+2)&1 : 0;
 		if (state == 0) {
-			cigar = mp_push_cigar(km, n_cigar, m_cigar, cigar, MP_CIGAR_M, 1), i -= 3, --j;
+			cigar = ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_M, 1), i -= 3, --j;
 		} else if (state == 1) {
-			cigar = mp_push_cigar(km, n_cigar, m_cigar, cigar, MP_CIGAR_I, 1), --j;
+			cigar = ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_I, 1), --j;
 		} else if (state == 2) {
-			cigar = mp_push_cigar(km, n_cigar, m_cigar, cigar, MP_CIGAR_D, 1), i -= 3;
+			cigar = ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_D, 1), i -= 3;
 		} else if (state == 3) {
-			cigar = mp_push_cigar(km, n_cigar, m_cigar, cigar, MP_CIGAR_N, 1), --i;
+			cigar = ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_N, 1), --i;
 		} else if (state == 4) {
-			cigar = mp_push_cigar(km, n_cigar, m_cigar, cigar, MP_CIGAR_N, 1), --i;
+			cigar = ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_N, 1), --i;
 			if (!ext) --j;
 		} else if (state == 5) {
-			cigar = mp_push_cigar(km, n_cigar, m_cigar, cigar, MP_CIGAR_N, 1), --i;
+			cigar = ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_N, 1), --i;
 			if (!ext) --j;
 		} else if (state == 6) {
-			cigar = mp_push_cigar(km, n_cigar, m_cigar, cigar, MP_CIGAR_F, 1), --i;
+			cigar = ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_F, 1), --i;
 		} else if (state == 7) {
-			cigar = mp_push_cigar(km, n_cigar, m_cigar, cigar, MP_CIGAR_G, 1), i -= 2;
+			cigar = ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_G, 1), i -= 2;
 		}
 		last = state >= 1 && state <= 5 && ext? state : 0;
 	}
@@ -79,7 +66,7 @@ static void mp_dps_backtrack(void *km, const uint8_t *bk, int32_t nal, int32_t a
  * B(i+1,j) = max{ H(i,j-1) - r - d(i+1), B(i,j) }
  * C(i+1,j) = max{ H(i,j-1) - r - d(i+2), C(i,j) }
  */
-void mp_dps_align_splice(void *km, const char *ns, int32_t nl, const char *as, int32_t al, int32_t asize, const int8_t *mat, int32_t q, int32_t e, int32_t r, int32_t f, int32_t cp)
+void ns_dps_align_splice(void *km, const char *ns, int32_t nl, const char *as, int32_t al, int32_t asize, const int8_t *mat, int32_t q, int32_t e, int32_t r, int32_t f, int32_t cp)
 {
 	int32_t nal, aal, i, j, *G, *H, *I, *D;
 	uint8_t *nas, *aas, *bk = 0;
@@ -141,12 +128,12 @@ void mp_dps_align_splice(void *km, const char *ns, int32_t nl, const char *as, i
 		int32_t A;
 		H = Kmalloc(km, int32_t, nal * 4);
 		G = H + nal, I = G + nal, D = I + nal;
-		for (i = 0; i < nal * 4; ++i) H[i] = MP_NEG_INF;
+		for (i = 0; i < nal * 4; ++i) H[i] = NS_NEG_INF;
 		G[0] = G[1] = G[2] = 0;
 		D[0] = D[1] = D[2] = -q;
 		for (i = 3, A = -r; i < nal; ++i) {
 			D[i] = D[i-3] - e;
-			G[i] = mp_max(D[i], A - acceptor[i]);
+			G[i] = ns_max(D[i], A - acceptor[i]);
 		}
 	}
 	{ // core loop
@@ -155,44 +142,44 @@ void mp_dps_align_splice(void *km, const char *ns, int32_t nl, const char *as, i
 			uint8_t *bkj = &bk[j * nal];
 			int8_t *ms = &nap[aas[j] * nal];
 			int32_t A, B, C, *swap;
-			A = B = C = D[0] = D[1] = D[2] = MP_NEG_INF; // FIXME: this is not correct
+			A = B = C = D[0] = D[1] = D[2] = NS_NEG_INF; // FIXME: this is not correct
 			for (i = 3; i < nal; ++i) {
 				uint8_t z = 0, y = 0;
 				int32_t h = G[i-3] + ms[i], tmp;
 
 				z |= G[i] - q >= I[i]? 0 : 1<<3;
-				I[i] = mp_max(G[i] - q, I[i]) - e;
+				I[i] = ns_max(G[i] - q, I[i]) - e;
 				y = h >= I[i]? y : 1;
-				h = mp_max(h, I[i]);
+				h = ns_max(h, I[i]);
 
 				z |= H[i-3] - q >= D[i-3]? 0 : 1<<4;
-				D[i] = mp_max(H[i-3] - q, D[i-3]) - e;
+				D[i] = ns_max(H[i-3] - q, D[i-3]) - e;
 				y = h >= D[i]? y : 2;
-				h = mp_max(h, D[i]);
+				h = ns_max(h, D[i]);
 
 				tmp = H[i-1] - r - donor[i-1];
 				z |= tmp >= A? 0 : 1<<5;
-				A = mp_max(tmp, A);
+				A = ns_max(tmp, A);
 				y = h >= A - acceptor[i]? y : 3;
-				h = mp_max(h, A - acceptor[i]);
+				h = ns_max(h, A - acceptor[i]);
 
 				tmp = G[i-2] - r - donor[i];
 				z |= tmp >= B? 0 : 1<<6;
-				B = mp_max(tmp, B);
+				B = ns_max(tmp, B);
 				y = h >= B - acceptor[i-2]? y : 4;
-				h = mp_max(h, B - acceptor[i-2]);
+				h = ns_max(h, B - acceptor[i-2]);
 
 				tmp = G[i-1] - r - donor[i+1];
 				z |= tmp >= C? 0 : 1<<7;
-				C = mp_max(tmp, C);
+				C = ns_max(tmp, C);
 				y = h >= C - acceptor[i-1]? y : 5;
-				h = mp_max(h, C - acceptor[i-1]);
+				h = ns_max(h, C - acceptor[i-1]);
 
 				y = h >= H[i-2] - f? y : 6;
-				h = mp_max(h, H[i-2] - f);
+				h = ns_max(h, H[i-2] - f);
 
 				y = h >= H[i-1] - f? y : 7;
-				h = mp_max(h, H[i-1] - f);
+				h = ns_max(h, H[i-1] - f);
 
 				H[i] = h, bkj[i] = z | y;
 			}
