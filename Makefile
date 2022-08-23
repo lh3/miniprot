@@ -36,19 +36,19 @@ depend:
 
 # DO NOT DELETE
 
-bseq.o: kvec-km.h kalloc.h mppriv.h miniprot.h kseq.h
-chain.o: mppriv.h miniprot.h kseq.h kalloc.h
-format.o: kseq.h mppriv.h miniprot.h
-hit.o: mppriv.h miniprot.h kseq.h kalloc.h
-index.o: mppriv.h miniprot.h kseq.h kalloc.h kvec-km.h kthread.h
+bseq.o: kvec-km.h kalloc.h mppriv.h miniprot.h nasw.h kseq.h
+chain.o: mppriv.h miniprot.h nasw.h kseq.h kalloc.h
+format.o: kseq.h mppriv.h miniprot.h nasw.h
+hit.o: mppriv.h miniprot.h nasw.h kseq.h kalloc.h
+index.o: mppriv.h miniprot.h nasw.h kseq.h kalloc.h kvec-km.h kthread.h
 kalloc.o: kalloc.h
 kthread.o: kthread.h
-main.o: mppriv.h miniprot.h kseq.h ketopt.h
-map.o: mppriv.h miniprot.h kseq.h kthread.h kvec-km.h kalloc.h
-misc.o: mppriv.h miniprot.h kseq.h ksort.h
-nasw-s.o: nasw.h kalloc.h mppriv.h miniprot.h kseq.h
-ntseq.o: mppriv.h miniprot.h kseq.h kalloc.h
+main.o: mppriv.h miniprot.h nasw.h kseq.h ketopt.h
+map.o: mppriv.h miniprot.h nasw.h kseq.h kthread.h kvec-km.h kalloc.h
+misc.o: mppriv.h miniprot.h nasw.h kseq.h ksort.h
+nasw-s.o: nasw.h kalloc.h
+nasw-tab.o: nasw.h
+ntseq.o: mppriv.h miniprot.h nasw.h kseq.h kalloc.h
 options.o: miniprot.h
-sketch.o: mppriv.h miniprot.h kseq.h kalloc.h kvec-km.h
-sys.o: mppriv.h miniprot.h kseq.h
-table.o: miniprot.h
+sketch.o: mppriv.h miniprot.h nasw.h kseq.h kalloc.h kvec-km.h
+sys.o: mppriv.h miniprot.h nasw.h kseq.h
