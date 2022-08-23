@@ -3,6 +3,7 @@
 
 #include <stdio.h>
 #include "miniprot.h"
+#include "nasw.h"
 #include "kseq.h"
 
 #define MP_DBG_NO_KALLOC   0x1

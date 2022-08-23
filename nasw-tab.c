@@ -1,23 +1,23 @@
 #include <string.h>
 #include <ctype.h>
-#include "miniprot.h"
+#include "nasw.h"
 
-char *mp_tab_nt_i2c = "ACGTN";
+char *ns_tab_nt_i2c = "ACGTN";
 					// 01234
 
-char *mp_tab_aa_i2c = "ARNDCQEGHILKMFPSTWYV*X";
+char *ns_tab_aa_i2c = "ARNDCQEGHILKMFPSTWYV*X";
 					// 0123456789012345678901
 
-uint8_t mp_tab_a2r[22] = { 0, 2, 4, 4, 6, 5, 5, 8, 3, 10, 11, 2, 11, 12, 7, 1, 1, 13, 12, 10, 14, 15 };
+uint8_t ns_tab_a2r[22] = { 0, 2, 4, 4, 6, 5, 5, 8, 3, 10, 11, 2, 11, 12, 7, 1, 1, 13, 12, 10, 14, 15 };
 						// A  R  N  D  C  Q  E  G  H   I   L  K   M   F  P  S  T   W   Y   V   *   X
 
-char *mp_tab_codon_std = "KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV*Y*YSSSS*CWCLFLFX";
+char *ns_tab_codon_std = "KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV*Y*YSSSS*CWCLFLFX";
 					   // 01234567890123456789012345678901234567890123456789012345678901234
 					   // KKNNRRSSTTTTIMIIEEDDGGGGAAAAVVVVQQHHRRRRPPPPLLLL**YY*WCCSSSSLLFFX <- this is the AGCT order
 
-uint8_t mp_tab_nt4[256], mp_tab_aa20[256], mp_tab_aa13[256], mp_tab_codon[64], mp_tab_codon13[64];
+uint8_t ns_tab_nt4[256], ns_tab_aa20[256], ns_tab_aa13[256], ns_tab_codon[64], ns_tab_codon13[64];
 
-int8_t mp_mat_blosum62[484] = { // 484 = 22*22
+int8_t ns_mat_blosum62[484] = { // 484 = 22*22
 //	 A  R  N  D  C  Q  E  G  H  I  L  K  M  F  P  S  T  W  Y  V  *  X
 	 4,-1,-2,-2, 0,-1,-1, 0,-2,-1,-1,-1,-1,-2,-1, 1, 0,-3,-2, 0,-4, 0,
 	-1, 5, 0,-2,-3, 1, 0,-2, 0,-3,-2, 2,-1,-3,-2,-1,-1,-3,-2,-3,-4,-1,
@@ -43,21 +43,35 @@ int8_t mp_mat_blosum62[484] = { // 484 = 22*22
 	 0,-1,-1,-1,-2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-2, 0, 0,-2,-1,-1,-4,-1
 };
 
-void mp_make_tables(int codon_type)
+void ns_make_tables(int codon_type)
 {
 	char *p;
 	int i;
-	memset(mp_tab_nt4, 4, 256);
-	for (p = mp_tab_nt_i2c; *p; ++p)
-		mp_tab_nt4[p - mp_tab_nt_i2c] = mp_tab_nt4[(uint8_t)toupper(*p)] = mp_tab_nt4[(uint8_t)tolower(*p)] = p - mp_tab_nt_i2c;
-	memset(mp_tab_aa20, 21, 256);
-	for (p = mp_tab_aa_i2c; *p; ++p)
-		mp_tab_aa20[p - mp_tab_aa_i2c] = mp_tab_aa20[(uint8_t)toupper(*p)] = mp_tab_aa20[(uint8_t)tolower(*p)] = p - mp_tab_aa_i2c;
-	memset(mp_tab_aa13, 15, 256);
-	for (p = mp_tab_aa_i2c; *p; ++p)
-		mp_tab_aa13[p - mp_tab_aa_i2c] = mp_tab_aa13[(uint8_t)toupper(*p)] = mp_tab_aa13[(uint8_t)tolower(*p)] = mp_tab_a2r[p - mp_tab_aa_i2c];
+	memset(ns_tab_nt4, 4, 256);
+	for (p = ns_tab_nt_i2c; *p; ++p)
+		ns_tab_nt4[p - ns_tab_nt_i2c] = ns_tab_nt4[(uint8_t)toupper(*p)] = ns_tab_nt4[(uint8_t)tolower(*p)] = p - ns_tab_nt_i2c;
+	memset(ns_tab_aa20, 21, 256);
+	for (p = ns_tab_aa_i2c; *p; ++p)
+		ns_tab_aa20[p - ns_tab_aa_i2c] = ns_tab_aa20[(uint8_t)toupper(*p)] = ns_tab_aa20[(uint8_t)tolower(*p)] = p - ns_tab_aa_i2c;
+	memset(ns_tab_aa13, 15, 256);
+	for (p = ns_tab_aa_i2c; *p; ++p)
+		ns_tab_aa13[p - ns_tab_aa_i2c] = ns_tab_aa13[(uint8_t)toupper(*p)] = ns_tab_aa13[(uint8_t)tolower(*p)] = ns_tab_a2r[p - ns_tab_aa_i2c];
 	for (i = 0; i < 64; ++i) {
-		mp_tab_codon[i] = mp_tab_aa20[(uint8_t)mp_tab_codon_std[i]];
-		mp_tab_codon13[i] = mp_tab_a2r[mp_tab_codon[i]];
+		ns_tab_codon[i] = ns_tab_aa20[(uint8_t)ns_tab_codon_std[i]];
+		ns_tab_codon13[i] = ns_tab_a2r[ns_tab_codon[i]];
 	}
+}
+
+void ns_opt_init(ns_opt_t *opt)
+{
+	memset(opt, 0, sizeof(*opt));
+	opt->go = 11, opt->ge = 1;
+	opt->io = 31;
+	opt->nc = 5;
+	opt->fs = 15;
+	opt->asize = 22;
+	opt->sc = ns_mat_blosum62;
+	opt->nt4 = ns_tab_nt4;
+	opt->aa20 = ns_tab_aa20;
+	opt->codon = ns_tab_codon;
 }

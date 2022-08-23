@@ -41,6 +41,7 @@ typedef struct {
 	int32_t mask_len;
 	float pri_ratio;
 	int32_t best_n;
+	int32_t go, ge, io, nc, fs;
 } mp_mapopt_t;
 
 typedef struct {
@@ -86,12 +87,11 @@ struct mp_tbuf_s;
 typedef struct mp_tbuf_s mp_tbuf_t;
 
 extern int32_t mp_verbose, mp_dbg_flag;
-extern char *mp_tab_nt_i2c, *mp_tab_aa_i2c;
-extern uint8_t mp_tab_a2r[22], mp_tab_nt4[256], mp_tab_aa20[256], mp_tab_aa13[256];
-extern uint8_t mp_tab_codon[64], mp_tab_codon13[64];
+extern char *ns_tab_nt_i2c, *ns_tab_aa_i2c;
+extern uint8_t ns_tab_a2r[22], ns_tab_nt4[256], ns_tab_aa20[256], ns_tab_aa13[256];
+extern uint8_t ns_tab_codon[64], ns_tab_codon13[64];
 
 void mp_start(void);
-void mp_make_tables(int codon_type);
 
 void mp_mapopt_init(mp_mapopt_t *mo);
 void mp_idxopt_init(mp_idxopt_t *io);

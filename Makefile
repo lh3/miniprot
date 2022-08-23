@@ -4,7 +4,7 @@ CFLAGS=		-g -Wall -O3
 CXXFLAGS=	$(CFLAGS)
 CPPFLAGS=
 INCLUDES=
-OBJS=		kalloc.o kthread.o sys.o misc.o table.o options.o ntseq.o sketch.o \
+OBJS=		kalloc.o kthread.o nasw-s.o nasw-tab.o sys.o misc.o options.o ntseq.o sketch.o \
 			index.o bseq.o chain.o nasw-s.o hit.o format.o map.o
 PROG=		miniprot
 LIBS=		-lpthread -lz

@@ -58,7 +58,7 @@ mp_ntdb_t *mp_ntseq_read(const char *fn)
 			memset(&d->seq[oldm>>1], 0, (d->m_seq - oldm) >> 1);
 		}
 		for (i = 0; i < ks->seq.l; ++i, ++off) {
-			uint8_t b = mp_tab_nt4[(uint8_t)ks->seq.s[i]];
+			uint8_t b = ns_tab_nt4[(uint8_t)ks->seq.s[i]];
 			d->seq[off >> 1] |= b << (off&1) * 4;
 		}
 		d->l_seq += ks->seq.l;
