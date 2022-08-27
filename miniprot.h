@@ -41,7 +41,7 @@ typedef struct {
 	int32_t mask_len;
 	float pri_ratio;
 	int32_t best_n;
-	int32_t go, ge, io, nc, fs;
+	int32_t go, ge, io, nc, fs; // gap open, extension, intron open, non-conanical and frame-shift
 } mp_mapopt_t;
 
 typedef struct {
