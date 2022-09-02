@@ -4,8 +4,12 @@
 #include "nasw.h"
 #include "kalloc.h"
 
-#ifdef __SSE4_1__
+#if defined(__SSE2__)
+#include <xmmintrin.h>
+#elif defined(__SSE4_1__)
 #include <smmintrin.h>
+#elif defined(__ARM_NEON)
+#include "s2n-lite.h"
 #endif
 
 /*
@@ -167,6 +171,51 @@ static uint8_t *ns_prep_seq(void *km, const char *ns, int32_t nl, const char *as
 			H1[-1] = sse_gen(insert, _suf)(_mm_slli_si128(H1[slen - 1], sizeof(ns_int_t)), neg_inf, 0); \
 		}
 
+static inline int ns_le_epi16(__m128i a, __m128i b)
+{
+#if defined(__SSE2__)
+	return !_mm_movemask_epi8(_mm_cmpgt_epi16(a, b));
+#elif defined(__ARM_NEON)
+	return (vmaxvq_u8(_mm_subs_epi16(a, b)) == 0);
+#endif
+}
+
+static inline int ns_le_epi32(__m128i a, __m128i b)
+{
+#if defined(__SSE2__)
+	return !_mm_movemask_epi8(_mm_cmpgt_epi16(a, b));
+#elif defined(__ARM_NEON)
+	return (vmaxvq_u8(vreinterpretq_u8_s32(vqsubq_s32(vreinterpretq_s32_u8(a), vreinterpretq_s32_u8(b)))) == 0);
+#endif
+}
+
+static inline __m128i ns_select(__m128i cond, __m128i a, __m128i b)
+{
+#if defined(__ARM_NEON) || defined(__SSE4_1__) // there is an ARM emulation of _mm_blendv_epi8()
+	return _mm_blendv_epi8(b, a, cond);
+#elif defined(__SSE2__)
+	return _mm_or_si128(_mm_and_si128(a, cond), _mm_andnot_si128(cond, b));
+#endif
+}
+
+#if defined(__SSE2__)
+static inline __m128i _mm_max_epi32(__m128i a, __m128i b) { return ns_select(_mm_cmpgt_epi32(a, b), a, b); }
+static inline __m128i _mm_insert_epi32(__m128i a, int b, const int ndx)
+{
+    switch (ndx & 0x3) {
+    case 0: a = _mm_insert_epi16( a, b    , 0 );
+            a = _mm_insert_epi16( a, b<<16, 1 ); break;
+    case 1: a = _mm_insert_epi16( a, b    , 2 );
+            a = _mm_insert_epi16( a, b<<16, 3 ); break;
+    case 2: a = _mm_insert_epi16( a, b    , 4 );
+            a = _mm_insert_epi16( a, b<<16, 5 ); break;
+    case 3: a = _mm_insert_epi16( a, b    , 6 );
+            a = _mm_insert_epi16( a, b<<16, 7 ); break;
+    }
+    return a;
+}
+#endif
+
 void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, ns_rst_t *r)
 {
 	typedef int16_t ns_int_t;
@@ -240,7 +289,7 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 					_mm_store_si128(H + j, h);
 					h = _mm_subs_epi16(h, goe);
 					I = _mm_subs_epi16(I, ge);
-					if (!_mm_movemask_epi8(_mm_cmpgt_epi16(I, h))) break;
+					if (ns_le_epi16(I, h)) break;
 				}
 				if (k < vsize) break;
 			}
@@ -264,7 +313,7 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 				z = _mm_or_si128(z, _mm_and_si128(_mm_cmpgt_epi16(I, t), _mm_set1_epi16(1<<4)));
 				t = _mm_max_epi16(t, I);
 				I = _mm_subs_epi16(t, ge);
-				y = _mm_blendv_epi8(y, _mm_set1_epi16(1), _mm_cmpgt_epi16(I, h));
+				y = ns_select(_mm_cmpgt_epi16(I, h), _mm_set1_epi16(1), y);
 				h = _mm_max_epi16(h, I);
 				// D(i,j) = max{ H(i-3,j) - q, D(i-3,j) } - e
 				u = _mm_subs_epi16(_mm_load_si128(H3 + j), go);
@@ -273,7 +322,7 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 				t = _mm_max_epi16(u, v);
 				t = _mm_subs_epi16(t, ge);
 				_mm_store_si128(D + j, t);
-				y = _mm_blendv_epi8(y, _mm_set1_epi16(2), _mm_cmpgt_epi16(t, h));
+				y = ns_select(_mm_cmpgt_epi16(t, h), _mm_set1_epi16(2), y);
 				h = _mm_max_epi16(h, t);
 				// A(i,j) = max{ H(i-1,j)   - r - d(i-1), A(i-1,j) }
 				u = _mm_subs_epi16(_mm_load_si128(H1 + j), io);
@@ -283,7 +332,7 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 				t = _mm_max_epi16(t, v);
 				_mm_store_si128(A + j, t);
 				t = _mm_subs_epi16(t, ai);
-				y = _mm_blendv_epi8(y, _mm_set1_epi16(3), _mm_cmpgt_epi16(t, h));
+				y = ns_select(_mm_cmpgt_epi16(t, h), _mm_set1_epi16(3), y);
 				h = _mm_max_epi16(h, t);
 				// B(i,j) = max{ H(i-1,j-1) - r - d(i),   B(i-1,j) }
 				u = _mm_subs_epi16(_mm_load_si128(H1 + j - 1), io);
@@ -293,7 +342,7 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 				t = _mm_max_epi16(t, v);
 				_mm_store_si128(B + j, t);
 				t = _mm_subs_epi16(t, aim2);
-				y = _mm_blendv_epi8(y, _mm_set1_epi16(4), _mm_cmpgt_epi16(t, h));
+				y = ns_select(_mm_cmpgt_epi16(t, h), _mm_set1_epi16(4), y);
 				h = _mm_max_epi16(h, t);
 				// C(i,j) = max{ H(i-1,j-1) - r - d(i+1), C(i-1,j) }
 				v = _mm_load_si128(C + j);
@@ -302,21 +351,21 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 				t = _mm_max_epi16(t, v);
 				_mm_store_si128(C + j, t);
 				t = _mm_subs_epi16(t, aim1);
-				y = _mm_blendv_epi8(y, _mm_set1_epi16(5), _mm_cmpgt_epi16(t, h));
+				y = ns_select(_mm_cmpgt_epi16(t, h), _mm_set1_epi16(5), y);
 				h = _mm_max_epi16(h, t);
 				// H(i-1,j-1)-f and H(i-2,j-1)-f
 				t = _mm_subs_epi16(_mm_load_si128(H1 + j), fs);
-				y = _mm_blendv_epi8(y, _mm_set1_epi16(6), _mm_cmpgt_epi16(t, h));
+				y = ns_select(_mm_cmpgt_epi16(t, h), _mm_set1_epi16(6), y);
 				h = _mm_max_epi16(h, t);
 				t = _mm_subs_epi16(_mm_load_si128(H2 + j), fs);
-				y = _mm_blendv_epi8(y, _mm_set1_epi16(7), _mm_cmpgt_epi16(t, h));
+				y = ns_select(_mm_cmpgt_epi16(t, h), _mm_set1_epi16(7), y);
 				h = _mm_max_epi16(h, t);
 				// H(i-1,j)-f and H(i-2,j)-f
 				t = _mm_subs_epi16(_mm_load_si128(H1 + j - 1), fs);
-				y = _mm_blendv_epi8(y, _mm_set1_epi16(8), _mm_cmpgt_epi16(t, h));
+				y = ns_select(_mm_cmpgt_epi16(t, h), _mm_set1_epi16(8), y);
 				h = _mm_max_epi16(h, t);
 				t = _mm_subs_epi16(_mm_load_si128(H2 + j - 1), fs);
-				y = _mm_blendv_epi8(y, _mm_set1_epi16(9), _mm_cmpgt_epi16(t, h));
+				y = ns_select(_mm_cmpgt_epi16(t, h), _mm_set1_epi16(9), y);
 				h = _mm_max_epi16(h, t);
 				// save H and traceback
 				z = _mm_or_si128(z, y);
@@ -336,7 +385,7 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 					_mm_store_si128(H + j, h);
 					h = _mm_subs_epi16(h, goe);
 					I = _mm_subs_epi16(I, ge);
-					if (!_mm_movemask_epi8(_mm_cmpgt_epi16(I, h))) break;
+					if (ns_le_epi16(I, h)) break;
 				}
 				if (k < vsize) break;
 			}
@@ -427,7 +476,7 @@ void ns_global_gs32(void *km, const char *ns, int32_t nl, const char *as, int32_
 					_mm_store_si128(H + j, h);
 					h = _mm_sub_epi32(h, goe);
 					I = _mm_sub_epi32(I, ge);
-					if (!_mm_movemask_epi8(_mm_cmpgt_epi32(I, h))) break;
+					if (ns_le_epi32(I, h)) break;
 				}
 				if (k < vsize) break;
 			}
@@ -451,7 +500,7 @@ void ns_global_gs32(void *km, const char *ns, int32_t nl, const char *as, int32_
 				z = _mm_or_si128(z, _mm_and_si128(_mm_cmpgt_epi32(I, t), _mm_set1_epi32(1<<4)));
 				t = _mm_max_epi32(t, I);
 				I = _mm_sub_epi32(t, ge);
-				y = _mm_blendv_epi8(y, _mm_set1_epi32(1), _mm_cmpgt_epi32(I, h));
+				y = ns_select(_mm_cmpgt_epi32(I, h), _mm_set1_epi32(1), y);
 				h = _mm_max_epi32(h, I);
 				// D(i,j) = max{ H(i-3,j) - q, D(i-3,j) } - e
 				u = _mm_sub_epi32(_mm_load_si128(H3 + j), go);
@@ -460,7 +509,7 @@ void ns_global_gs32(void *km, const char *ns, int32_t nl, const char *as, int32_
 				t = _mm_max_epi32(u, v);
 				t = _mm_sub_epi32(t, ge);
 				_mm_store_si128(D + j, t);
-				y = _mm_blendv_epi8(y, _mm_set1_epi32(2), _mm_cmpgt_epi32(t, h));
+				y = ns_select(_mm_cmpgt_epi32(t, h), _mm_set1_epi32(2), y);
 				h = _mm_max_epi32(h, t);
 				// A(i,j) = max{ H(i-1,j)   - r - d(i-1), A(i-1,j) }
 				u = _mm_sub_epi32(_mm_load_si128(H1 + j), io);
@@ -470,7 +519,7 @@ void ns_global_gs32(void *km, const char *ns, int32_t nl, const char *as, int32_
 				t = _mm_max_epi32(t, v);
 				_mm_store_si128(A + j, t);
 				t = _mm_sub_epi32(t, ai);
-				y = _mm_blendv_epi8(y, _mm_set1_epi32(3), _mm_cmpgt_epi32(t, h));
+				y = ns_select(_mm_cmpgt_epi32(t, h), _mm_set1_epi32(3), y);
 				h = _mm_max_epi32(h, t);
 				// B(i,j) = max{ H(i-1,j-1) - r - d(i),   B(i-1,j) }
 				u = _mm_sub_epi32(_mm_load_si128(H1 + j - 1), io);
@@ -480,7 +529,7 @@ void ns_global_gs32(void *km, const char *ns, int32_t nl, const char *as, int32_
 				t = _mm_max_epi32(t, v);
 				_mm_store_si128(B + j, t);
 				t = _mm_sub_epi32(t, aim2);
-				y = _mm_blendv_epi8(y, _mm_set1_epi32(4), _mm_cmpgt_epi32(t, h));
+				y = ns_select(_mm_cmpgt_epi32(t, h), _mm_set1_epi32(4), y);
 				h = _mm_max_epi32(h, t);
 				// C(i,j) = max{ H(i-1,j-1) - r - d(i+1), C(i-1,j) }
 				v = _mm_load_si128(C + j);
@@ -489,21 +538,21 @@ void ns_global_gs32(void *km, const char *ns, int32_t nl, const char *as, int32_
 				t = _mm_max_epi32(t, v);
 				_mm_store_si128(C + j, t);
 				t = _mm_sub_epi32(t, aim1);
-				y = _mm_blendv_epi8(y, _mm_set1_epi32(5), _mm_cmpgt_epi32(t, h));
+				y = ns_select(_mm_cmpgt_epi32(t, h), _mm_set1_epi32(5), y);
 				h = _mm_max_epi32(h, t);
 				// H(i-1,j-1)-f and H(i-2,j-1)-f
 				t = _mm_sub_epi32(_mm_load_si128(H1 + j), fs);
-				y = _mm_blendv_epi8(y, _mm_set1_epi32(6), _mm_cmpgt_epi32(t, h));
+				y = ns_select(_mm_cmpgt_epi32(t, h), _mm_set1_epi32(6), y);
 				h = _mm_max_epi32(h, t);
 				t = _mm_sub_epi32(_mm_load_si128(H2 + j), fs);
-				y = _mm_blendv_epi8(y, _mm_set1_epi32(7), _mm_cmpgt_epi32(t, h));
+				y = ns_select(_mm_cmpgt_epi32(t, h), _mm_set1_epi32(7), y);
 				h = _mm_max_epi32(h, t);
 				// H(i-1,j)-f and H(i-2,j)-f
 				t = _mm_sub_epi32(_mm_load_si128(H1 + j - 1), fs);
-				y = _mm_blendv_epi8(y, _mm_set1_epi32(8), _mm_cmpgt_epi32(t, h));
+				y = ns_select(_mm_cmpgt_epi32(t, h), _mm_set1_epi32(8), y);
 				h = _mm_max_epi32(h, t);
 				t = _mm_sub_epi32(_mm_load_si128(H2 + j - 1), fs);
-				y = _mm_blendv_epi8(y, _mm_set1_epi32(9), _mm_cmpgt_epi32(t, h));
+				y = ns_select(_mm_cmpgt_epi32(t, h), _mm_set1_epi32(9), y);
 				h = _mm_max_epi32(h, t);
 				// save H and traceback
 				z = _mm_or_si128(z, y);
@@ -523,7 +572,7 @@ void ns_global_gs32(void *km, const char *ns, int32_t nl, const char *as, int32_
 					_mm_store_si128(H + j, h);
 					h = _mm_sub_epi32(h, goe);
 					I = _mm_sub_epi32(I, ge);
-					if (!_mm_movemask_epi8(_mm_cmpgt_epi32(I, h))) break;
+					if (ns_le_epi32(I, h)) break;
 				}
 				if (k < vsize) break;
 			}
