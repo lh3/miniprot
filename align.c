@@ -22,17 +22,30 @@ static void mp_filter_seed(int32_t cnt, uint64_t *a, int32_t max_aa_dist, int32_
 	}
 }
 
+static inline int32_t mp_score_ungapped(int32_t alen, const uint8_t *nseq, const char *aseq, int32_t asize, const int8_t *mat)
+{
+	int32_t i, j, score = 0;
+	for (i = 0, j = 0; i < alen; i += 3, ++j) {
+		uint8_t nt_aa, aa_aa, codon = nseq[i]<<4 | nseq[i+1]<<2 | nseq[i+2];
+		nt_aa = nseq[i] > 3 || nseq[i+1] > 3 || nseq[i+2] > 3? ns_tab_aa20['X'] : ns_tab_codon[codon];
+		aa_aa = ns_tab_aa20[aseq[j]];
+		score += mat[nt_aa * asize + aa_aa];
+	}
+	return score;
+}
+
 typedef struct {
 	int32_t n, m;
 	uint32_t *c;
 } mp_cigar_t;
 
-static void mp_align_seq(void *km, const mp_mapopt_t *opt, int32_t nlen, const uint8_t *nseq, int32_t alen, const char *aseq, mp_cigar_t *cigar)
+static int32_t mp_align_seq(void *km, const mp_mapopt_t *opt, int32_t nlen, const uint8_t *nseq, int32_t alen, const char *aseq, mp_cigar_t *cigar)
 {
+	int32_t i;
 	if (nlen == alen * 3 && alen <= opt->kmer2) {
 		cigar->c = ns_push_cigar(km, &cigar->n, &cigar->m, cigar->c, NS_CIGAR_M, alen);
+		return mp_score_ungapped(alen, nseq, aseq, opt->asize, opt->mat);
 	} else {
-		int32_t i;
 		ns_opt_t ns_opt;
 		ns_rst_t rst;
 		ns_opt_init(&ns_opt);
@@ -43,12 +56,14 @@ static void mp_align_seq(void *km, const mp_mapopt_t *opt, int32_t nlen, const u
 		printf("%d\t%d\t%d\t%d\n", nlen, alen, rst.score, rst.n_cigar);
 		for (i = 0; i < rst.n_cigar; ++i)
 			cigar->c = ns_push_cigar(km, &cigar->n, &cigar->m, cigar->c, rst.cigar[i]&0xf, rst.cigar[i]>>4);
+		kfree(km, rst.cigar);
+		return rst.score;
 	}
 }
 
-static void mp_extra_cal(mp_reg1_t *r, const int8_t *mat)
+static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt, const char *aa)
 {
-	int32_t k, nl = 0, al = 0;
+	int32_t k, i, j, nl = 0, al = 0;
 	mp_extra_t *e = r->p;
 	for (k = 0; k < e->n_cigar; ++k) {
 		int32_t op = e->cigar[k]&0xf, len = e->cigar[k]>>4;
@@ -70,7 +85,8 @@ static void mp_extra_cal(mp_reg1_t *r, const int8_t *mat)
 			nl += len, ++al;
 		}
 	}
-	printf("%d == %lld\t%d == %d\n", nl, r->ve - r->vs, al, r->qe - r->qs);
+	assert(nl == r->ve - r->vs);
+	assert(al == r->qe - r->qs);
 }
 
 static void mp_extra_gen(void *km, mp_reg1_t *r, mp_cigar_t *cigar, int32_t score)
@@ -88,8 +104,8 @@ static void mp_extra_gen(void *km, mp_reg1_t *r, mp_cigar_t *cigar, int32_t scor
 
 void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len, const char *aa, mp_reg1_t *r)
 {
-	int32_t i, i0, ne0, ae0;
-	int64_t as, ae, ctg_len, l_nt;
+	int32_t i, i0, ne0, ae0, score;
+	int64_t as, ae, ctg_len, vs0, l_nt;
 	uint8_t *nt;
 	mp_cigar_t cigar = {0,0,0};
 
@@ -102,6 +118,7 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	nt = Kmalloc(km, uint8_t, ae - as);
 	l_nt = mp_ntseq_get(mi->nt, r->vid>>1, r->vid&1? ctg_len - ae : as, r->vid&1? ctg_len - as : ae, r->vid&1, nt);
 	assert(l_nt == ae - as);
+	vs0 = r->vs;
 
 	for (i = 0; i < r->cnt; ++i)
 		if (r->a[i]>>31&1) break;
@@ -110,20 +127,22 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	if (i0 < r->cnt) {
 		cigar.c = ns_push_cigar(km, &cigar.n, &cigar.m, cigar.c, NS_CIGAR_M, opt->kmer2);
 		ne0 = (r->a[i0]>>32) + 1, ae0 = ((int32_t)r->a[i0]<<1>>1) + 1;
+		r->vs += ne0 - opt->kmer2 * 3, r->qs = ae0 - opt->kmer2;
 	}
-	for (i = i0 + 1; i < r->cnt; ++i) {
+	for (i = i0 + 1, score = 0; i < r->cnt; ++i) {
 		int32_t ne1, ae1;
 		if (!(r->a[i]>>31&1)) continue;
 		ne1 = (r->a[i]>>32) + 1, ae1 = ((int32_t)r->a[i]<<1>>1) + 1;
-		mp_align_seq(km, opt, ne1 - ne0, &nt[ne0 + r->vs - as], ae1 - ae0, &aa[ae0], &cigar);
+		score += mp_align_seq(km, opt, ne1 - ne0, &nt[ne0 + vs0 - as], ae1 - ae0, &aa[ae0], &cigar);
 		i0 = i, ne0 = ne1, ae0 = ae1;
 	}
+	r->ve = ne0 + vs0, r->qe = ae0;
 	#else
-	mp_align_seq(km, opt, r->ve - r->vs, &nt[r->vs - as], r->qe - r->qs, aa, &cigar);
+	score = mp_align_seq(km, opt, r->ve - r->vs, &nt[r->vs - as], r->qe - r->qs, aa, &cigar);
 	#endif
-	kfree(km, nt);
-	printf("%lld\n", as);
 	for (i = 0; i < cigar.n; ++i) printf("%d%c", cigar.c[i]>>4, NS_CIGAR_STR[cigar.c[i]&0xf]); putchar('\n');
-	mp_extra_gen(km, r, &cigar, 0);
-	mp_extra_cal(r, opt->mat);
+	mp_extra_gen(km, r, &cigar, score);
+	printf("score=%d\n", score);
+	mp_extra_cal(r, opt, &nt[r->vs - as], aa);
+	kfree(km, nt);
 }

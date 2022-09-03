@@ -43,6 +43,7 @@ typedef struct {
 	int32_t best_n;
 	int32_t kmer2;
 	int32_t go, ge, io, nc, fs; // gap open, extension, intron open, non-conanical and frame-shift
+	int32_t asize; // size of the alphabet
 	const int8_t *mat;
 } mp_mapopt_t;
 
