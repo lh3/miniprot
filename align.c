@@ -49,7 +49,7 @@ static void mp_align_seq(void *km, const mp_mapopt_t *opt, int32_t nlen, const u
 void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len, const char *aa, mp_reg1_t *r)
 {
 	int32_t i, i0, ne0, ae0;
-	int64_t as, ae, ctg_len;
+	int64_t as, ae, ctg_len, l_nt;
 	uint8_t *nt;
 	mp_cigar_t cigar = {0,0,0};
 
@@ -65,10 +65,13 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	as = r->vs > opt->max_ext? r->vs - opt->max_ext : 0;
 	ae = r->ve + opt->max_ext < ctg_len? r->ve + opt->max_ext : ctg_len;
 	nt = Kmalloc(km, uint8_t, ae - as);
+	l_nt = mp_ntseq_get(mi->nt, r->vid>>1, r->vid&1? ctg_len - ae : as, r->vid&1? ctg_len - as : ae, r->vid&1, nt);
+	assert(l_nt == ae - as);
 
 	for (i = 0; i < r->cnt; ++i)
 		if (r->a[i]>>31&1) break;
 	i0 = i;
+	#if 1
 	if (i0 < r->cnt) {
 		cigar.c = ns_push_cigar(km, &cigar.n, &cigar.m, cigar.c, NS_CIGAR_M, opt->kmer2);
 		ne0 = r->a[i0]>>32, ae0 = (int32_t)r->a[i0]<<1>>1;
@@ -80,7 +83,11 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 		mp_align_seq(km, opt, ne1 - ne0, &nt[ne0 + r->vs - as], ae1 - ae0, &aa[ae0], &cigar);
 		i0 = i, ne0 = ne1, ae0 = ae1;
 	}
+	#else
+	mp_align_seq(km, opt, r->ve - r->vs, &nt[r->vs - as], r->qe - r->qs, aa, &cigar);
+	#endif
 	kfree(km, nt);
+	printf("%lld\n", as);
 	for (i = 0; i < cigar.n; ++i) printf("%d%c", cigar.c[i]>>4, NS_CIGAR_STR[cigar.c[i]&0xf]); putchar('\n');
 	kfree(km, cigar.c);
 }
