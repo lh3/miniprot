@@ -32,7 +32,7 @@ void mp_tbuf_destroy(mp_tbuf_t *b)
 static void mp_refine_reg(void *km, const mp_idx_t *mi, const mp_mapopt_t *opt, const char *aa, int32_t l_aa, mp_reg1_t *r)
 {
 	const mp_idxopt_t *io = &mi->opt;
-	int32_t i, j, k, n_u, max_sc = 0, max_i, kmer = io->kmer - 1, smer = kmer, is_splice = !(opt->flag&MP_F_NO_SPLICE);
+	int32_t i, j, k, n_u, max_sc = 0, max_i, kmer = opt->kmer2, smer = kmer, is_splice = !(opt->flag&MP_F_NO_SPLICE);
 	int64_t as, ae, l_nt, n_a, ctg_len = mi->nt->ctg[r->vid>>1].len;
 	uint8_t *nt;
 	uint64_t *a, *u;
@@ -155,6 +155,8 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 		mp_set_parent(km, opt->mask_level, opt->mask_len, *n_reg, reg, mi->opt.kmer, 0);
 		mp_select_sub(km, opt->pri_ratio, mi->opt.kmer * 2, opt->best_n, n_reg, reg);
 	}
+	for (i = 0; i < *n_reg; ++i)
+		mp_align(km, opt, mi, qlen, seq, &reg[i]);
 	kfree(km, a);
 	mp_sort_reg(km, n_reg, reg);
 	for (i = 0; i < *n_reg; ++i)

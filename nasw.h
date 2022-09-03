@@ -2,6 +2,7 @@
 #define NASW_H
 
 #include <stdint.h>
+#include <string.h>
 #include "kalloc.h"
 
 #define NS_CIGAR_M	0
@@ -42,7 +43,6 @@ extern "C" {
 void ns_make_tables(int codon_type);
 void ns_opt_init(ns_opt_t *opt);
 
-void ns_rst_init(ns_rst_t *r);
 void ns_splice_s1(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, ns_rst_t *r);
 void ns_splice_i16(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, ns_rst_t *r);
 
@@ -59,6 +59,11 @@ static inline uint32_t *ns_push_cigar(void *km, int32_t *n_cigar, int32_t *m_cig
 		cigar[(*n_cigar)++] = len<<4 | op;
 	} else cigar[(*n_cigar)-1] += len<<4;
 	return cigar;
+}
+
+static inline void ns_rst_init(ns_rst_t *r)
+{
+	memset(r, 0, sizeof(*r));
 }
 
 #ifdef __cplusplus
