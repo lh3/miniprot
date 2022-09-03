@@ -74,12 +74,12 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	#if 1
 	if (i0 < r->cnt) {
 		cigar.c = ns_push_cigar(km, &cigar.n, &cigar.m, cigar.c, NS_CIGAR_M, opt->kmer2);
-		ne0 = r->a[i0]>>32, ae0 = (int32_t)r->a[i0]<<1>>1;
+		ne0 = (r->a[i0]>>32) + 1, ae0 = ((int32_t)r->a[i0]<<1>>1) + 1;
 	}
 	for (i = i0 + 1; i < r->cnt; ++i) {
 		int32_t ne1, ae1;
 		if (!(r->a[i]>>31&1)) continue;
-		ne1 = r->a[i]>>32, ae1 = (int32_t)r->a[i]<<1>>1;
+		ne1 = (r->a[i]>>32) + 1, ae1 = ((int32_t)r->a[i]<<1>>1) + 1;
 		mp_align_seq(km, opt, ne1 - ne0, &nt[ne0 + r->vs - as], ae1 - ae0, &aa[ae0], &cigar);
 		i0 = i, ne0 = ne1, ae0 = ae1;
 	}
