@@ -224,6 +224,7 @@ static void *worker_pipeline(void *shared, int step, void *in)
 				p->str.l = 0;
 				mp_write_paf(&p->str, p->mi, &s->seq[i], &s->reg[i][j]);
 				fwrite(p->str.s, 1, p->str.l, stdout);
+				free(s->reg[i][j].p);
 			}
 			free(s->reg[i]);
 			free(s->seq[i].seq); free(s->seq[i].name);
