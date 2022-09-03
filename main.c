@@ -43,6 +43,8 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -m NUM       min chaining score [%d]\n", mo->min_chn_sc);
 	fprintf(fp, "    -p FLOAT     min secondary-to-primary score ratio [%g]\n", mo->pri_ratio);
 	fprintf(fp, "    -N NUM       consider at most INT secondary alignments [%d]\n", mo->best_n);
+	fprintf(fp, "  Alignment:\n");
+	fprintf(fp, "    -A           no alignment\n");
 	fprintf(fp, "  Input/output:\n");
 	fprintf(fp, "    -t INT       number of threads [%d]\n", n_threads);
 	fprintf(fp, "    -K NUM       query batch size [100M]\n");
@@ -60,7 +62,7 @@ int main(int argc, char *argv[])
 	mp_start();
 	mp_mapopt_init(&mo);
 	mp_idxopt_init(&io);
-	while ((c = ketopt(&o, argc, argv, 1, "k:s:b:t:d:c:n:m:K:p:N:S", long_options)) >= 0) {
+	while ((c = ketopt(&o, argc, argv, 1, "k:s:b:t:d:c:n:m:K:p:N:SA", long_options)) >= 0) {
 		if (c == 'k') io.kmer = atoi(o.arg);
 		else if (c == 's') io.smer = atoi(o.arg);
 		else if (c == 'b') io.bbit = atoi(o.arg);
@@ -73,6 +75,7 @@ int main(int argc, char *argv[])
 		else if (c == 'p') mo.pri_ratio = atof(o.arg);
 		else if (c == 'N') mo.best_n = mp_parse_num(o.arg);
 		else if (c == 'S') mo.flag |= MP_F_NO_SPLICE;
+		else if (c == 'A') mo.flag |= MP_F_NO_ALIGN;
 		else if (c == 501) mp_dbg_flag |= MP_DBG_NO_KALLOC; // --no-kalloc
 		else if (c == 502) mp_dbg_flag |= MP_DBG_QNAME; // --dbg-qname
 		else if (c == 503) mp_dbg_flag |= MP_DBG_NO_REFINE; // --dbg-no-refine

@@ -155,10 +155,15 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 		mp_set_parent(km, opt->mask_level, opt->mask_len, *n_reg, reg, mi->opt.kmer, 0);
 		mp_select_sub(km, opt->pri_ratio, mi->opt.kmer * 2, opt->best_n, n_reg, reg);
 	}
-	for (i = 0; i < *n_reg; ++i)
-		mp_align(km, opt, mi, qlen, seq, &reg[i]);
-	kfree(km, a);
+	if (opt->flag & MP_F_NO_ALIGN) {
+		//for (i = 0; i < *n_reg; ++i)
+		//	kfree(km, reg[i].a);
+	} else {
+		for (i = 0; i < *n_reg; ++i)
+			mp_align(km, opt, mi, qlen, seq, &reg[i]);
+	}
 	mp_sort_reg(km, n_reg, reg);
+	kfree(km, a);
 	for (i = 0; i < *n_reg; ++i)
 		kfree(km, reg[i].a);
 	return reg;
