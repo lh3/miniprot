@@ -169,6 +169,6 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	#endif
 	//for (i = 0; i < cigar.n; ++i) printf("%d%c", cigar.c[i]>>4, NS_CIGAR_STR[cigar.c[i]&0xf]); putchar('\n');
 	mp_extra_gen(km, r, &cigar, score);
-	mp_extra_cal(r, opt, &nt[r->vs - as], aa);
+	mp_extra_cal(r, opt, &nt[r->vs - as], &aa[r->qs]);
 	kfree(km, nt);
 }
