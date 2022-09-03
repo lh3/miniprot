@@ -43,6 +43,7 @@ typedef struct {
 	int32_t best_n;
 	int32_t kmer2;
 	int32_t go, ge, io, nc, fs; // gap open, extension, intron open, non-conanical and frame-shift
+	const int8_t *mat;
 } mp_mapopt_t;
 
 typedef struct {
@@ -69,6 +70,8 @@ typedef struct {
 
 typedef struct {
 	int32_t dp_max, dp_max2;
+	int32_t n_cigar, m_cigar;
+	uint32_t cigar[];
 } mp_extra_t;
 
 typedef struct {

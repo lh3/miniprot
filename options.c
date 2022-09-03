@@ -1,5 +1,6 @@
 #include <string.h>
 #include "miniprot.h"
+#include "nasw.h"
 
 void mp_idxopt_init(mp_idxopt_t *io)
 {
@@ -35,4 +36,5 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 	mo->io = 31;
 	mo->nc = 6;
 	mo->fs = 15;
+	mo->mat = ns_mat_blosum62;
 }
