@@ -72,6 +72,9 @@ typedef struct {
 typedef struct {
 	int32_t dp_max, dp_max2;
 	int32_t n_cigar, m_cigar;
+	int32_t glen, clen; // genomic length, CDS length in alignment
+	int32_t n_iden, n_plus;
+	int32_t aa_score;
 	uint32_t cigar[];
 } mp_extra_t;
 
