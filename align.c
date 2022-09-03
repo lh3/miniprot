@@ -130,7 +130,7 @@ static void mp_extra_gen(void *km, mp_reg1_t *r, mp_cigar_t *cigar, int32_t scor
 
 void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len, const char *aa, mp_reg1_t *r)
 {
-	int32_t i, i0, ne0, ae0, score = 0;
+	int32_t i, i0, ne0 = 0, ae0 = 0, score = 0;
 	int64_t as, ae, ctg_len, vs0, l_nt;
 	uint8_t *nt;
 	mp_cigar_t cigar = {0,0,0};

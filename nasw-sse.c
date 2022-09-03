@@ -99,7 +99,7 @@ static uint8_t *ns_prep_seq(void *km, const char *ns, int32_t nl, const char *as
 	for (i = 1; i < nl; ++i) { // generate acceptor[]
 		int32_t t = 0;
 		if (nas[i-1] == 0 && nas[i] == 2) t = 1;
-		if (t && i > 0 && (nas[i-2] == 1 || nas[i-2] == 3)) t = 2;
+		if (t && i >= 2 && (nas[i-2] == 1 || nas[i-2] == 3)) t = 2;
 		acceptor[i] = t == 2? 0 : t == 1? opt->nc/2 : opt->nc;
 	}
 	memset(nas, opt->aa20['X'], nl);

@@ -29,7 +29,7 @@ miniprot:$(OBJS) main.o
 		$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
 
 clean:
-		rm -fr gmon.out *.o a.out $(PROG) fmd-occ *~ *.a *.dSYM
+		rm -fr *.o a.out $(PROG) *~ *.a *.dSYM
 
 depend:
 		(LC_ALL=C; export LC_ALL; makedepend -Y -- $(CFLAGS) $(DFLAGS) -- *.c *.cpp)
@@ -50,6 +50,6 @@ misc.o: mppriv.h miniprot.h nasw.h kalloc.h kseq.h ksort.h
 nasw-sse.o: nasw.h kalloc.h
 nasw-tab.o: nasw.h kalloc.h
 ntseq.o: mppriv.h miniprot.h nasw.h kalloc.h kseq.h
-options.o: miniprot.h
+options.o: miniprot.h nasw.h kalloc.h
 sketch.o: mppriv.h miniprot.h nasw.h kalloc.h kseq.h kvec-km.h
 sys.o: mppriv.h miniprot.h nasw.h kalloc.h kseq.h
