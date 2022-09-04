@@ -159,8 +159,10 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 		//for (i = 0; i < *n_reg; ++i)
 		//	kfree(km, reg[i].a);
 	} else {
-		for (i = 0; i < *n_reg; ++i)
+		for (i = 0; i < *n_reg; ++i) {
+			//fprintf(stderr, "X\t%s\t%c\t%ld\n", mi->nt->ctg[reg[i].vid>>1].name, "+-"[reg[i].vid&1], (long)reg[i].vs);
 			mp_align(km, opt, mi, qlen, seq, &reg[i]);
+		}
 	}
 	mp_sort_reg(km, n_reg, reg);
 	kfree(km, a);

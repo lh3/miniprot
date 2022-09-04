@@ -110,6 +110,7 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 			nl += len, ++al, e->glen += len, e->clen += 3;
 		}
 	}
+	//if (al != r->qe - r->qs) fprintf(stderr, "%d != %d\n", al, r->qe - r->qs);
 	assert(nl == r->ve - r->vs);
 	assert(al == r->qe - r->qs);
 	//printf("aa_score=%d, glen=%d, clen=%d, n_iden=%d, n_plus=%d\n", e->aa_score, e->glen, e->clen, e->n_iden, e->n_plus);
@@ -137,6 +138,13 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 
 	assert(r->cnt > 0);
 	mp_filter_seed(r->cnt, r->a, 3, 3);
+	for (i = 0; i < r->cnt; ++i)
+		if (r->a[i]>>31&1) break;
+	if (i == r->cnt) { // all filtered; FIXME: we need to filter it later; not implemented yet
+		r->cnt = 0;
+		return;
+	}
+	i0 = i;
 
 	ctg_len = mi->nt->ctg[r->vid>>1].len;
 	as = r->vs > opt->max_ext? r->vs - opt->max_ext : 0;
@@ -146,9 +154,6 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	assert(l_nt == ae - as);
 	vs0 = r->vs;
 
-	for (i = 0; i < r->cnt; ++i)
-		if (r->a[i]>>31&1) break;
-	i0 = i;
 	#if 1
 	if (i0 < r->cnt) {
 		ne0 = (r->a[i0]>>32) + 1, ae0 = ((int32_t)r->a[i0]<<1>>1) + 1;
