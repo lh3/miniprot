@@ -186,6 +186,18 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	#else
 	score = mp_align_seq(km, opt, r->ve - r->vs, &nt[r->vs - as], r->qe - r->qs, aa, &cigar);
 	#endif
+
+	{ // right extension
+		ns_opt_t ns_opt;
+		ns_rst_t rst;
+		mp_map2ns_opt(opt, &ns_opt);
+		ns_opt.flag |= NS_F_EXT_RIGHT;
+		ns_rst_init(&rst);
+		ns_global_gs16(km, (const char*)&nt[r->ve - as], ae - r->ve, &aa[r->qe], len - r->qe, &ns_opt, &rst);
+		score += mp_align_seq(km, opt, rst.nt_len, &nt[r->ve - as], rst.aa_len, &aa[r->qe], &cigar);
+		r->ve += rst.nt_len, r->qe += rst.aa_len;
+	}
+
 	//for (i = 0; i < cigar.n; ++i) printf("%d%c", cigar.c[i]>>4, NS_CIGAR_STR[cigar.c[i]&0xf]); putchar('\n');
 	mp_extra_gen(km, r, &cigar, score);
 	mp_extra_cal(r, opt, &nt[r->vs - as], &aa[r->qs]);
