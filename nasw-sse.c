@@ -76,10 +76,25 @@ static void ns_backtrack(void *km, int32_t vs, const __m128i *tb, int32_t nl, in
 	*cigar_ = cigar;
 }
 
+static void ns_prep_nas(const char *ns, int32_t nl, const ns_opt_t *opt, uint8_t *nas)
+{
+	int32_t i, l;
+	uint8_t codon;
+	memset(nas, opt->aa20['X'], nl);
+	for (i = l = 0, codon = 0; i < nl; ++i) { // generate the real nas[]
+		uint8_t c = opt->nt4[(uint8_t)ns[i]];
+		if (c < 4) {
+			codon = (codon << 2 | c) & 0x3f;
+			if (++l >= 3)
+				nas[i] = opt->codon[codon];
+		} else codon = 0, l = 0;
+	}
+}
+
 static uint8_t *ns_prep_seq(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, uint8_t **aas_, int8_t **donor_, int8_t **acceptor_)
 {
-	int32_t i, j, l;
-	uint8_t codon, *nas, *aas;
+	int32_t i, j;
+	uint8_t *nas, *aas;
 	int8_t *donor, *acceptor;
 	nas = Kmalloc(km, uint8_t, nl + al + (nl + 1) * 2);
 	*aas_ = aas = nas + nl;
@@ -102,15 +117,41 @@ static uint8_t *ns_prep_seq(void *km, const char *ns, int32_t nl, const char *as
 		if (t && i >= 2 && (nas[i-2] == 1 || nas[i-2] == 3)) t = 2;
 		acceptor[i] = t == 2? 0 : t == 1? opt->nc/2 : opt->nc;
 	}
-	memset(nas, opt->aa20['X'], nl);
-	for (i = l = 0, codon = 0; i < nl; ++i) { // generate the real nas[]
-		uint8_t c = opt->nt4[(uint8_t)ns[i]];
-		if (c < 4) {
-			codon = (codon << 2 | c) & 0x3f;
-			if (++l >= 3)
-				nas[i] = opt->codon[codon];
-		} else codon = 0, l = 0;
+	ns_prep_nas(ns, nl, opt, nas);
+	return nas;
+}
+
+static uint8_t *ns_prep_seq_left(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, uint8_t **aas_, int8_t **donor_, int8_t **acceptor_)
+{
+	int32_t i, j;
+	uint8_t *nas, *aas, tmp;
+	int8_t *donor, *acceptor;
+	nas = Kmalloc(km, uint8_t, nl + al + (nl + 1) * 2);
+	*aas_ = aas = nas + nl;
+	*donor_ = donor = (int8_t*)aas + al, *acceptor_ = acceptor = donor + nl + 1;
+	for (j = 0; j < al; ++j) // generate aas[]
+		aas[al - 1 - j] = opt->aa20[(uint8_t)as[j]];
+	for (i = 0; i < nl; ++i) // nt4 encoding of ns[] for computing donor[] and acceptor[]
+		nas[nl - 1 - i] = opt->nt4[(uint8_t)ns[i]];
+	for (i = 0; i < nl + 1; ++i)
+		donor[i] = acceptor[i] = opt->nc;
+	for (i = 0; i < nl - 3; ++i) { // generate donor[]
+		int32_t t = 0;
+		if (nas[i+1] == 2 && nas[i+2] == 0) t = 1; // GA-- (because nas has been reversed)
+		if (t && i + 3 < nl && (nas[i+3] == 1 || nas[i+3] == 3)) t = 2;
+		donor[i] = t == 2? 0 : t == 1? opt->nc/2 : opt->nc;
 	}
+	for (i = 1; i < nl; ++i) { // generate acceptor[]
+		int32_t t = 0;
+		if (nas[i-1] == 3 && nas[i] == 2) t = 1; // --TG
+		if (t && i >= 2 && (nas[i-2] == 0 || nas[i-2] == 2)) t = 2;
+		acceptor[i] = t == 2? 0 : t == 1? opt->nc/2 : opt->nc;
+	}
+	ns_prep_nas(ns, nl, opt, nas);
+	for (i = 0; i < nl>>1; ++i) // reverse
+		tmp = nas[i], nas[i] = nas[nl - 1 - i], nas[nl - 1 - i] = tmp;
+	memmove(nas + 2, nas, nl - 2);
+	nas[0] = nas[1] = opt->aa20['X'];
 	return nas;
 }
 
@@ -131,29 +172,32 @@ static uint8_t *ns_prep_seq(void *km, const char *ns, int32_t nl, const char *as
 #define sse_gen(func, suf) _mm_##func##_##suf
 
 #define NS_GEN_VAR(_suf) \
-	int32_t i, j, slen = (al + vsize - 1) / vsize; /* segment length */ \
+	int32_t i, j, is_ext = !!(opt->flag&(NS_F_EXT_LEFT|NS_F_EXT_RIGHT)), slen = (al + vsize - 1) / vsize; /* segment length */ \
 	uint8_t *nas, *aas, *mem_ap, *mem_H, *mem_tb = 0; \
 	int8_t *donor, *acceptor; \
-	__m128i *ap, *tb = 0, *H0, *H, *H1, *H2, *H3, *D, *D1, *D2, *D3, *A, *B, *C; \
+	__m128i *ap, *tb = 0, *H0, *H, *H1, *H2, *H3, *D, *D1, *D2, *D3, *A, *B, *C, *Hmax; \
 	__m128i go, ge, goe, io, fs; \
 
 #define NS_GEN_PREPARE(_suf) \
-	r->n_cigar = 0; \
-	nas = ns_prep_seq(km, ns, nl, as, al, opt, &aas, &donor, &acceptor); \
+	r->n_cigar = 0, r->nt_len = nl, r->aa_len = al, r->score = INT32_MIN; \
+	if (opt->flag & NS_F_EXT_LEFT) nas = ns_prep_seq_left(km, ns, nl, as, al, opt, &aas, &donor, &acceptor); \
+	else nas = ns_prep_seq(km, ns, nl, as, al, opt, &aas, &donor, &acceptor); \
 	ns_gen_prof(ns_int_t, km, aas, al, opt, neg_inf, &mem_ap, &ap); \
 	go = sse_gen(set1, _suf)(opt->go); \
 	ge = sse_gen(set1, _suf)(opt->ge); \
 	goe= sse_gen(set1, _suf)(opt->go + opt->ge); \
 	io = sse_gen(set1, _suf)(opt->io); \
 	fs = sse_gen(set1, _suf)(opt->fs); \
-	H0 = ns_alloc16(km, (slen + 1) * 4 + slen * 7, &mem_H); \
+	H0 = ns_alloc16(km, (slen + 1) * 5 + slen * 7, &mem_H); \
 	H = H0 + 1, H1 = H0 + (slen + 1) + 1, H2 = H0 + (slen + 1) * 2 + 1, H3 = H0 + (slen + 1) * 3 + 1; \
-	D = H3 + slen, D1 = D + slen, D2 = D1 + slen, D3 = D2 + slen; \
+	Hmax = H0 + (slen + 1) * 4 + 1; \
+	D = Hmax + slen, D1 = D + slen, D2 = D1 + slen, D3 = D2 + slen; \
 	A = D3 + slen, B = A + slen, C = B + slen; \
-	if (opt->flag & NS_F_CIGAR) tb = ns_alloc16(km, nl * slen, &mem_tb);
+	if ((opt->flag & NS_F_CIGAR) && !is_ext) \
+		tb = ns_alloc16(km, nl * slen, &mem_tb);
 
 #define NS_GEN_INIT1(_suf) \
-	for (i = 0; i < (slen + 1) * 4 + slen * 7; ++i) \
+	for (i = 0; i < (slen + 1) * 5 + slen * 7; ++i) \
 		H0[i] = sse_gen(set1, _suf)(neg_inf); \
 	H3[-1] = sse_gen(insert, _suf)(H3[-1], 0, 0); \
 	H2[-1] = sse_gen(insert, _suf)(H2[-1], -opt->fs, 0); \
@@ -198,7 +242,19 @@ static inline __m128i ns_select(__m128i cond, __m128i a, __m128i b)
 #endif
 }
 
-#if defined(__SSE2__)
+static inline int ns_max_8(__m128i a)
+{
+#if defined(__ARM_NEON__)
+	return vmaxvq_s16(vreinterpretq_s16_u8(a));
+#elif defined(__SSE2__)
+	a = _mm_max_epi16(a, _mm_srli_si128(a, 8));
+	a = _mm_max_epi16(a, _mm_srli_si128(a, 4));
+	a = _mm_max_epi16(a, _mm_srli_si128(a, 2));
+    return _mm_extract_epi16(a, 0);
+#endif
+}
+
+#if defined(__SSE2__) && !defined(__SSE4_1__)
 static inline __m128i _mm_max_epi32(__m128i a, __m128i b) { return ns_select(_mm_cmpgt_epi32(a, b), a, b); }
 static inline __m128i _mm_insert_epi32(__m128i a, int b, const int ndx)
 {
@@ -226,8 +282,11 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 	NS_GEN_INIT1(epi16)
 
 	if (tb == 0) {
+		int32_t max_sc = INT32_MIN, tmp_sc, max_i = -1;
 		for (i = 2; i < nl; ++i) {
+			__m128i max;
 			NS_GEN_INIT2(epi16)
+			max = _mm_set1_epi16(neg_inf);
 			for (j = 0; j < slen; ++j) {
 				__m128i h, t, u, v;
 				// H(i-3,j-1) + s(i,j)
@@ -277,6 +336,7 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 				t = _mm_subs_epi16(_mm_load_si128(H2 + j - 1), fs);
 				h = _mm_max_epi16(h, t);
 				// save H
+				max = _mm_max_epi16(max, h);
 				_mm_store_si128(H + j, h);
 				last_h = h;
 			}
@@ -287,6 +347,7 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 					__m128i h;
 					h = _mm_load_si128(H + j);
 					h = _mm_max_epi16(h, I);
+					max = _mm_max_epi16(max, h);
 					_mm_store_si128(H + j, h);
 					h = _mm_subs_epi16(h, goe);
 					I = _mm_subs_epi16(I, ge);
@@ -294,8 +355,22 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 				}
 				if (j < slen) break;
 			}
+			tmp_sc = ns_max_8(max);
+			if (tmp_sc > max_sc) {
+				max_sc = tmp_sc, max_i = i;
+				memcpy(&Hmax[-1], &H[-1], (slen + 1) * 16);
+			}
 			tmp = H3, H3 = H2, H2 = H1, H1 = H, H = tmp;
 			tmp = D3, D3 = D2, D2 = D1, D1 = D, D = tmp;
+			if (max_sc - tmp_sc > opt->xdrop) break;
+		}
+		if (is_ext) {
+			for (j = 0; j < al; ++j) {
+				int32_t sc = *((ns_int_t*)&Hmax[j%slen] + j/slen);
+				if (sc == max_sc) break;
+			}
+			assert(j < al);
+			r->nt_len = max_i + 1, r->aa_len = j + 1, r->score = max_sc;
 		}
 	} else {
 		for (i = 2; i < nl; ++i) {
@@ -396,7 +471,7 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 			tmp = D3, D3 = D2, D2 = D1, D1 = D, D = tmp;
 		}
 	}
-	r->score = *((ns_int_t*)&H1[(al-1)%slen] + (al-1)/slen);
+	if (!is_ext) r->score = *((ns_int_t*)&H1[(al-1)%slen] + (al-1)/slen);
 	kfree(km, mem_H);
 	kfree(km, mem_ap);
 	kfree(km, nas);
