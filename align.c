@@ -39,6 +39,12 @@ typedef struct {
 	uint32_t *c;
 } mp_cigar_t;
 
+static inline void mp_map2ns_opt(const mp_mapopt_t *mo, ns_opt_t *no)
+{
+	ns_opt_init(no);
+	no->go = mo->go, no->ge = mo->ge, no->io = mo->io, no->fs = mo->fs, no->nc = mo->nc, no->sc = mo->mat;
+}
+
 static int32_t mp_align_seq(void *km, const mp_mapopt_t *opt, int32_t nlen, const uint8_t *nseq, int32_t alen, const char *aseq, mp_cigar_t *cigar)
 {
 	int32_t i;
@@ -48,9 +54,8 @@ static int32_t mp_align_seq(void *km, const mp_mapopt_t *opt, int32_t nlen, cons
 	} else {
 		ns_opt_t ns_opt;
 		ns_rst_t rst;
-		ns_opt_init(&ns_opt);
+		mp_map2ns_opt(opt, &ns_opt);
 		ns_opt.flag |= NS_F_CIGAR;
-		ns_opt.go = opt->go, ns_opt.ge = opt->ge, ns_opt.io = opt->io, ns_opt.fs = opt->fs, ns_opt.nc = opt->nc, ns_opt.sc = opt->mat;
 		ns_rst_init(&rst);
 		ns_global_gs16(km, (const char*)nseq, nlen, aseq, alen, &ns_opt, &rst);
 		//printf("%d\t%d\t%d\t%d\n", nlen, alen, rst.score, rst.n_cigar);
@@ -150,18 +155,27 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	as = r->vs > opt->max_ext? r->vs - opt->max_ext : 0;
 	ae = r->ve + opt->max_ext < ctg_len? r->ve + opt->max_ext : ctg_len;
 	nt = Kmalloc(km, uint8_t, ae - as);
-	l_nt = mp_ntseq_get(mi->nt, r->vid>>1, r->vid&1? ctg_len - ae : as, r->vid&1? ctg_len - as : ae, r->vid&1, nt);
+	l_nt = mp_ntseq_get_by_v(mi->nt, r->vid, as, ae, nt);
 	assert(l_nt == ae - as);
 	vs0 = r->vs;
 
-	#if 1
-	if (i0 < r->cnt) {
-		ne0 = (r->a[i0]>>32) + 1, ae0 = ((int32_t)r->a[i0]<<1>>1) + 1;
-		r->vs += ne0 - opt->kmer2 * 3, r->qs = ae0 - opt->kmer2;
-		cigar.c = ns_push_cigar(km, &cigar.n, &cigar.m, cigar.c, NS_CIGAR_M, opt->kmer2);
-		score = mp_score_ungapped(opt->kmer2, &nt[r->vs - as], &aa[r->qs], opt->asize, opt->mat);
+	{ // left extension
+		int64_t vs1 = vs0 + (r->a[i0]>>32) + 1;
+		int32_t as1 = ((int32_t)r->a[i0]<<1>>1) + 1;
+		ns_opt_t ns_opt;
+		ns_rst_t rst;
+		mp_map2ns_opt(opt, &ns_opt);
+		ns_opt.flag |= NS_F_EXT_LEFT;
+		ns_rst_init(&rst);
+		ns_global_gs16(km, (const char*)nt, vs1 - as, aa, as1, &ns_opt, &rst);
+		r->vs = vs1 - rst.nt_len;
+		r->qs = as1 - rst.aa_len;
+		ne0 = r->vs - vs0;
+		ae0 = r->qs;
 	}
-	for (i = i0 + 1; i < r->cnt; ++i) {
+
+	#if 1
+	for (i = i0; i < r->cnt; ++i) {
 		int32_t ne1, ae1;
 		if (!(r->a[i]>>31&1)) continue;
 		ne1 = (r->a[i]>>32) + 1, ae1 = ((int32_t)r->a[i]<<1>>1) + 1;
