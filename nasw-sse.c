@@ -250,7 +250,7 @@ static inline int ns_max_8(__m128i a)
 	a = _mm_max_epi16(a, _mm_srli_si128(a, 8));
 	a = _mm_max_epi16(a, _mm_srli_si128(a, 4));
 	a = _mm_max_epi16(a, _mm_srli_si128(a, 2));
-    return _mm_extract_epi16(a, 0);
+    return (int16_t)_mm_extract_epi16(a, 0);
 #endif
 }
 

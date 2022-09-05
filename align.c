@@ -187,7 +187,7 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	score = mp_align_seq(km, opt, r->ve - r->vs, &nt[r->vs - as], r->qe - r->qs, aa, &cigar);
 	#endif
 
-	{ // right extension
+	if (r->qe < len && r->ve < ae) { // right extension
 		ns_opt_t ns_opt;
 		ns_rst_t rst;
 		mp_map2ns_opt(opt, &ns_opt);
