@@ -15,7 +15,7 @@ static void mp_filter_seed(int32_t cnt, uint64_t *a, int32_t max_aa_dist, int32_
 				break;
 		}
 		if (j - i >= min_cnt) {
-			for (; i < j; ++i)
+			for (; i < j - min_cnt + 1; ++i)
 				a[i] |= 1ULL<<31;
 			--i;
 		}
