@@ -3,7 +3,7 @@
 #include "mppriv.h"
 #include "nasw.h"
 
-static void mp_filter_seed(int32_t cnt, uint64_t *a, int32_t max_aa_dist, int32_t min_cnt)
+static void mp_filter_seed(int32_t cnt, uint64_t *a, int32_t max_aa_dist, int32_t min_cnt, int32_t kmer2, int32_t trim_back)
 {
 	int32_t i, j;
 	for (i = 0; i < cnt; ++i) {
@@ -15,9 +15,17 @@ static void mp_filter_seed(int32_t cnt, uint64_t *a, int32_t max_aa_dist, int32_
 				break;
 		}
 		if (j - i >= min_cnt) {
-			for (; i < j - min_cnt + 1; ++i)
+			int32_t k, t = (int32_t)a[j-1];
+			for (k = j - 2; k >= i; --k)
+				if (t - (int32_t)a[k] >= trim_back)
+					break;
+			t = (int32_t)a[i] + 1 - kmer2;
+			for (; i < k; ++i)
+				if ((int32_t)a[i] + 1 - t >= trim_back)
+					break;
+			for (; i <= k; ++i)
 				a[i] |= 1ULL<<31;
-			--i;
+			i = j - 1;
 		}
 	}
 }
@@ -142,7 +150,7 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	mp_cigar_t cigar = {0,0,0};
 
 	assert(r->cnt > 0);
-	mp_filter_seed(r->cnt, r->a, 3, 3);
+	mp_filter_seed(r->cnt, r->a, 3, 3, opt->kmer2, opt->kmer2 + 1);
 	for (i = 0; i < r->cnt; ++i)
 		if (r->a[i]>>31&1) break;
 	if (i == r->cnt) { // all filtered; FIXME: we need to filter it later; not implemented yet
