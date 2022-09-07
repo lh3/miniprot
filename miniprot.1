@@ -109,7 +109,7 @@ r | l | l .
 Op	Regex	Description
 _
  :	[0-9]+	Number of identical amino acids
- *	[acgtn]{3}[A-Z*]	Substitution: ref to query
+ *	[acgtn]+[A-Z*]	Substitution: ref to query
  +	[acgtn]+	# aa inserted to the reference
  -	[acgtn]+	# nt deleted from the reference
  ~	[acgtn]{2}[0-9]+[acgtn]{2}	Intron length and splice signal
