@@ -11,12 +11,12 @@ man ./miniprot.1  # for output format
 ## Introduction
 
 Miniprot aligns a protein sequence against a genome with splicing and
-frameshift. It is primarily used for annotating protein-coding genes in a new
+frameshift. It is primarily intended for annotating protein-coding genes in a new
 species using known genes from other species. Miniprot is similar to GeneWise
 in functionality but it can map proteins to whole genomes and is over 100 times
 faster at the residue alignment step.
 
-Miniprot is not intended for mapping distant homologs because distant homologs
+Miniprot is not optimized for mapping distant homologs because distant homologs
 are less informative to gene annotations. Nonetheless, you can tune seeding
 parameters to achieve higher sensitivity at the cost of performance.
 
@@ -42,6 +42,10 @@ miniprot -t8 -d ref.mpi ref.fna
 ```
 Because miniprot indexing is slow and memory intensive, it is recommended to
 pre-build the index. FASTA input files can be optionally compressed with gzip.
+
+Miniprot outputs alignment in the protein PAF format. Different from the more
+common nucleotide PAF format, miniprot uses more CIGAR operators to encode
+introns and frameshifts. Please refer to the manpage for detailed explaination.
 
 ## Limitations
 
