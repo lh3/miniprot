@@ -33,3 +33,92 @@ miniprot
 .RE
 .SH DESCRIPTION
 Miniprot aligns protein sequences to a genome allowing potential frameshifts and splicing.
+.SH OPTIONS
+.SS Indexing options
+.SS Chaining options
+.SS Alignment options
+.SS Input/Output options
+.SH OUTPUT FORMAT
+.PP
+Miniprot outputs alignments in the extended Pairwise mApping Format (PAF) by
+default. PAF is a TAB-delimited text format with each line consisting of at
+least 12 fields as are described in the following table:
+.TS
+center box;
+cb | cb | cb
+r | c | l .
+Col	Type	Description
+_
+1	string	Protein sequence name
+2	int	Protein sequence length
+3	int	Protein start coordinate (0-based)
+4	int	Protein end coordinate (0-based)
+5	char	`+' for forward strand; `-' for reverse
+6	string	Contig sequence name
+7	int	Contig sequence length
+8	int	Contig start coordinate on the original strand
+9	int	Contig end coordinate on the original strand
+10	int	Number of matching nucleotides
+11	int	Number of nucleotides in alignment excl. introns
+12	int	Mapping quality (0-255 with 255 for missing)
+.TE
+
+.PP
+PAF may optionally have additional fields in the SAM-like typed key-value
+format. Miniprot may output the following tags:
+.TS
+center box;
+cb | cb | cb
+r | c | l .
+Tag	Type	Description
+_
+AS	i	Alignment score from dynamic programming
+as	i	Alignment excluding introns
+np	i	Number of amino acid matches with positive scores
+gl	i	Length of genomic sequences in the alignment
+cg	i	Protein CIGAR
+cs	i	Difference string
+.TE
+
+.PP
+A protein CIGAR consists of the following operators:
+.TS
+center box;
+cb | cb
+r | l .
+Op	Description
+_
+nM	Alignment match. Consuming n*3 nucleotides and n amino acids
+nI	Insertion. Consuming n amino acides
+nD	Delection. Consuming n*3 nucleotides
+nF	Frameshift deletion. Consuming n nucleotides
+nG	Frameshift match. Consuming n nucleotides and 1 amino acid
+nN	Phase-0 intron. Consuming n nucleotides
+nU	Phase-1 intron. Consuming n nucleotides and 1 amino acid
+nV	Phase-2 intron. Consuming n nucleotides and 1 amino acid
+.TE
+
+.PP
+The
+.B cs
+tag encodes difference sequences. It consists of a series of operations:
+.TS
+center box;
+cb | cb |cb
+r | l | l .
+Op	Regex	Description
+_
+ :	[0-9]+	Number of identical amino acids
+ *	[acgtn]{3}[A-Z*]	Substitution: ref to query
+ +	[acgtn]+	# aa inserted to the reference
+ -	[acgtn]+	# nt deleted from the reference
+ ~	[acgtn]{2}[0-9]+[acgtn]{2}	Intron length and splice signal
+.TE
+
+.SH LIMITATIONS
+.TP 2
+*
+Miniprot is not well tested.
+.TP
+*
+The DP alignment score (the AS tag) is not be accurate.
