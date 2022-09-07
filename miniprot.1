@@ -1,0 +1,35 @@
+.TH miniprot 1 "6 September 2022" "miniprot-0.0-dirty (r76)" "Bioinformatics tools"
+.SH NAME
+.PP
+miniprot - protein-to-genome alignment with splicing and frameshifts
+.SH SYNOPSIS
+* Indexing a genome (recommended as indexing can be slow and memory hungry):
+.RS 4
+miniprot
+.RB [ -t
+.IR nThreads ]
+.B -d
+.I ref.mpi
+.I ref.fna
+.RE
+
+* Aligning proteins to a genome:
+.RS 4
+miniprot 
+.RB [ -t
+.IR nThreads ]
+.I ref.mpi
+.I protein.faa
+>
+.I output.paf
+.br
+miniprot 
+.RB [ -t
+.IR nThreads ]
+.I ref.fna
+.I protein.faa
+>
+.I output.paf
+.RE
+.SH DESCRIPTION
+Miniprot aligns protein sequences to a genome allowing potential frameshifts and splicing.
