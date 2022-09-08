@@ -45,7 +45,7 @@ pre-build the index. FASTA input files can be optionally compressed with gzip.
 
 Miniprot outputs alignment in the protein PAF format. Different from the more
 common nucleotide PAF format, miniprot uses more CIGAR operators to encode
-introns and frameshifts. Please refer to the manpage for detailed explaination.
+introns and frameshifts. Please refer to the manpage for detailed explanation.
 
 ## Limitations
 

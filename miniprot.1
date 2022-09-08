@@ -35,9 +35,84 @@ miniprot
 Miniprot aligns protein sequences to a genome allowing potential frameshifts and splicing.
 .SH OPTIONS
 .SS Indexing options
+.TP 10
+.BI -k \ INT
+K-mer size for genome-wide indexing [6]
+.TP
+.BI -s \ INT
+Syncmer submer size [4]. In average, miniprot selects a k-mer every 2*(k-s)+1 residues.
+.TP
+.BI -b \ INT
+Number of bits per bin [8]. Miniprot splits the genome into non-overlapping bins of 2^8 bp in size.
+.TP
+.BI -d \ FILE
+Write the index to
+.I FILE
+[].
 .SS Chaining options
+.TP 10
+.B -S
+Disable splicing. It applies
+.RB ` -G1k
+.B -J1k
+.BR -e1k '
+at the same time.
+.TP
+.BI -c \ NUM
+Ignore k-mers occurring
+.I NUM
+times or more [50k]
+.TP
+.BI -G \ NUM
+Max intron size [200k]
+.TP
+.BI -n \ NUM
+Min number of syncmers in a chain [10]
+.TP
+.BI -m \ NUM
+Min chaining score [0]
+.TP
+.BI -l \ INT
+K-mer size for the second round of chaining [5]
+.TP
+.BI -e \ NUM
+Max extension from chain ends for alignment or the second round of chaining [10k]
+.TP
+.BI -p \ FLOAT
+Filter out a secondary chain/alignment if its score is
+.I FLOAT
+fraction of the best chain [0.5]
+.TP
+.BI -N \ NUM
+Retain at most
+.I NUM
+number of secondary chains/alignments [100]
 .SS Alignment options
+.TP 10
+.BI -O \ INT
+Gap open penalty [11]
+.TP
+.BI -E \ INT
+Gap extension penalty [1]. A gap of size
+.B g
+costs 
+.RB { -O }+{ -E }* g .
+.TP
+.BI -J \ INT
+Intron open penalty [31]
+.TP
+.BI -C \ INT
+Bonus for canonical GT-AG splicing [6]
+.TP
+.BI -F \ INT
+Frameshift penalty [15]
 .SS Input/Output options
+.TP 10
+.BI -t \ INT
+Number of threads [4]
+.TP
+.BI -K \ NUM
+Query batch size [100M]
 .SH OUTPUT FORMAT
 .PP
 Miniprot outputs alignments in the extended Pairwise mApping Format (PAF) by
@@ -73,7 +148,7 @@ r | c | l .
 Tag	Type	Description
 _
 AS	i	Alignment score from dynamic programming
-as	i	Alignment excluding introns
+as	i	Alignment score excluding introns
 np	i	Number of amino acid matches with positive scores
 gl	i	Length of genomic sequences in the alignment
 cg	i	Protein CIGAR
@@ -89,7 +164,7 @@ r | l .
 Op	Description
 _
 nM	Alignment match. Consuming n*3 nucleotides and n amino acids
-nI	Insertion. Consuming n amino acides
+nI	Insertion. Consuming n amino acids
 nD	Delection. Consuming n*3 nucleotides
 nF	Frameshift deletion. Consuming n nucleotides
 nG	Frameshift match. Consuming n nucleotides and 1 amino acid
