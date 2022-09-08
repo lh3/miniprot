@@ -55,7 +55,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -F INT       frameshift penalty [%d]\n", mo->fs);
 	fprintf(fp, "  Input/output:\n");
 	fprintf(fp, "    -t INT       number of threads [%d]\n", n_threads);
-	fprintf(fp, "    -K NUM       query batch size [10M]\n");
+	fprintf(fp, "    -K NUM       query batch size [2M]\n");
 }
 
 int main(int argc, char *argv[])

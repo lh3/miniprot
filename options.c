@@ -15,7 +15,7 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 {
 	memset(mo, 0, sizeof(*mo));
 	mo->flag = 0;
-	mo->mini_batch_size = 10000000;
+	mo->mini_batch_size = 2000000;
 	mo->max_occ = 50000;
 	mo->max_gap = 1000;
 	mo->max_intron = 200000;
