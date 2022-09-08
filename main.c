@@ -51,11 +51,11 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -O INT       gap open penalty [%d]\n", mo->go);
 	fprintf(fp, "    -E INT       gap extension (a k-long gap costs O+k*E) [%d]\n", mo->ge);
 	fprintf(fp, "    -J INT       intron open penalty [%d]\n", mo->io);
-	fprintf(fp, "    -C INT       bonus for canonical GT-AG splicing [%d]\n", mo->nc);
+	fprintf(fp, "    -C INT       penalty for non-canonical splicing [%d]\n", mo->nc);
 	fprintf(fp, "    -F INT       frameshift penalty [%d]\n", mo->fs);
 	fprintf(fp, "  Input/output:\n");
 	fprintf(fp, "    -t INT       number of threads [%d]\n", n_threads);
-	fprintf(fp, "    -K NUM       query batch size [100M]\n");
+	fprintf(fp, "    -K NUM       query batch size [10M]\n");
 }
 
 int main(int argc, char *argv[])
