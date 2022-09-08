@@ -79,7 +79,7 @@ static void mp_write_cs(kstring_t *str, const mp_idx_t *mi, const char *aa, cons
 		if (op == NS_CIGAR_I || op == NS_CIGAR_F || op == NS_CIGAR_G) l_tmp = l_tmp > len? l_tmp : len;
 		else if (op == NS_CIGAR_D) l_tmp = l_tmp > len3? l_tmp : len3;
 	}
-	tmp = Kmalloc(0, char, l_tmp);
+	tmp = Kmalloc(0, char, l_tmp + 16);
 	nt = Kmalloc(0, uint8_t, r->ve - r->vs);
 	l_nt = mp_ntseq_get_by_v(mi->nt, r->vid, r->vs, r->ve, nt);
 	assert(l_nt == r->ve - r->vs);
