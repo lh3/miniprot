@@ -102,7 +102,7 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 		} else if (op == NS_CIGAR_F) {
 			e->aa_score -= opt->fs;
 			nl += len, e->glen += len, e->clen += len;
-		} else if (op == NS_CIGAR_G) {
+		} else if (op == NS_CIGAR_R) {
 			e->aa_score -= opt->fs;
 			nl += len, ++al, e->glen += 3, e->clen += 3;
 		} else if (op == NS_CIGAR_N) {

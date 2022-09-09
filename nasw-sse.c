@@ -59,9 +59,9 @@ static void ns_backtrack(void *km, int32_t vs, const __m128i *tb, int32_t nl, in
 		} else if (state == 7) {
 			cigar = ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_F, 2), i -= 2;
 		} else if (state == 8) {
-			cigar = ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_G, 1), --i, --j;
+			cigar = ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_R, 1), --i, --j;
 		} else if (state == 9) {
-			cigar = ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_G, 2), i -= 2, --j;
+			cigar = ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_R, 2), i -= 2, --j;
 		}
 		last = state >= 1 && state <= 5 && ext? state : 0;
 	}

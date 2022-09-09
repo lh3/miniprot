@@ -9,13 +9,13 @@
 #define NS_CIGAR_I	1
 #define NS_CIGAR_D	2
 #define NS_CIGAR_N	3  // phase-0 intron
-#define NS_CIGAR_F	10 // frameshift
-#define NS_CIGAR_G	11 // frameshift
+#define NS_CIGAR_F	10 // frameshift deletion
+#define NS_CIGAR_R	11 // frameshift match
 #define NS_CIGAR_U	12 // phase-1 intron (TODO: may change)
 #define NS_CIGAR_V	13 // phase-2 intron
 #define NS_CIGAR_E	14 // empty placeholder
 
-#define NS_CIGAR_STR   "MIDNSHP=XBFGUVE"
+#define NS_CIGAR_STR   "MIDNSHP=XBFRUVE"
 
 #define NS_F_CIGAR      0x1
 #define NS_F_EXT_LEFT   0x2
@@ -57,7 +57,7 @@ void ns_global_gs32(void *km, const char *ns, int32_t nl, const char *as, int32_
 
 static inline uint32_t *ns_push_cigar(void *km, int32_t *n_cigar, int32_t *m_cigar, uint32_t *cigar, uint32_t op, int32_t len)
 {
-	if (*n_cigar == 0 || op != (cigar[(*n_cigar) - 1]&0xf) || op == NS_CIGAR_F || op == NS_CIGAR_G) {
+	if (*n_cigar == 0 || op != (cigar[(*n_cigar) - 1]&0xf) || op == NS_CIGAR_F || op == NS_CIGAR_R) {
 		if (*n_cigar == *m_cigar) {
 			(*m_cigar) += ((*m_cigar)>>1) + 8;
 			cigar = Krealloc(km, uint32_t, cigar, *m_cigar);

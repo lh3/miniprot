@@ -76,7 +76,7 @@ static void mp_write_cs(kstring_t *str, const mp_idx_t *mi, const char *aa, cons
 	mp_sprintf_lite(str, "cs:Z:");
 	for (k = 0; k < e->n_cigar; ++k) { // pre-calculate l_tmp
 		int32_t op = e->cigar[k]&0xf, len = e->cigar[k]>>4, len3 = len * 3;
-		if (op == NS_CIGAR_I || op == NS_CIGAR_F || op == NS_CIGAR_G) l_tmp = l_tmp > len? l_tmp : len;
+		if (op == NS_CIGAR_I || op == NS_CIGAR_F || op == NS_CIGAR_R) l_tmp = l_tmp > len? l_tmp : len;
 		else if (op == NS_CIGAR_D) l_tmp = l_tmp > len3? l_tmp : len3;
 	}
 	tmp = Kmalloc(0, char, l_tmp + 16);
@@ -117,7 +117,7 @@ static void mp_write_cs(kstring_t *str, const mp_idx_t *mi, const char *aa, cons
 			tmp[t] = 0;
 			mp_sprintf_lite(str, "-%s", tmp);
 			nl += len;
-		} else if (op == NS_CIGAR_G) {
+		} else if (op == NS_CIGAR_R) {
 			for (i = t = 0; i < len; ++i)
 				tmp[t++] = "acgtn"[nt[nl + i]];
 			tmp[t++] = toupper(aa[al]);
