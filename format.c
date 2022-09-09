@@ -154,7 +154,12 @@ static void mp_write_cs(kstring_t *str, const mp_idx_t *mi, const char *aa, cons
 
 void mp_write_paf(kstring_t *s, const mp_idx_t *mi, const mp_bseq1_t *seq, const mp_reg1_t *r)
 {
-	const mp_ctg_t *ctg = &mi->nt->ctg[r->vid>>1];
+	const mp_ctg_t *ctg;
+	if (r == 0) {
+		mp_sprintf_lite(s, "%s\t%d\t0\t0\t*\t*\t0\t0\t0\t0\t0\t0\n", seq->name, seq->l_seq);
+		return;
+	}
+	ctg = &mi->nt->ctg[r->vid>>1];
 	mp_sprintf_lite(s, "%s\t%d\t%d\t%d\t%c\t%s\t%d\t", seq->name, seq->l_seq, r->qs, r->qe, "+-"[r->vid&1], ctg->name, (int)ctg->len);
 	if (r->vid&1) mp_sprintf_lite(s, "%d\t%d\t", (int)(ctg->len - r->ve), (int)(ctg->len - r->vs)); // FIXME: make it work for 64-bit integers
 	else mp_sprintf_lite(s, "%d\t%d\t", (int)r->vs, (int)r->ve);

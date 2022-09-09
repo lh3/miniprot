@@ -113,6 +113,9 @@ Number of threads [4]
 .TP
 .BI -K \ NUM
 Query batch size [2M]
+.TP
+.B -u
+Print unmapped query proteins
 .SH OUTPUT FORMAT
 .PP
 Miniprot outputs alignments in the extended Pairwise mApping Format (PAF) by
@@ -150,7 +153,8 @@ _
 AS	i	Alignment score from dynamic programming
 as	i	Alignment score excluding introns
 np	i	Number of amino acid matches with positive scores
-ds	i	Distance to the nearest stop codon
+da	i	Distance to the nearest start codon
+do	i	Distance to the nearest stop codon
 cg	i	Protein CIGAR
 cs	i	Difference string
 .TE
