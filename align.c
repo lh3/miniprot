@@ -78,7 +78,7 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 {
 	int32_t k, i, j, l, nl = 0, al = 0;
 	mp_extra_t *e = r->p;
-	e->glen = e->clen = e->n_iden = e->n_plus = e->aa_score = 0;
+	e->clen = e->n_iden = e->n_plus = e->aa_score = 0;
 	for (k = 0; k < e->n_cigar; ++k) {
 		int32_t op = e->cigar[k]&0xf, len = e->cigar[k]>>4, len3 = len * 3;
 		if (op == NS_CIGAR_M) {
@@ -92,21 +92,21 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 				e->n_plus += (s > 0);
 				e->aa_score += s;
 			}
-			nl += len3, al += len, e->glen += len3, e->clen += len3;
+			nl += len3, al += len, e->clen += len3;
 		} else if (op == NS_CIGAR_I) {
 			e->aa_score -= opt->go + opt->ge * len;
-			al += len, e->glen += len3, e->clen += len3;
+			al += len, e->clen += len3;
 		} else if (op == NS_CIGAR_D) {
 			e->aa_score -= opt->go + opt->ge * len;
-			nl += len3, e->glen += len3, e->clen += len3;
+			nl += len3, e->clen += len3;
 		} else if (op == NS_CIGAR_F) {
 			e->aa_score -= opt->fs;
-			nl += len, e->glen += len, e->clen += len;
+			nl += len, e->clen += len;
 		} else if (op == NS_CIGAR_G) {
 			e->aa_score -= opt->fs;
-			nl += len, ++al, e->glen += 3, e->clen += 3;
+			nl += len, ++al, e->clen += 3;
 		} else if (op == NS_CIGAR_N) {
-			nl += len, e->glen += len;
+			nl += len;
 		} else if (op == NS_CIGAR_U || op == NS_CIGAR_V) {
 			uint8_t n1, n2, n3, codon, nt_aa, aa_aa;
 			int32_t s;
@@ -120,7 +120,7 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 			e->n_iden += (nt_aa == aa_aa);
 			e->n_plus += (s > 0);
 			e->aa_score += s;
-			nl += len, ++al, e->glen += len, e->clen += 3;
+			nl += len, ++al, e->clen += 3;
 		}
 	}
 	//if (al != r->qe - r->qs) fprintf(stderr, "%d != %d\n", al, r->qe - r->qs);
