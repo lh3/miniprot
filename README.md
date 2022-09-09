@@ -1,4 +1,5 @@
-**WARNING: miniprot is WIP.**
+**WARNING: miniprot is WIP. I made the repo public mainly to get feedbacks from
+actual users. Please read the Limitations section below and use with caution.**
 
 ## Getting Started
 ```sh
@@ -23,8 +24,9 @@ similar to GeneWise and Exonerate in functionality but it can map proteins to
 whole genomes and is much faster at the residue alignment step.
 
 Miniprot is not optimized for mapping distant homologs because distant homologs
-are less informative to gene annotations. Nonetheless, you can tune seeding
-parameters to achieve higher sensitivity at the cost of performance.
+are less informative to gene annotations. Nonetheless, it is still possible to
+tune seeding parameters to achieve higher sensitivity at the cost of
+performance.
 
 ## Users' Guide
 
@@ -71,6 +73,29 @@ against GRCh38. Miniprot mapped 34,283 of them with 84.5% of 267,776 predicted
 introns confirmed by the Gencode annotation. The accuracy is lower because
 zebrafish is more distant from human and because the input includes rarer
 isoforms.
+
+### Algorithm overview
+
+1. Translate the reference genome to amino acids in six phases and filter out
+   ORFs shorter than 45bp. Reduce 20 amino acids to 13 distinct integers and
+   extract random open syncmers of 6aa in length. By default, miniprot selects
+   20% of 6-mers in average. For a reduced 6-mer at reference position `x`,
+   keep the 6-mer and `floor(x/256)` in a dense hash table. This concludes the
+   indexing step.
+
+2. Given a protein sequence as query, extract 6-mer syncmers on the protein,
+   look up the index for seed matches and apply minimap2-like chaining. This
+   first round of chaining is approximate as the reference positions have been
+   binned during indexing.
+
+3. For each chain in step 2, redo seeding and chaining with sliding 5-mers from
+   both the reference and the protein in the original chain. Miniprot uses all
+   reduced 5-mers for this second round of chaining.
+
+4. Choose top 100 (see `-N`) chains. Filter out anchors around potential
+   introns or long gaps. Perform striped dynamic programming between remaining
+   anchors and also extend from the first or last anchors. This gives the final
+   alignment.
 
 ## Limitations
 
