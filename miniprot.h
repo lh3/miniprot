@@ -75,6 +75,7 @@ typedef struct {
 	int32_t n_cigar, m_cigar;
 	int32_t clen; // CDS length in alignment
 	int32_t dist_stop; // distance in bp to the closest stop codon
+	int32_t dist_start; // distance in bp the the closest 'M'
 	int32_t n_iden, n_plus;
 	int32_t aa_score;
 	uint32_t cigar[];

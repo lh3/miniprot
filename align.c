@@ -142,16 +142,31 @@ static void mp_extra_gen(void *km, mp_reg1_t *r, mp_cigar_t *cigar, int32_t scor
 	kfree(km, cigar->c);
 }
 
-static int32_t mp_extra_stop(const mp_reg1_t *r, const uint8_t *nt, int32_t l_nt)
+static int32_t mp_extra_stop(const mp_reg1_t *r, const uint8_t *nt, int64_t as, int64_t ae)
 {
-	int32_t i;
-	for (i = 0; i + 2 < l_nt; i += 3) {
+	int64_t j;
+	for (j = r->ve; j + 2 < ae; j += 3) {
+		int32_t i = j - as;
 		uint8_t codon = nt[i]<<4 | nt[i+1]<<2 | nt[i+2];
 		uint8_t aa = nt[i] > 3 || nt[i+1] > 3 || nt[i+2] > 3? ns_tab_aa20['X'] : ns_tab_codon[codon];
-		if (aa == 20) return i;
+		if (aa == 20) return j - r->ve;
 	}
 	return -1;
 }
+
+static int32_t mp_extra_start(const mp_reg1_t *r, const uint8_t *nt, int64_t as, int64_t ae)
+{
+	int64_t j;
+	for (j = r->vs; j >= as && j + 2 < ae; j -= 3) {
+		int32_t i = j - as;
+		uint8_t codon = nt[i]<<4 | nt[i+1]<<2 | nt[i+2];
+		uint8_t aa = nt[i] > 3 || nt[i+1] > 3 || nt[i+2] > 3? ns_tab_aa20['X'] : ns_tab_codon[codon];
+		if (aa == 20) break;
+		if (aa == 12) return r->vs - j;
+	}
+	return -1;
+}
+
 void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len, const char *aa, mp_reg1_t *r)
 {
 	int32_t i, i0, ne0 = 0, ae0 = 0, score = 0;
@@ -219,6 +234,7 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	//for (i = 0; i < cigar.n; ++i) printf("%d%c", cigar.c[i]>>4, NS_CIGAR_STR[cigar.c[i]&0xf]); putchar('\n');
 	mp_extra_gen(km, r, &cigar, score);
 	mp_extra_cal(r, opt, &nt[r->vs - as], &aa[r->qs]);
-	r->p->dist_stop = mp_extra_stop(r, &nt[r->ve - as], l_nt - (r->ve - as));
+	r->p->dist_stop  = mp_extra_stop(r, nt, as, ae);
+	r->p->dist_start = mp_extra_start(r, nt, as, ae);
 	kfree(km, nt);
 }
