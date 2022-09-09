@@ -78,7 +78,7 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 {
 	int32_t k, i, j, l, nl = 0, al = 0;
 	mp_extra_t *e = r->p;
-	e->clen = e->n_iden = e->n_plus = e->aa_score = 0;
+	e->clen = e->n_iden = e->n_plus = e->aa_score = 0, e->dist_stop = -1;
 	for (k = 0; k < e->n_cigar; ++k) {
 		int32_t op = e->cigar[k]&0xf, len = e->cigar[k]>>4, len3 = len * 3;
 		if (op == NS_CIGAR_M) {
@@ -142,6 +142,16 @@ static void mp_extra_gen(void *km, mp_reg1_t *r, mp_cigar_t *cigar, int32_t scor
 	kfree(km, cigar->c);
 }
 
+static int32_t mp_extra_stop(const mp_reg1_t *r, const uint8_t *nt, int32_t l_nt)
+{
+	int32_t i;
+	for (i = 0; i + 2 < l_nt; i += 3) {
+		uint8_t codon = nt[i]<<4 | nt[i+1]<<2 | nt[i+2];
+		uint8_t aa = nt[i] > 3 || nt[i+1] > 3 || nt[i+2] > 3? ns_tab_aa20['X'] : ns_tab_codon[codon];
+		if (aa == 20) return i;
+	}
+	return -1;
+}
 void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len, const char *aa, mp_reg1_t *r)
 {
 	int32_t i, i0, ne0 = 0, ae0 = 0, score = 0;
@@ -209,5 +219,6 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	//for (i = 0; i < cigar.n; ++i) printf("%d%c", cigar.c[i]>>4, NS_CIGAR_STR[cigar.c[i]&0xf]); putchar('\n');
 	mp_extra_gen(km, r, &cigar, score);
 	mp_extra_cal(r, opt, &nt[r->vs - as], &aa[r->qs]);
+	r->p->dist_stop = mp_extra_stop(r, &nt[r->ve - as], l_nt - (r->ve - as));
 	kfree(km, nt);
 }

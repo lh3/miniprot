@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.0-r86-dirty"
+#define MP_VERSION "0.0-r90-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
@@ -74,6 +74,7 @@ typedef struct {
 	int32_t dp_max, dp_max2;
 	int32_t n_cigar, m_cigar;
 	int32_t clen; // CDS length in alignment
+	int32_t dist_stop; // distance in bp to the closest stop codon
 	int32_t n_iden, n_plus;
 	int32_t aa_score;
 	uint32_t cigar[];

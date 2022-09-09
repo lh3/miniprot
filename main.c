@@ -4,6 +4,7 @@
 #include "ketopt.h"
 
 static ko_longopt_t long_options[] = {
+	{ "version",         ko_no_argument,       401 },
 	{ "no-kalloc",       ko_no_argument,       501 },
 	{ "dbg-qname",       ko_no_argument,       502 },
 	{ "dbg-no-refine",   ko_no_argument,       503 },
@@ -95,6 +96,10 @@ int main(int argc, char *argv[])
 		else if (c == 501) mp_dbg_flag |= MP_DBG_NO_KALLOC; // --no-kalloc
 		else if (c == 502) mp_dbg_flag |= MP_DBG_QNAME; // --dbg-qname
 		else if (c == 503) mp_dbg_flag |= MP_DBG_NO_REFINE; // --dbg-no-refine
+		else if (c == 401) {
+			printf("%s\n", MP_VERSION);
+			return 0;
+		}
 	}
 	if (argc - o.ind == 0 || (argc - o.ind == 1 && fn_idx == 0)) {
 		print_usage(stderr, &io, &mo, n_threads);
