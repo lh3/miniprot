@@ -231,14 +231,15 @@ static void *worker_pipeline(void *shared, int step, void *in)
 		for (i = 0; i < p->n_threads; ++i) mp_tbuf_destroy(s->buf[i]);
 		free(s->buf);
 		for (i = 0; i < s->n_seq; ++i) {
-			if (s->n_reg[i] == 0)
+			if (s->n_reg[i] == 0) {
 				mp_write_paf(&p->str, p->mi, &s->seq[i], 0);
+				fwrite(p->str.s, 1, p->str.l, stdout);
+			}
 			for (j = 0; j < s->n_reg[i]; ++j) {
-				p->str.l = 0;
 				mp_write_paf(&p->str, p->mi, &s->seq[i], &s->reg[i][j]);
+				fwrite(p->str.s, 1, p->str.l, stdout);
 				free(s->reg[i][j].p);
 			}
-			if (p->str.l > 0) fwrite(p->str.s, 1, p->str.l, stdout);
 			free(s->reg[i]);
 			free(s->seq[i].seq); free(s->seq[i].name);
 			if (s->seq[i].comment) free(s->seq[i].comment);
