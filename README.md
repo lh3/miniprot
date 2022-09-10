@@ -1,7 +1,7 @@
 **WARNING: miniprot is WIP. I made the repo public mainly to get feedbacks from
-actual users. Please read the Limitations section below and use with caution.**
+actual users. Please read the [Limitations](#limit) section below and use with caution.**
 
-## Getting Started
+## <a name="started"></a>Getting Started
 ```sh
 # download and compile
 git clone https://github.com/lh3/miniprot
@@ -15,7 +15,17 @@ paftools.js paf2gff -a aln.paf > aln.gff  # requiring latest paftools.js from gi
 man ./miniprot.1
 ```
 
-## Introduction
+## Table of Contents
+
+- [Getting Started](#started)
+- [Users' Guide](#uguide)
+  - [Installation](#install)
+  - [Usage](#usage)
+  - [Preliminary evaluation](#eval)
+  - [Algorithm overview](#algo)
+- [Limitations](#limit)
+
+## <a name="intro"></a>Introduction
 
 Miniprot aligns a protein sequence against a genome with affine gap penalty,
 splicing and frameshift. It is primarily intended for annotating protein-coding
@@ -29,9 +39,9 @@ are less informative to gene annotations. Nonetheless, it is still possible to
 tune seeding parameters to achieve higher sensitivity at the cost of
 performance.
 
-## Users' Guide
+## <a name="uguide"></a>Users' Guide
 
-### Installation
+### <a name="install"></a>Installation
 
 Miniprot requires SSE2 or NEON instructions and only works on x86\_64 or ARM
 CPUs. It depends on [zlib][zlib] for parsing gzip'd input files. To compile
@@ -39,7 +49,7 @@ miniprot, type `make` in the source code directory. This will produce a
 standalone executable `miniprot`. This executable is all you need to invoke
 miniprot.
 
-### Usage
+### <a name="usage"></a>Usage
 
 To run miniprot, use
 ```sh
@@ -63,7 +73,7 @@ paftools.js paf2gff -a aln.paf > out.gff
 This requires the latest [paftools.js][paftools] from the [minimap2][minimap2]
 github repo.
 
-### Preliminary evaluation
+### <a name="eval"></a>Preliminary evaluation
 
 We aligned 21,919 canonical mouse proteins from Gencode M30 against pre-indexed
 GRCh38. It took about 5 minutes over 16 threads. Miniprot mapped 19,309
@@ -77,7 +87,7 @@ introns confirmed by the Gencode annotation. The accuracy is lower because
 zebrafish is more distant from human and because the input includes rarer
 isoforms.
 
-### Algorithm overview
+### <a name="algo"></a>Algorithm overview
 
 1. Translate the reference genome to amino acids in six phases and filter out
    ORFs shorter than 45bp. Reduce 20 amino acids to 13 distinct integers and
@@ -100,7 +110,7 @@ isoforms.
    anchors and also extend from the first or last anchors. This gives the final
    alignment.
 
-## Limitations
+## <a name="limit"></a>Limitations
 
 * The initial conditions of dynamic programming are not technically correct,
   which may result in suboptimal residue alignment in rare cases.
