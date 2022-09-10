@@ -20,8 +20,9 @@ man ./miniprot.1
 Miniprot aligns a protein sequence against a genome with affine gap penalty,
 splicing and frameshift. It is primarily intended for annotating protein-coding
 genes in a new species using known genes from other species. Miniprot is
-similar to GeneWise and Exonerate in functionality but it can map proteins to
-whole genomes and is much faster at the residue alignment step.
+similar to [GeneWise][genewise] and [Exonerate][exonerate] in functionality but
+it can map proteins to whole genomes and is much faster at the residue
+alignment step.
 
 Miniprot is not optimized for mapping distant homologs because distant homologs
 are less informative to gene annotations. Nonetheless, it is still possible to
@@ -33,9 +34,10 @@ performance.
 ### Installation
 
 Miniprot requires SSE2 or NEON instructions and only works on x86\_64 or ARM
-CPUs. It depends on zlib for parsing gzip'd input files. To compile miniprot,
-type `make` in the source code directory. This will produce a standalone
-executable `miniprot`. This executable is all you need to invoke miniprot.
+CPUs. It depends on [zlib][zlib] for parsing gzip'd input files. To compile
+miniprot, type `make` in the source code directory. This will produce a
+standalone executable `miniprot`. This executable is all you need to invoke
+miniprot.
 
 ### Usage
 
@@ -58,7 +60,8 @@ You may also convert the output PAF to GFF3 with
 ```sh
 paftools.js paf2gff -a aln.paf > out.gff
 ```
-This requires the latest paftools.js from the minimap2 github.
+This requires the latest [paftools.js][paftools] from the [minimap2][minimap2]
+github repo.
 
 ### Preliminary evaluation
 
@@ -106,3 +109,9 @@ isoforms.
 
 * More manual inspection required for improved accuracy. For example, tandem
   copies in segmental duplications could be handled more carefully.
+
+[exonerate]: https://pubmed.ncbi.nlm.nih.gov/15713233/
+[genewise]: https://pubmed.ncbi.nlm.nih.gov/15123596/
+[zlib]: https://zlib.net
+[paftools]: https://github.com/lh3/minimap2/blob/master/misc/paftools.js
+[minimap2]: https://github.com/lh3/minimap2
