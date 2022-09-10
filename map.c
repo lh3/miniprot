@@ -29,7 +29,7 @@ void mp_tbuf_destroy(mp_tbuf_t *b)
 	free(b);
 }
 
-static void mp_refine_reg(void *km, const mp_idx_t *mi, const mp_mapopt_t *opt, const char *aa, int32_t l_aa, mp_reg1_t *r)
+static void mp_refine_reg(void *km, const mp_idx_t *mi, const mp_mapopt_t *opt, const char *aa, int32_t l_aa, mp_reg1_t *r, int32_t extl, int32_t extr)
 {
 	const mp_idxopt_t *io = &mi->opt;
 	int32_t i, j, k, n_u, max_sc = 0, max_i, kmer = opt->kmer2, smer = kmer, is_splice = !(opt->flag&MP_F_NO_SPLICE);
@@ -38,8 +38,8 @@ static void mp_refine_reg(void *km, const mp_idx_t *mi, const mp_mapopt_t *opt, 
 	uint64_t *a, *u;
 	mp64_v sd = {0,0,0}, sd_aa = {0,0,0};
 
-	as = r->vs > opt->max_ext? r->vs - opt->max_ext : 0;
-	ae = r->ve + opt->max_ext < ctg_len? r->ve + opt->max_ext : ctg_len;
+	as = r->vs > extl? r->vs - extl : 0;
+	ae = r->ve + extr < ctg_len? r->ve + extr : ctg_len;
 	nt = Kmalloc(km, uint8_t, ae - as);
 	l_nt = mp_ntseq_get(mi->nt, r->vid>>1, r->vid&1? ctg_len - ae : as, r->vid&1? ctg_len - as : ae, r->vid&1, nt);
 	mp_sketch_nt4(km, nt, l_nt, io->min_aa_len/2, kmer, smer, 0, 0, &sd);
@@ -145,12 +145,15 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	mp_select_sub(km, opt->pri_ratio, mi->opt.kmer * 2, opt->best_n, n_reg, reg);
 	if (!(mp_dbg_flag & MP_DBG_NO_REFINE)) {
 		int32_t nr = 0;
+		uint64_t *ext;
+		ext = mp_cal_max_ext(km, *n_reg, reg, a, 100, opt->max_ext);
 		for (i = 0; i < *n_reg; ++i) {
-			mp_refine_reg(km, mi, opt, seq, qlen, &reg[i]);
+			mp_refine_reg(km, mi, opt, seq, qlen, &reg[i], ext[i]>>32, (int32_t)ext[i]);
 			if (reg[i].cnt > 0)
 				reg[nr++] = reg[i];
 		}
 		*n_reg = nr;
+		kfree(km, ext);
 		mp_sort_reg(km, n_reg, reg);
 		mp_set_parent(km, opt->mask_level, opt->mask_len, *n_reg, reg, mi->opt.kmer, 0);
 		mp_select_sub(km, opt->pri_ratio, mi->opt.kmer * 2, opt->best_n, n_reg, reg);

@@ -181,3 +181,38 @@ void mp_select_sub(void *km, float pri_ratio, int min_diff, int best_n, int *n_,
 		*n_ = k;
 	}
 }
+
+uint64_t *mp_cal_max_ext(void *km, int32_t n_reg, mp_reg1_t *reg, const uint64_t *a, int32_t min_ext, int32_t max_ext)
+{
+	uint64_t *ext, *b;
+	int32_t i;
+	if (n_reg <= 0) return 0;
+	b = Kmalloc(km, uint64_t, n_reg);
+	for (i = 0; i < n_reg; ++i) {
+		mp_reg1_t *r = &reg[i];
+		b[i] = (a[r->off]>>32)<<32 | i;
+	}
+	radix_sort_mp64(b, b + n_reg);
+	ext = Kmalloc(km, uint64_t, n_reg);
+	for (i = 0; i < n_reg; ++i) {
+		int32_t left = max_ext, right = max_ext, j = (int32_t)b[i];
+		mp_reg1_t *r = &reg[j];
+		if (i > 0) {
+			mp_reg1_t *q = &reg[(int32_t)b[i-1]];
+			if (q->vid == r->vid && q->qe >= r->qs) {
+				left = r->vs - q->ve < max_ext? r->vs - q->ve : max_ext;
+				left = left > min_ext? left : min_ext;
+			}
+		}
+		if (i < n_reg - 1) {
+			mp_reg1_t *q = &reg[(int32_t)b[i+1]];
+			if (q->vid == r->vid && r->qe >= q->qs) {
+				right = q->vs - r->ve < max_ext? q->vs - r->ve : max_ext;
+				right = right > min_ext? right : min_ext;
+			}
+		}
+		ext[j] = (uint64_t)left<<32 | right;
+	}
+	kfree(km, b);
+	return ext;
+}

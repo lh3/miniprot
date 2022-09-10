@@ -99,12 +99,10 @@ isoforms.
 
 ## Limitations
 
-* Miniprot may report duplicated alignments for genes in tandem segmental
-  duplications.
-
 * The initial conditions of dynamic programming are not technically correct,
   which may result in suboptimal residue alignment in rare cases.
 
 * Support for non-splicing alignment needs to be improved.
 
-* More manual inspection required for improved accuracy.
+* More manual inspection required for improved accuracy. For example, tandem
+  copies in segmental duplications could be handled more carefully.
