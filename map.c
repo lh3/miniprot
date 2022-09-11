@@ -40,6 +40,7 @@ static void mp_refine_reg(void *km, const mp_idx_t *mi, const mp_mapopt_t *opt, 
 
 	as = r->vs > extl? r->vs - extl : 0;
 	ae = r->ve + extr < ctg_len? r->ve + extr : ctg_len;
+	//fprintf(stderr, "%ld\t%ld\n", (long)as, (long)ae);
 	nt = Kmalloc(km, uint8_t, ae - as);
 	l_nt = mp_ntseq_get(mi->nt, r->vid>>1, r->vid&1? ctg_len - ae : as, r->vid&1? ctg_len - as : ae, r->vid&1, nt);
 	mp_sketch_nt4(km, nt, l_nt, io->min_aa_len/2, kmer, smer, 0, 0, &sd);

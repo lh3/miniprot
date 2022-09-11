@@ -169,7 +169,7 @@ static int32_t mp_extra_start(const mp_reg1_t *r, const uint8_t *nt, int64_t as,
 
 void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len, const char *aa, mp_reg1_t *r)
 {
-	int32_t i, i0, ne0 = 0, ae0 = 0, score = 0;
+	int32_t i, i0, ne0 = 0, ae0 = 0, score = 0, extl, extr;
 	int64_t as, ae, ctg_len, vs0, l_nt;
 	uint8_t *nt;
 	mp_cigar_t cigar = {0,0,0};
@@ -184,9 +184,12 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	}
 	i0 = i;
 
+	extl = extr = opt->max_ext;
+	if (r->qs >= 10) extl = opt->max_intron;
+	if (len - r->qe >= 10) extr = opt->max_intron;
 	ctg_len = mi->nt->ctg[r->vid>>1].len;
-	as = r->vs > opt->max_ext? r->vs - opt->max_ext : 0;
-	ae = r->ve + opt->max_ext < ctg_len? r->ve + opt->max_ext : ctg_len;
+	as = r->vs > extl? r->vs - extl : 0;
+	ae = r->ve + extr < ctg_len? r->ve + extr : ctg_len;
 	nt = Kmalloc(km, uint8_t, ae - as);
 	l_nt = mp_ntseq_get_by_v(mi->nt, r->vid, as, ae, nt);
 	assert(l_nt == ae - as);
