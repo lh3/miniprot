@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.1-r100-dirty"
+#define MP_VERSION "0.1-r101-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
@@ -45,6 +45,7 @@ typedef struct {
 	int32_t best_n;
 	int32_t kmer2;
 	int32_t go, ge, io, nc, fs; // gap open, extension, intron open, non-conanical and frame-shift
+	int32_t end_bonus;
 	int32_t asize; // size of the alphabet
 	const int8_t *mat;
 } mp_mapopt_t;

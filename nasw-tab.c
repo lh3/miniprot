@@ -70,6 +70,7 @@ void ns_opt_init(ns_opt_t *opt)
 	opt->nc = 5;
 	opt->fs = 15;
 	opt->xdrop = 100;
+	opt->end_bonus = 10;
 	opt->asize = 22;
 	opt->sc = ns_mat_blosum62;
 	opt->nt4 = ns_tab_nt4;

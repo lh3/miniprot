@@ -29,7 +29,7 @@ extern int8_t ns_mat_blosum62[484];
 typedef struct {
 	int32_t flag;
 	int32_t go, ge, io, nc, fs;
-	int32_t xdrop;
+	int32_t xdrop, end_bonus;
 	int32_t asize;
 	const int8_t *sc;
 	uint8_t *nt4, *aa20, *codon;

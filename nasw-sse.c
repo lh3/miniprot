@@ -282,7 +282,7 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 	NS_GEN_INIT1(epi16)
 
 	if (tb == 0) {
-		int32_t max_sc = INT32_MIN, tmp_sc, max_i = -1;
+		int32_t max_sc = INT32_MIN, tmp_sc, end_sc, max_i = -1;
 		for (i = 2; i < nl; ++i) {
 			__m128i max;
 			NS_GEN_INIT2(epi16)
@@ -356,6 +356,8 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 				if (j < slen) break;
 			}
 			tmp_sc = ns_max_8(max);
+			end_sc = *((ns_int_t*)&H[(al-1)%slen] + (al-1)/slen) + opt->end_bonus;
+			tmp_sc = tmp_sc > end_sc? tmp_sc : end_sc;
 			if (tmp_sc > max_sc) {
 				max_sc = tmp_sc, max_i = i;
 				memcpy(&Hmax[-1], &H[-1], (slen + 1) * 16);
@@ -367,6 +369,7 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 		if (is_ext) {
 			for (j = 0; j < al; ++j) {
 				int32_t sc = *((ns_int_t*)&Hmax[j%slen] + j/slen);
+				if (j == al - 1) sc += opt->end_bonus;
 				if (sc == max_sc) break;
 			}
 			assert(j < al);

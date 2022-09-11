@@ -54,6 +54,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -J INT       intron open penalty [%d]\n", mo->io);
 	fprintf(fp, "    -C INT       penalty for non-canonical splicing [%d]\n", mo->nc);
 	fprintf(fp, "    -F INT       frameshift penalty [%d]\n", mo->fs);
+	fprintf(fp, "    -B INT       end bonus [%d]\n", mo->end_bonus);
 	fprintf(fp, "  Input/output:\n");
 	fprintf(fp, "    -t INT       number of threads [%d]\n", n_threads);
 	fprintf(fp, "    -K NUM       query batch size [2M]\n");
@@ -72,7 +73,7 @@ int main(int argc, char *argv[])
 	mp_start();
 	mp_mapopt_init(&mo);
 	mp_idxopt_init(&io);
-	while ((c = ketopt(&o, argc, argv, 1, "k:s:l:b:t:d:c:n:m:K:p:N:SAO:E:J:C:F:G:e:u", long_options)) >= 0) {
+	while ((c = ketopt(&o, argc, argv, 1, "k:s:l:b:t:d:c:n:m:K:p:N:SAO:E:J:C:F:G:e:uB:", long_options)) >= 0) {
 		if (c == 'k') io.kmer = atoi(o.arg);
 		else if (c == 's') io.smer = atoi(o.arg);
 		else if (c == 'b') io.bbit = atoi(o.arg);
@@ -93,6 +94,7 @@ int main(int argc, char *argv[])
 		else if (c == 'J') mo.io = atoi(o.arg);
 		else if (c == 'C') mo.nc = atoi(o.arg);
 		else if (c == 'F') mo.fs = atoi(o.arg);
+		else if (c == 'B') mo.end_bonus = atoi(o.arg);
 		else if (c == 'e') mo.max_ext = mp_parse_num(o.arg);
 		else if (c == 'u') mo.flag |= MP_F_SHOW_UNMAP;
 		else if (c == 501) mp_dbg_flag |= MP_DBG_NO_KALLOC; // --no-kalloc
