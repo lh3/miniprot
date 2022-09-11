@@ -8,8 +8,7 @@ git clone https://github.com/lh3/miniprot
 cd miniprot && make
 
 # alignment
-./miniprot -ut16 test/DPP3-hs.gen.fa.gz test/DPP3-mm.pep.fa.gz > aln.paf
-paftools.js paf2gff -a aln.paf > aln.gff  # requiring latest paftools.js from github
+./miniprot -ut16 --gff test/DPP3-hs.gen.fa.gz test/DPP3-mm.pep.fa.gz > aln.gff
 
 # output format
 man ./miniprot.1
@@ -66,12 +65,10 @@ pre-build the index. FASTA input files can be optionally compressed with gzip.
 Miniprot outputs alignment in the protein PAF format. Different from the more
 common nucleotide PAF format, miniprot uses more CIGAR operators to encode
 introns and frameshifts. Please refer to the manpage for detailed explanation.
-You may also convert the output PAF to GFF3 with
+To get GFF3 output, add option `--gff`:
 ```sh
-paftools.js paf2gff -a aln.paf > out.gff
+miniprot -t8 --gff -d ref.mpi ref.fna > out.gff
 ```
-This requires the latest [paftools.js][paftools] from the [minimap2][minimap2]
-github repo.
 
 ### <a name="eval"></a>Preliminary evaluation
 
