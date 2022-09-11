@@ -152,10 +152,10 @@ static void mp_write_cs(kstring_t *str, const mp_idx_t *mi, const char *aa, cons
 	kfree(0, tmp);
 }
 
-void mp_write_paf(kstring_t *s, const mp_idx_t *mi, const mp_bseq1_t *seq, const mp_reg1_t *r)
+void mp_write_paf(kstring_t *s, const mp_idx_t *mi, const mp_bseq1_t *seq, const mp_reg1_t *r, int32_t gff_out)
 {
 	const mp_ctg_t *ctg;
-	s->l = 0;
+	if (gff_out) mp_sprintf_lite(s, "##PAF\t");
 	if (r == 0) {
 		mp_sprintf_lite(s, "%s\t%d\t0\t0\t*\t*\t0\t0\t0\t0\t0\t0\n", seq->name, seq->l_seq);
 		return;
@@ -174,4 +174,104 @@ void mp_write_paf(kstring_t *s, const mp_idx_t *mi, const mp_bseq1_t *seq, const
 	mp_sprintf_lite(s, "\t");
 	mp_write_cs(s, mi, &seq->seq[r->qs], r);
 	mp_sprintf_lite(s, "\n");
+}
+
+typedef struct {
+	int64_t vs, ve;
+	int32_t qs, qe;
+	int32_t phase;
+	int32_t n_fs;
+} mp_feat_t;
+
+static inline void mp_write_gff_gene(kstring_t *s, const char *name, int64_t st, int64_t en, int32_t score, int32_t rev, const char *gff_prefix, const char *number)
+{
+	mp_sprintf_lite(s, "%s\tminiprot\tgene\t%d\t%d\t%d\t%c\t.\tID=%sG%s\n", name, (int)st + 1, (int)en,
+		score, "+-"[!!rev], gff_prefix, number);
+	mp_sprintf_lite(s, "%s\tminiprot\tmRNA\t%d\t%d\t%d\t%c\t.\tID=%sT%s;Parent=%sG%s\n", name, (int)st + 1, (int)en,
+		score, "+-"[!!rev], gff_prefix, number, gff_prefix, number);
+}
+
+void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *seq, const mp_reg1_t *r, const char *gff_prefix, int64_t id)
+{
+	const mp_ctg_t *ctg;
+	mp_feat_t *feat, *f;
+	int32_t k, j, n_intron = 0, n_feat;
+	int64_t vs, ve;
+	int32_t qs, qe, phase, n_fs, tot_fs = 0;
+	char buf[16];
+
+	if (r == 0 || r->p == 0) return;
+	for (k = 0; k < r->p->n_cigar; ++k) {
+		int32_t op = r->p->cigar[k]&0xf;
+		if (op == NS_CIGAR_N || op == NS_CIGAR_U || op == NS_CIGAR_V)
+			++n_intron;
+	}
+	n_feat = n_intron + 1;
+	feat = Kmalloc(km, mp_feat_t, n_feat);
+
+	vs = ve = r->vs, qs = qe = r->qs, phase = 0, n_fs = 0;
+	for (k = j = 0; k < r->p->n_cigar; ++k) {
+		int32_t op = r->p->cigar[k]&0xf, len = r->p->cigar[k]>>4, len3 = len * 3;
+		if (op == NS_CIGAR_M) {
+			ve += len3, qe += len;
+		} else if (op == NS_CIGAR_I) {
+			qe += len;
+		} else if (op == NS_CIGAR_D) {
+			ve += len3;
+		} else if (op == NS_CIGAR_F) {
+			ve += len, n_fs += len, tot_fs += len;
+		} else if (op == NS_CIGAR_G) {
+			ve += len, ++qe, n_fs += len, tot_fs += len;
+		} else if (op == NS_CIGAR_N || op == NS_CIGAR_U || op == NS_CIGAR_V) {
+			f = &feat[j++];
+			f->phase = phase;
+			f->vs = vs, f->qs = qs, f->qe = qe, f->n_fs = n_fs;
+			if (op == NS_CIGAR_N) {
+				f->ve = ve;
+				vs = ve + len, phase = 0;
+			} else if (op == NS_CIGAR_U) {
+				f->ve = ve + 1;
+				vs = ve + len - 2, phase = 2;
+			} else if (op == NS_CIGAR_V) {
+				f->ve = ve + 2;
+				vs = ve + len - 1, phase = 1;
+			}
+			qs = qe, n_fs = 0;
+			ve += len, qe += (op != NS_CIGAR_N);
+		}
+	}
+	f = &feat[j++];
+	f->vs = vs, f->ve = ve, f->qs = qs, f->qe = qe, f->phase = phase, f->n_fs = n_fs;
+
+	snprintf(buf, 16, "%.6ld", (long)id);
+	ctg = &mi->nt->ctg[r->vid>>1];
+	if ((r->vid&1) == 0) {
+		mp_write_gff_gene(s, ctg->name, r->vs, r->ve, r->p->dp_max, 0, gff_prefix, buf);
+		for (j = 0; j < n_feat; ++j) {
+			f = &feat[j];
+			mp_sprintf_lite(s, "%s\tminiprot\t%s\t%d\t%d\t0\t+\t%d\tParent=%sT%s\n", ctg->name, tot_fs? "exon" : "CDS",
+				(int)f->vs + 1, (int)f->ve, f->phase, gff_prefix, buf);
+		}
+	} else {
+		mp_write_gff_gene(s, ctg->name, ctg->len - r->ve, ctg->len - r->vs, r->p->dp_max, 1, gff_prefix, buf);
+		for (j = 0; j < n_feat; ++j) {
+			f = &feat[j];
+			mp_sprintf_lite(s, "%s\tminiprot\t%s\t%d\t%d\t0\t-\t%d\tParent=%sT%s\n", ctg->name, tot_fs? "exon" : "CDS",
+				(int)(ctg->len - f->vs) + 1, (int)(ctg->len - f->ve), f->phase, gff_prefix, buf);
+		}
+	}
+	kfree(km, feat);
+}
+
+void mp_write_output(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *seq, const mp_reg1_t *r, const mp_mapopt_t *opt, int64_t id)
+{
+	s->l = 0;
+	if (r == 0) {
+		if (opt->flag&MP_F_SHOW_UNMAP)
+			mp_write_paf(s, mi, seq, 0, opt->flag&MP_F_GFF);
+	} else {
+		mp_write_paf(s, mi, seq, r, opt->flag&MP_F_GFF);
+		if (opt->flag&MP_F_GFF)
+			mp_write_gff(s, km, mi, seq, r, opt->gff_prefix, id);
+	}
 }

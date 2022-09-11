@@ -4,6 +4,7 @@
 #include "ketopt.h"
 
 static ko_longopt_t long_options[] = {
+	{ "gff",             ko_no_argument,       301 },
 	{ "version",         ko_no_argument,       401 },
 	{ "no-kalloc",       ko_no_argument,       501 },
 	{ "dbg-qname",       ko_no_argument,       502 },
@@ -57,6 +58,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -B INT       end bonus [%d]\n", mo->end_bonus);
 	fprintf(fp, "  Input/output:\n");
 	fprintf(fp, "    -t INT       number of threads [%d]\n", n_threads);
+	fprintf(fp, "    --gff        output in the GFF3 format\n");
 	fprintf(fp, "    -K NUM       query batch size [2M]\n");
 	fprintf(fp, "    -u           print unmapped query proteins\n");
 }
@@ -97,6 +99,7 @@ int main(int argc, char *argv[])
 		else if (c == 'B') mo.end_bonus = atoi(o.arg);
 		else if (c == 'e') mo.max_ext = mp_parse_num(o.arg);
 		else if (c == 'u') mo.flag |= MP_F_SHOW_UNMAP;
+		else if (c == 301) mo.flag |= MP_F_GFF;
 		else if (c == 501) mp_dbg_flag |= MP_DBG_NO_KALLOC; // --no-kalloc
 		else if (c == 502) mp_dbg_flag |= MP_DBG_QNAME; // --dbg-qname
 		else if (c == 503) mp_dbg_flag |= MP_DBG_NO_REFINE; // --dbg-no-refine

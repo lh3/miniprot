@@ -39,4 +39,6 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 	mo->end_bonus = 5;
 	mo->asize = 22;
 	mo->mat = ns_mat_blosum62;
+
+	mo->gff_prefix = "MP";
 }

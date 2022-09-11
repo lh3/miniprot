@@ -3,11 +3,12 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.1-r102-dirty"
+#define MP_VERSION "0.1-r103-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
 #define MP_F_SHOW_UNMAP   0x4
+#define MP_F_GFF          0x8
 
 #define MP_CODON_STD 0
 #define MP_IDX_MAGIC "MPI\1"
@@ -27,7 +28,7 @@ typedef struct {
 } mp_idxopt_t;
 
 typedef struct {
-	uint64_t flag;
+	uint32_t flag;
 	int64_t mini_batch_size;
 	int32_t max_occ;
 	int32_t max_gap; // max gap on the query protein, in aa
@@ -48,6 +49,7 @@ typedef struct {
 	int32_t end_bonus;
 	int32_t asize; // size of the alphabet
 	const int8_t *mat;
+	const char *gff_prefix;
 } mp_mapopt_t;
 
 typedef struct {

@@ -185,6 +185,7 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 
 typedef struct {
 	int32_t n_threads;
+	int64_t id;
 	const mp_mapopt_t *opt;
 	mp_bseq_file_t *fp;
 	const mp_idx_t *mi;
@@ -236,11 +237,11 @@ static void *worker_pipeline(void *shared, int step, void *in)
 		free(s->buf);
 		for (i = 0; i < s->n_seq; ++i) {
 			if (s->n_reg[i] == 0) {
-				mp_write_paf(&p->str, p->mi, &s->seq[i], 0);
+				mp_write_output(&p->str, 0, p->mi, &s->seq[i], 0, p->opt, 0);
 				fwrite(p->str.s, 1, p->str.l, stdout);
 			}
 			for (j = 0; j < s->n_reg[i]; ++j) {
-				mp_write_paf(&p->str, p->mi, &s->seq[i], &s->reg[i][j]);
+				mp_write_output(&p->str, 0, p->mi, &s->seq[i], &s->reg[i][j], p->opt, ++p->id);
 				fwrite(p->str.s, 1, p->str.l, stdout);
 				free(s->reg[i][j].p);
 			}
