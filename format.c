@@ -176,37 +176,42 @@ void mp_write_paf(kstring_t *s, const mp_idx_t *mi, const mp_bseq1_t *seq, const
 	mp_sprintf_lite(s, "\n");
 }
 
+#define MP_FEAT_EXON  0
+#define MP_FEAT_STOP  1
+
 typedef struct {
 	int64_t vs, ve;
 	int32_t qs, qe;
 	int32_t phase;
 	int32_t n_fs;
+	int32_t type;
 } mp_feat_t;
 
-static inline void mp_write_gff_gene(kstring_t *s, const char *name, int64_t st, int64_t en, int32_t score, int32_t rev, const char *gff_prefix, const char *number)
+static inline void mp_write_gff_gene(kstring_t *s, const char *name, int64_t st, int64_t en, int32_t score, int32_t rev, const char *gff_prefix, const char *number, int32_t has_fs)
 {
-	mp_sprintf_lite(s, "%s\tminiprot\tgene\t%d\t%d\t%d\t%c\t.\tID=%sG%s\n", name, (int)st + 1, (int)en,
-		score, "+-"[!!rev], gff_prefix, number);
-	mp_sprintf_lite(s, "%s\tminiprot\tmRNA\t%d\t%d\t%d\t%c\t.\tID=%sT%s;Parent=%sG%s\n", name, (int)st + 1, (int)en,
-		score, "+-"[!!rev], gff_prefix, number, gff_prefix, number);
+	mp_sprintf_lite(s, "%s\tminiprot\tmRNA\t%d\t%d\t%d\t%c\t.\tID=%s%s", name, (int)st + 1, (int)en, score, "+-"[!!rev], gff_prefix, number);
+	if (has_fs) mp_sprintf_lite(s, ";Frameshift=true");
+	mp_sprintf_lite(s, "\n");
 }
 
-void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *seq, const mp_reg1_t *r, const char *gff_prefix, int64_t id)
+void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *seq, const mp_reg1_t *r, const char *gff_prefix, int64_t id, const char *qname)
 {
 	const mp_ctg_t *ctg;
 	mp_feat_t *feat, *f;
 	int32_t k, j, n_intron = 0, n_feat;
-	int64_t vs, ve;
-	int32_t qs, qe, phase, n_fs, tot_fs = 0;
+	int64_t vs, ve, ve_mRNA;
+	int32_t qs, qe, phase, n_fs, tot_fs = 0, has_stop = 0;
 	char buf[16];
 
 	if (r == 0 || r->p == 0) return;
+	has_stop = (r->qe == seq->l_seq && r->p->dist_stop == 0);
+	ve_mRNA = has_stop? r->ve + 3 : r->ve;
 	for (k = 0; k < r->p->n_cigar; ++k) {
 		int32_t op = r->p->cigar[k]&0xf;
 		if (op == NS_CIGAR_N || op == NS_CIGAR_U || op == NS_CIGAR_V)
 			++n_intron;
 	}
-	n_feat = n_intron + 1;
+	n_feat = n_intron + 1 + (!!has_stop);
 	feat = Kmalloc(km, mp_feat_t, n_feat);
 
 	vs = ve = r->vs, qs = qe = r->qs, phase = 0, n_fs = 0;
@@ -225,7 +230,7 @@ void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *
 		} else if (op == NS_CIGAR_N || op == NS_CIGAR_U || op == NS_CIGAR_V) {
 			f = &feat[j++];
 			f->phase = phase;
-			f->vs = vs, f->qs = qs, f->qe = qe, f->n_fs = n_fs;
+			f->vs = vs, f->qs = qs, f->qe = qe, f->n_fs = n_fs, f->type = MP_FEAT_EXON;
 			if (op == NS_CIGAR_N) {
 				f->ve = ve;
 				vs = ve + len, phase = 0;
@@ -241,24 +246,27 @@ void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *
 		}
 	}
 	f = &feat[j++];
-	f->vs = vs, f->ve = ve, f->qs = qs, f->qe = qe, f->phase = phase, f->n_fs = n_fs;
+	f->vs = vs, f->ve = ve, f->qs = qs, f->qe = qe, f->phase = phase, f->n_fs = n_fs, f->type = MP_FEAT_EXON;
+	if (has_stop) {
+		f = &feat[j++];
+		f->vs = ve_mRNA - 3, f->ve = ve_mRNA, f->qs = qe, f->qe = qe, f->phase = 0, f->n_fs = 0, f->type = MP_FEAT_STOP;
+	}
 
-	snprintf(buf, 16, "%.6ld", (long)id);
 	ctg = &mi->nt->ctg[r->vid>>1];
-	if ((r->vid&1) == 0) {
-		mp_write_gff_gene(s, ctg->name, r->vs, r->ve, r->p->dp_max, 0, gff_prefix, buf);
-		for (j = 0; j < n_feat; ++j) {
-			f = &feat[j];
-			mp_sprintf_lite(s, "%s\tminiprot\t%s\t%d\t%d\t0\t+\t%d\tParent=%sT%s\n", ctg->name, tot_fs? "exon" : "CDS",
-				(int)f->vs + 1, (int)f->ve, f->phase, gff_prefix, buf);
-		}
-	} else {
-		mp_write_gff_gene(s, ctg->name, ctg->len - r->ve, ctg->len - r->vs, r->p->dp_max, 1, gff_prefix, buf);
-		for (j = 0; j < n_feat; ++j) {
-			f = &feat[j];
-			mp_sprintf_lite(s, "%s\tminiprot\t%s\t%d\t%d\t0\t-\t%d\tParent=%sT%s\n", ctg->name, tot_fs? "exon" : "CDS",
-				(int)(ctg->len - f->vs) + 1, (int)(ctg->len - f->ve), f->phase, gff_prefix, buf);
-		}
+	snprintf(buf, 16, "%.6ld", (long)id);
+	vs = r->vid&1? ctg->len - ve_mRNA : r->vs;
+	ve = r->vid&1? ctg->len - r->vs   : ve_mRNA;
+	mp_write_gff_gene(s, ctg->name, vs, ve, r->p->dp_max, r->vid&1, gff_prefix, buf, (tot_fs > 0));
+	for (j = 0; j < n_feat; ++j) {
+		f = &feat[j];
+		vs = r->vid&1? ctg->len - f->ve : f->vs;
+		ve = r->vid&1? ctg->len - f->vs : f->ve;
+		mp_sprintf_lite(s, "%s\tminiprot\t%s\t%d\t%d\t0\t%c\t%d\tParent=%s%s", ctg->name, f->type == MP_FEAT_STOP? "stop_codon" : "CDS",
+			(int)vs + 1, (int)ve, "+-"[r->vid&1], f->phase, gff_prefix, buf);
+		if (f->n_fs > 0) mp_sprintf_lite(s, ";Frameshift=true");
+		if (f->type == MP_FEAT_EXON)
+			mp_sprintf_lite(s, ";Target=%s %d %d", seq->name, f->qs + 1, f->qe);
+		mp_sprintf_lite(s, "\n");
 	}
 	kfree(km, feat);
 }
@@ -272,6 +280,6 @@ void mp_write_output(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_
 	} else {
 		mp_write_paf(s, mi, seq, r, opt->flag&MP_F_GFF);
 		if (opt->flag&MP_F_GFF)
-			mp_write_gff(s, km, mi, seq, r, opt->gff_prefix, id);
+			mp_write_gff(s, km, mi, seq, r, opt->gff_prefix, id, seq->name);
 	}
 }

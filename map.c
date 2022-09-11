@@ -265,6 +265,7 @@ int32_t mp_map_file(const mp_idx_t *idx, const char *fn, const mp_mapopt_t *opt,
 	if (pl.fp == 0) return -1;
 	pl.opt = opt, pl.mi = idx;
 	pl.n_threads = n_threads > 1? n_threads : 1;
+	if (opt->flag & MP_F_GFF) puts("##gff-version 3");
 	kt_pipeline(2, worker_pipeline, &pl, 3);
 	free(pl.str.s);
 	mp_bseq_close(pl.fp);
