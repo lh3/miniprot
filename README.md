@@ -65,10 +65,13 @@ pre-build the index. FASTA input files can be optionally compressed with gzip.
 Miniprot outputs alignment in the protein PAF format. Different from the more
 common nucleotide PAF format, miniprot uses more CIGAR operators to encode
 introns and frameshifts. Please refer to the manpage for detailed explanation.
-To get GFF3 output, add option `--gff`:
+
+The PAF format gives full alignment information. For convenience, miniprot can
+also output GFF3 with option `--gff`:
 ```sh
 miniprot -t8 --gff -d ref.mpi ref.fna > out.gff
 ```
+The detailed alignment is embedded in `##PAF` lines in the GFF3 output.
 
 ### <a name="eval"></a>Preliminary evaluation
 

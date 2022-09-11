@@ -187,13 +187,6 @@ typedef struct {
 	int32_t type;
 } mp_feat_t;
 
-static inline void mp_write_gff_gene(kstring_t *s, const char *name, int64_t st, int64_t en, int32_t score, int32_t rev, const char *gff_prefix, const char *number, int32_t has_fs)
-{
-	mp_sprintf_lite(s, "%s\tminiprot\tmRNA\t%d\t%d\t%d\t%c\t.\tID=%s%s", name, (int)st + 1, (int)en, score, "+-"[!!rev], gff_prefix, number);
-	if (has_fs) mp_sprintf_lite(s, ";Frameshift=true");
-	mp_sprintf_lite(s, "\n");
-}
-
 void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *seq, const mp_reg1_t *r, const char *gff_prefix, int64_t id, const char *qname)
 {
 	const mp_ctg_t *ctg;
@@ -201,7 +194,7 @@ void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *
 	int32_t k, j, n_intron = 0, n_feat;
 	int64_t vs, ve, ve_mRNA;
 	int32_t qs, qe, phase, n_fs, tot_fs = 0, has_stop = 0;
-	char buf[16];
+	char buf[16], dec[16];
 
 	if (r == 0 || r->p == 0) return;
 	has_stop = (r->qe == seq->l_seq && r->p->dist_stop == 0);
@@ -256,7 +249,14 @@ void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *
 	snprintf(buf, 16, "%.6ld", (long)id);
 	vs = r->vid&1? ctg->len - ve_mRNA : r->vs;
 	ve = r->vid&1? ctg->len - r->vs   : ve_mRNA;
-	mp_write_gff_gene(s, ctg->name, vs, ve, r->p->dp_max, r->vid&1, gff_prefix, buf, (tot_fs > 0));
+	mp_sprintf_lite(s, "%s\tminiprot\tmRNA\t%d\t%d\t%d\t%c\t.\tID=%s%s", ctg->name, (int)vs + 1, (int)ve, r->p->dp_max, "+-"[r->vid&1], gff_prefix, buf);
+	if (tot_fs > 0) mp_sprintf_lite(s, ";Frameshift=true");
+	snprintf(dec, 16, "%.4f", (double)r->p->n_iden * 3 / r->p->clen);
+	mp_sprintf_lite(s, ";Identity=%s", dec);
+	snprintf(dec, 16, "%.4f", (double)r->p->n_plus * 3 / r->p->clen);
+	mp_sprintf_lite(s, ";Positive=%s", dec);
+	mp_sprintf_lite(s, ";Target=%s %d %d\n", seq->name, r->qs + 1, r->qe);
+
 	for (j = 0; j < n_feat; ++j) {
 		f = &feat[j];
 		vs = r->vid&1? ctg->len - f->ve : f->vs;

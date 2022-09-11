@@ -1,4 +1,4 @@
-.TH miniprot 1 "9 September 2022" "miniprot-0.1 (r97)" "Bioinformatics tools"
+.TH miniprot 1 "9 September 2022" "miniprot-0.1-dirty (r106)" "Bioinformatics tools"
 .SH NAME
 .PP
 miniprot - protein-to-genome alignment with splicing and frameshifts
@@ -110,6 +110,9 @@ Frameshift penalty [15]
 .TP 10
 .BI -t \ INT
 Number of threads [4]
+.TP
+.B --gff
+Output in the GFF3 format. `##PAF' lines in the output provide detailed alignments.
 .TP
 .BI -K \ NUM
 Query batch size [2M]
