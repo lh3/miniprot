@@ -76,13 +76,15 @@ The detailed alignment is embedded in `##PAF` lines in the GFF3 output.
 ### <a name="eval"></a>Preliminary evaluation
 
 We aligned 21,919 canonical mouse proteins from Gencode M30 against pre-indexed
-GRCh38. It took about 5 minutes over 16 threads. Miniprot mapped 19,309
-proteins with 154,660 introns in their best alignment. In comparison to Gencode
-v40 human annotations, 94.5% of these introns are annotated in Gencode with
-exact coordinates.
+GRCh38. It took about 7 minutes over 16 threads. Miniprot mapped 19,308
+proteins with 160,119 introns in their best alignment. In comparison to Gencode
+v40 human annotations, 93.6% of these introns are annotated in Gencode with
+exact coordinates. The global mode of [spaln][spaln] (`-Q7`) mapped 18,907
+proteins in 90 min. It identified 185,442 introns with 87.1% of them coincide
+with Gencode. Its local mode (`-Q7 -LS`) crashed.
 
 We also aligned 52,089 zebrafish proteins, including alternative isoforms,
-against GRCh38. Miniprot mapped 34,283 of them with 84.5% of 267,776 predicted
+against GRCh38. Miniprot mapped 34,288 of them with 81.4% of 298,495 predicted
 introns confirmed by the Gencode annotation. The accuracy is lower because
 zebrafish is more distant from human and because the input includes rarer
 isoforms.
@@ -125,3 +127,4 @@ isoforms.
 [zlib]: https://zlib.net
 [paftools]: https://github.com/lh3/minimap2/blob/master/misc/paftools.js
 [minimap2]: https://github.com/lh3/minimap2
+[spaln]: https://github.com/ogotoh/spaln
