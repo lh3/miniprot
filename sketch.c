@@ -48,6 +48,7 @@ void mp_sketch_clean_orf(void *km, const uint8_t *seq, int64_t st, int64_t en, i
 	uint32_t x, mask_k = (1U<<kmer*4) - 1, mask_s = (1U<<smer*4) - 1;
 	for (i = st, l = 0, x = 0; i < en; i += 3) {
 		uint8_t codon = seq[i]<<4 | seq[i+1]<<2 | seq[i+2];
+		assert(seq[i] < 4 && seq[i+1] < 4 && seq[i+2] < 4);
 		x = (x<<4 | ns_tab_codon13[codon]) & mask_k;
 		if (++l >= kmer) {
 			int32_t sel = 0;
@@ -70,7 +71,7 @@ void mp_sketch_clean_orf(void *km, const uint8_t *seq, int64_t st, int64_t en, i
 
 void mp_sketch_nt4(void *km, const uint8_t *seq, int64_t len, int32_t min_aa_len, int32_t kmer, int32_t smer, int32_t bbit, int64_t boff, mp64_v *a)
 {
-	uint8_t codon, p;
+	uint8_t codon, p, q;
 	int64_t i, j, l, e[3], k[3];
 	kv_resize(uint64_t, km, *a, len>>2);
 	a->n = 0;
@@ -89,9 +90,12 @@ void mp_sketch_nt4(void *km, const uint8_t *seq, int64_t len, int32_t min_aa_len
 				} else e[p] = i, ++k[p];
 			}
 		} else {
-			if (k[p] >= min_aa_len)
-				mp_sketch_clean_orf(km, seq, e[p] + 1 - k[p] * 3, e[p] + 1, kmer, smer, bbit, boff, a);
-			k[p] = 0, e[p] = -1, l = 0, codon = 0;
+			for (q = 0; q < 3; ++q) {
+				if (k[q] >= min_aa_len)
+					mp_sketch_clean_orf(km, seq, e[q] + 1 - k[q] * 3, e[q] + 1, kmer, smer, bbit, boff, a);
+				k[q] = 0, e[q] = -1;
+			}
+			l = 0, codon = 0;
 		}
 	}
 	for (p = 0; p < 3; ++p)
