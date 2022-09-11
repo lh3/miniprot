@@ -186,8 +186,8 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	i0 = i;
 
 	extl = extr = opt->max_ext;
-	if (r->qs >= 10) extl = opt->max_intron;
-	if (len - r->qe >= 10) extr = opt->max_intron;
+	if (r->qs >= 10) extl = opt->max_intron/2;
+	if (len - r->qe >= 10) extr = opt->max_intron/2;
 	ctg_len = mi->nt->ctg[r->vid>>1].len;
 	as = r->vs > extl? r->vs - extl : 0;
 	ae = r->ve + extr < ctg_len? r->ve + extr : ctg_len;
