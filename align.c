@@ -79,7 +79,7 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 {
 	int32_t k, i, j, l, nl = 0, al = 0;
 	mp_extra_t *e = r->p;
-	e->clen = e->n_iden = e->n_plus = e->aa_score = 0, e->dist_stop = -1;
+	e->clen = e->n_iden = e->n_plus = e->dp_max = 0, e->dist_stop = -1;
 	for (k = 0; k < e->n_cigar; ++k) {
 		int32_t op = e->cigar[k]&0xf, len = e->cigar[k]>>4, len3 = len * 3;
 		if (op == NS_CIGAR_M) {
@@ -91,20 +91,20 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 				s = opt->mat[nt_aa * opt->asize + aa_aa];
 				e->n_iden += (nt_aa == aa_aa);
 				e->n_plus += (s > 0);
-				e->aa_score += s;
+				e->dp_max += s;
 			}
 			nl += len3, al += len, e->clen += len3;
 		} else if (op == NS_CIGAR_I) {
-			e->aa_score -= opt->go + opt->ge * len;
+			e->dp_max -= opt->go + opt->ge * len;
 			al += len, e->clen += len3;
 		} else if (op == NS_CIGAR_D) {
-			e->aa_score -= opt->go + opt->ge * len;
+			e->dp_max -= opt->go + opt->ge * len;
 			nl += len3, e->clen += len3;
 		} else if (op == NS_CIGAR_F) {
-			e->aa_score -= opt->fs;
+			e->dp_max -= opt->fs;
 			nl += len, e->clen += len;
 		} else if (op == NS_CIGAR_G) {
-			e->aa_score -= opt->fs;
+			e->dp_max -= opt->fs;
 			nl += len, ++al, e->clen += 3;
 		} else if (op == NS_CIGAR_N) {
 			nl += len;
@@ -120,7 +120,7 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 			//printf("%c:%c, score=%d\n", ns_tab_aa_i2c[nt_aa], ns_tab_aa_i2c[aa_aa], s);
 			e->n_iden += (nt_aa == aa_aa);
 			e->n_plus += (s > 0);
-			e->aa_score += s;
+			e->dp_max += s;
 			nl += len, ++al, e->clen += 3;
 		}
 	}
@@ -137,7 +137,7 @@ static void mp_extra_gen(void *km, mp_reg1_t *r, mp_cigar_t *cigar, int32_t scor
 	r->a = 0;
 	cap = cigar->n + sizeof(mp_extra_t) / 4;
 	r->p = Kcalloc(0, mp_extra_t, cap); // allocate globally, not from km
-	r->p->dp_max = score;
+	r->p->dp_score = score;
 	r->p->n_cigar = r->p->m_cigar = cigar->n;
 	memcpy(r->p->cigar, cigar->c, cigar->n * sizeof(uint32_t));
 	kfree(km, cigar->c);
