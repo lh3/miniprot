@@ -7,8 +7,13 @@ actual users. Please read the [Limitations](#limit) section below and use with c
 git clone https://github.com/lh3/miniprot
 cd miniprot && make
 
-# alignment
-./miniprot -ut16 --gff test/DPP3-hs.gen.fa.gz test/DPP3-mm.pep.fa.gz > aln.gff
+# test file
+./miniprot test/DPP3-hs.gen.fa.gz test/DPP3-mm.pep.fa.gz > aln.paf        # PAF output
+./miniprot --gff test/DPP3-hs.gen.fa.gz test/DPP3-mm.pep.fa.gz > aln.gff  # GFF3+PAF output
+
+# general command line
+./miniprot -t16 -d genome.mpi genome.fna                 # indexing optional but recommended
+./miniprot -ut16 --gff genome.mpi protein.faa > aln.gff  # alignment
 
 # output format
 man ./miniprot.1
