@@ -155,27 +155,25 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 		}
 		*n_reg = nr;
 		kfree(km, ext);
+		kfree(km, a);
+		a = mp_collate_a(km, *n_reg, reg);
 		mp_sort_reg(km, n_reg, reg);
 		mp_set_parent(km, opt->mask_level, opt->mask_len, *n_reg, reg, mi->opt.kmer, 0);
 		mp_select_sub(km, opt->pri_ratio, mi->opt.kmer * 2, opt->best_n, n_reg, reg);
 	}
-	if (opt->flag & MP_F_NO_ALIGN) {
-		//for (i = 0; i < *n_reg; ++i)
-		//	kfree(km, reg[i].a);
-	} else {
+	if (!(opt->flag & MP_F_NO_ALIGN)) {
 		int32_t k;
 		for (i = k = 0; i < *n_reg; ++i) {
 			//fprintf(stderr, "X\t%s\t%c\t%ld\n", mi->nt->ctg[reg[i].vid>>1].name, "+-"[reg[i].vid&1], (long)reg[i].vs);
 			mp_align(km, opt, mi, qlen, seq, &reg[i]);
-			if (reg[i].p == 0) kfree(km, reg[i].a);
-			else reg[k++] = reg[i];
+			if (reg[i].p) reg[k++] = reg[i];
 		}
 		*n_reg = k;
+		mp_sort_reg(km, n_reg, reg);
+		mp_set_parent(km, opt->mask_level, opt->mask_len, *n_reg, reg, mi->opt.kmer, 0);
+		mp_select_sub(km, opt->pri_ratio, mi->opt.kmer * 2, opt->best_n, n_reg, reg);
 	}
-	mp_sort_reg(km, n_reg, reg);
 	kfree(km, a);
-	for (i = 0; i < *n_reg; ++i)
-		kfree(km, reg[i].a);
 	return reg;
 }
 

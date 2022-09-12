@@ -133,8 +133,6 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 static void mp_extra_gen(void *km, mp_reg1_t *r, mp_cigar_t *cigar, int32_t score)
 {
 	int32_t cap;
-	kfree(km, r->a);
-	r->a = 0;
 	cap = cigar->n + sizeof(mp_extra_t) / 4;
 	r->p = Kcalloc(0, mp_extra_t, cap); // allocate globally, not from km
 	r->p->dp_score = score;

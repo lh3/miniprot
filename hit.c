@@ -48,6 +48,25 @@ mp_reg1_t *mp_reg_gen_from_block(void *km, const mp_idx_t *mi, int32_t n_u, cons
 	return reg;
 }
 
+uint64_t *mp_collate_a(void *km, int32_t n_reg, mp_reg1_t *reg)
+{
+	uint64_t *a;
+	int64_t n_a;
+	int32_t i;
+	for (i = 0, n_a = 0; i < n_reg; ++i)
+		n_a += reg[i].cnt;
+	a = Kmalloc(km, uint64_t, n_a);
+	for (i = 0, n_a = 0; i < n_reg; ++i) {
+		mp_reg1_t *r = &reg[i];
+		r->off = n_a;
+		memcpy(&a[n_a], r->a, r->cnt * sizeof(uint64_t));
+		kfree(km, r->a);
+		r->a = &a[n_a];
+		n_a += r->cnt;
+	}
+	return a;
+}
+
 void mp_sort_reg(void *km, int *n_regs, mp_reg1_t *r)
 {
 	int32_t i, n_aux, n = *n_regs, has_cigar = 0, no_cigar = 0;
@@ -169,9 +188,11 @@ void mp_select_sub(void *km, float pri_ratio, int min_diff, int best_n, int *n_,
 		int i, k, n = *n_, n_2nd = 0;
 		for (i = k = 0; i < n; ++i) {
 			int p = r[i].parent;
+			int sci = r[i].p? r[i].p->dp_max : r[i].chn_sc;
+			int scp = r[p].p? r[p].p->dp_max : r[p].chn_sc;
 			if (p == i) { // primary or inversion
 				r[k++] = r[i];
-			} else if ((r[i].chn_sc >= r[p].chn_sc * pri_ratio || r[i].chn_sc + min_diff >= r[p].chn_sc) && n_2nd < best_n) {
+			} else if ((sci >= scp * pri_ratio || sci + min_diff >= scp) && n_2nd < best_n) {
 				if (!(r[i].qs == r[p].qs && r[i].qe == r[p].qe && r[i].vid == r[p].vid && r[i].vs == r[p].vs && r[i].ve == r[p].ve)) // not identical hits
 					r[k++] = r[i], ++n_2nd;
 				else if (r[i].p) free(r[i].p);
