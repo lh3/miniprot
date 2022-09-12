@@ -6,7 +6,7 @@ void mp_idxopt_init(mp_idxopt_t *io)
 {
 	memset(io, 0, sizeof(*io));
 	io->bbit = 8;
-	//io->min_aa_len = 15;
+	io->min_aa_len = 15;
 	io->kmer = 6;
 	io->smer = 4;
 }
@@ -28,7 +28,7 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 	mo->max_ava = 1000;
 	mo->mask_level = 0.5f;
 	mo->mask_len = INT32_MAX;
-	mo->pri_ratio = 0.5f;
+	mo->pri_ratio = 0.7f;
 	mo->best_n = 100;
 	mo->kmer2 = 5;
 

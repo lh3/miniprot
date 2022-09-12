@@ -143,7 +143,7 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	kfree(km, u);
 	mp_sort_reg(km, n_reg, reg);
 	mp_set_parent(km, opt->mask_level, opt->mask_len, *n_reg, reg, mi->opt.kmer, 0);
-	mp_select_sub(km, opt->pri_ratio, mi->opt.kmer * 2, opt->best_n, n_reg, reg);
+	mp_select_sub(km, opt->pri_ratio * opt->pri_ratio, mi->opt.kmer * 2, opt->best_n, n_reg, reg);
 	if (!(mp_dbg_flag & MP_DBG_NO_REFINE)) {
 		int32_t nr = 0;
 		uint64_t *ext;
@@ -159,7 +159,7 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 		a = mp_collate_a(km, *n_reg, reg);
 		mp_sort_reg(km, n_reg, reg);
 		mp_set_parent(km, opt->mask_level, opt->mask_len, *n_reg, reg, mi->opt.kmer, 0);
-		mp_select_sub(km, opt->pri_ratio, mi->opt.kmer * 2, opt->best_n, n_reg, reg);
+		mp_select_sub(km, opt->pri_ratio * opt->pri_ratio, mi->opt.kmer * 2, opt->best_n, n_reg, reg);
 	}
 	if (!(opt->flag & MP_F_NO_ALIGN)) {
 		int32_t k;
