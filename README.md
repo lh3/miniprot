@@ -19,10 +19,11 @@ man ./miniprot.1
 ## Table of Contents
 
 - [Getting Started](#started)
+- [Introduction](#intro)
 - [Users' Guide](#uguide)
   - [Installation](#install)
   - [Usage](#usage)
-  - [Preliminary evaluation](#eval)
+  - [Evaluation](#eval)
   - [Algorithm overview](#algo)
 - [Limitations](#limit)
 
@@ -75,21 +76,39 @@ miniprot -t8 --gff -d ref.mpi ref.fna > out.gff
 ```
 The detailed alignment is embedded in `##PAF` lines in the GFF3 output.
 
-### <a name="eval"></a>Preliminary evaluation
+### <a name="eval"></a>Evaluation
 
-We aligned 21,919 canonical mouse proteins from Gencode M30 against pre-indexed
-GRCh38. It took about 7 minutes over 16 threads. Miniprot mapped 19,308
-proteins with 160,119 introns in their best alignment. In comparison to Gencode
-v40 human annotations, 93.6% of these introns are annotated in Gencode with
-exact coordinates. The global mode of [spaln][spaln] (`-Q7`) mapped 18,907
-proteins in 90 min. It identified 185,442 introns with 87.1% of them coincide
-with Gencode. Its local mode (`-Q7 -LS`) crashed.
+We collected Ensembl canonical mouse proteins from Gencode vM30 and longest
+proteins per gene for chicken and zebrafish. We then aligned these proteins to
+the human reference genome GRCh38. We say a junction is confirmed if it can be
+found in the human Gencode annotation v41; a junction is non-overlapping if the
+intron in the junction does not overlap with any introns in the Gencode
+annotation.
 
-We also aligned 52,089 zebrafish proteins, including alternative isoforms,
-against GRCh38. Miniprot mapped 34,288 of them with 81.4% of 298,495 predicted
-introns confirmed by the Gencode annotation. The accuracy is lower because
-zebrafish is more distant from human and because the input includes rarer
-isoforms.
+We only evaluated miniprot and [spaln][spaln] as these are the only tools
+practical for whole genomes. In addition, [Iwata and Gotoh (2012)][spaln2]
+suggest that spaln2 consistently outperforms exonerate, GeneWise, ProSplign and
+genBlastG.  Both miniprot and spaln were set to use 16 CPU threads. We used
+option `-Q7 -O0 -Thomosapi` with spaln. This does global alignment with the
+human-specific splice model.
+
+|Metric          |mouse/mp |mouse/sp |chicken/mp|zebrafish/mp|
+|:---------------|--------:|---------|--------:|--------:|
+|Elapsed time (s)|     347 |   3,714 |     294 |     464 |
+|# proteins      |  21,844 |  21,844 |  17,007 |  30,313 |
+|# mapped        |  19,253 |  18,847 |  13,284 |  19,797 |
+|# single-exon   |   2,878 |         |   1,110 |   1,857 |
+|# predicted junc| 164,718 | 173,475 | 131,346 | 176,044 |
+|# non-ovlp junc |     402 |   1,490 |     482 |     960 |
+|# confirmed junc| 157,400 | 162,303 | 117,416 | 151,912 |
+|% confirmed     |    95.6 |    93.6 |    89.4 |    86.3 |
+
+On the human-mouse dataset, miniprot finds fewer novel splice junctions,
+implying higher specificity, but spaln finds more confirmed junctions, implying
+higher sensitivity. This is partly because spaln forces global alignment.
+I have tried a few other options of spaln such as `-yS`, `-M` (more than one
+hits per query) and `-LS` (local mode), but spaln-2.4.12 crashed. Not using a
+species-specific splice model (`-T`) would lead to a much worse alignment.
 
 ### <a name="algo"></a>Algorithm overview
 
@@ -130,3 +149,4 @@ isoforms.
 [paftools]: https://github.com/lh3/minimap2/blob/master/misc/paftools.js
 [minimap2]: https://github.com/lh3/minimap2
 [spaln]: https://github.com/ogotoh/spaln
+[spaln2]: https://pubmed.ncbi.nlm.nih.gov/22848105/
