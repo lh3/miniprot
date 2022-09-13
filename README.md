@@ -1,6 +1,3 @@
-**WARNING: miniprot is WIP. I made the repo public mainly to get feedbacks from
-actual users. Please read the [Limitations](#limit) section below and use with caution.**
-
 ## <a name="started"></a>Getting Started
 ```sh
 # download and compile
