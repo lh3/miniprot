@@ -32,7 +32,7 @@ static void ns_backtrack(void *km, int32_t vs, const __m128i *tb, int32_t nl, in
 	int32_t i = nl - 1, j = al - 1, last = 0, slen = (al + vs - 1) / vs;
 	uint32_t *cigar = *cigar_, tmp;
 	assert(vs == 4 || vs == 8);
-	while (i >= 1 && j >= 0) {
+	while (i >= 2 && j >= 0) {
 		const __m128i *tbi = &tb[i * slen];
 		int32_t x = *((int16_t*)&tbi[j%slen] + j/slen);
 		int32_t state, ext;
@@ -65,14 +65,15 @@ static void ns_backtrack(void *km, int32_t vs, const __m128i *tb, int32_t nl, in
 		}
 		last = state >= 1 && state <= 5 && ext? state : 0;
 	}
-	if (j > 0) ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_I, j); // TODO: is this correct?
-	if (i >= 1) {
-		int32_t l = (i-1)/3*3, t = i - l;
-		if (l > 0) ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_D, l); // TODO: is this correct?
+	if (j > 0) ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_I, j);
+	if (i >= 0) {
+		int32_t l = (i+1) / 3 * 3, t = (i+1) % 3;
+		if (l > 0) ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_D, l);
 		if (t != 0) ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_F, t);
 	}
 	for (i = 0; i < (*n_cigar)>>1; ++i) // reverse CIGAR
 		tmp = cigar[i], cigar[i] = cigar[(*n_cigar) - 1 - i], cigar[(*n_cigar) - 1 - i] = tmp;
+	//fprintf(stderr, "%d\t", nl); for (i = 0; i < (*n_cigar); ++i) fprintf(stderr, "%d%c", cigar[i]>>4, NS_CIGAR_STR[cigar[i]&0xf]); fputc('\n', stderr);
 	*cigar_ = cigar;
 }
 

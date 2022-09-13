@@ -124,7 +124,12 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 			nl += len, ++al, e->clen += 3;
 		}
 	}
-	//if (al != r->qe - r->qs) fprintf(stderr, "%d != %d\n", al, r->qe - r->qs);
+	if (nl != r->ve - r->vs || al != r->qe - r->qs) {
+		fprintf(stderr, "BUG! %d == %d? %d == %d? ", nl, (int)(r->ve - r->vs), al, r->qe - r->qs);
+		for (k = 0; k < e->n_cigar; ++k)
+			fprintf(stderr, "%d%c", e->cigar[k]>>4, NS_CIGAR_STR[e->cigar[k]&0xf]);
+		fputc('\n', stderr);
+	}
 	assert(nl == r->ve - r->vs);
 	assert(al == r->qe - r->qs);
 	//printf("aa_score=%d, glen=%d, clen=%d, n_iden=%d, n_plus=%d\n", e->aa_score, e->glen, e->clen, e->n_iden, e->n_plus);
@@ -193,6 +198,7 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	l_nt = mp_ntseq_get_by_v(mi->nt, r->vid, as, ae, nt);
 	assert(l_nt == ae - as);
 	vs0 = r->vs;
+	//fprintf(stderr, "X\t%s\t%c\t%ld\t%ld\n", mi->nt->ctg[r->vid>>1].name, "+-"[r->vid&1], (long)(r->vid&1? ctg_len - ae : as), (long)(r->vid&1? ctg_len - as : ae));
 
 	{ // left extension
 		int64_t vs1 = vs0 + (r->a[i0]>>32) + 1;
