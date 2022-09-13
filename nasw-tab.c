@@ -67,7 +67,7 @@ void ns_opt_init(ns_opt_t *opt)
 	memset(opt, 0, sizeof(*opt));
 	opt->go = 11, opt->ge = 1;
 	opt->io = 31;
-	opt->nc = 5;
+	opt->nc = 11;
 	opt->fs = 15;
 	opt->xdrop = 100;
 	opt->end_bonus = 10;
