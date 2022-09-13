@@ -88,12 +88,14 @@ annotation.
 We only evaluated miniprot and [spaln][spaln] as these are the only tools
 practical for whole genomes. In addition, [Iwata and Gotoh (2012)][spaln2]
 suggest that spaln2 consistently outperforms exonerate, GeneWise, ProSplign and
-genBlastG.  Both miniprot and spaln were set to use 16 CPU threads. We used
-option `-Q7 -O0 -Thomosapi` with spaln. This does global alignment with the
-human-specific splice model.
+genBlastG.
+
+In the evaluation, both miniprot and spaln were set to use 16 CPU threads. We
+used option `-Q7 -O0 -Thomosapi` with spaln. This does global alignment with
+the human-specific splice model.
 
 |Metric          |mouse/mp |mouse/sp |chicken/mp|zebrafish/mp|
-|:---------------|--------:|---------|--------:|--------:|
+|:---------------|--------:|--------:|--------:|--------:|
 |Elapsed time (s)|     347 |   3,714 |     294 |     464 |
 |# proteins      |  21,844 |  21,844 |  17,007 |  30,313 |
 |# mapped        |  19,253 |  18,847 |  13,284 |  19,797 |
@@ -108,7 +110,7 @@ implying higher specificity, but spaln finds more confirmed junctions, implying
 higher sensitivity. This is partly because spaln forces global alignment.
 I have tried a few other options of spaln such as `-yS`, `-M` (more than one
 hits per query) and `-LS` (local mode), but spaln-2.4.12 crashed. Not using a
-species-specific splice model (`-T`) would lead to a much worse alignment.
+species-specific splice model (`-T`) would lead to lower accuracy.
 
 ### <a name="algo"></a>Algorithm overview
 
