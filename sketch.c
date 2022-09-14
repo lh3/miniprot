@@ -101,8 +101,9 @@ void mp_sketch_nt4(void *km, const uint8_t *seq, int64_t len, int32_t min_aa_len
 	for (p = 0; p < 3; ++p)
 		if (k[p] >= min_aa_len)
 			mp_sketch_clean_orf(km, seq, e[p] + 1 - k[p] * 3, e[p] + 1, kmer, smer, bbit, boff, a);
+	if (a->n <= 1) return; // the following loop doesn't work when a->n == 0
 	radix_sort_mp64(a->a, a->a + a->n);
-	for (i = 1, j = 0; i < a->n; ++i)
+	for (i = 1, j = 0; i < a->n; ++i) // squeeze out identical entries
 		if (a->a[j] != a->a[i])
 			a->a[++j] = a->a[i];
 	a->n = ++j;
