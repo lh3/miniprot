@@ -278,7 +278,8 @@ void mp_write_output(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_
 		if (opt->flag&MP_F_SHOW_UNMAP)
 			mp_write_paf(s, mi, seq, 0, opt->flag&MP_F_GFF);
 	} else {
-		mp_write_paf(s, mi, seq, r, opt->flag&MP_F_GFF);
+		if (!(opt->flag&MP_F_NO_PAF))
+			mp_write_paf(s, mi, seq, r, opt->flag&MP_F_GFF);
 		if (opt->flag&MP_F_GFF)
 			mp_write_gff(s, km, mi, seq, r, opt->gff_prefix, id, seq->name);
 	}

@@ -6,7 +6,8 @@
 static ko_longopt_t long_options[] = {
 	{ "gff",             ko_no_argument,       301 },
 	{ "xdrop",           ko_required_argument, 302 },
-	{ "outn",            ko_no_argument,       303 },
+	{ "outn",            ko_required_argument, 303 },
+	{ "gff-only",        ko_no_argument,       304 },
 	{ "version",         ko_no_argument,       401 },
 	{ "no-kalloc",       ko_no_argument,       501 },
 	{ "dbg-qname",       ko_no_argument,       502 },
@@ -61,8 +62,10 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "  Input/output:\n");
 	fprintf(fp, "    -t INT       number of threads [%d]\n", n_threads);
 	fprintf(fp, "    --gff        output in the GFF3 format\n");
-	fprintf(fp, "    -K NUM       query batch size [2M]\n");
+	fprintf(fp, "    -P STR       prefix for IDs in GFF3 [%s]\n", mo->gff_prefix);
 	fprintf(fp, "    -u           print unmapped query proteins\n");
+	fprintf(fp, "    --outn=NUM   output up to min{NUM,-N} alignments per query [%d]\n", mo->out_n);
+	fprintf(fp, "    -K NUM       query batch size [2M]\n");
 }
 
 int main(int argc, char *argv[])
@@ -77,7 +80,7 @@ int main(int argc, char *argv[])
 	mp_start();
 	mp_mapopt_init(&mo);
 	mp_idxopt_init(&io);
-	while ((c = ketopt(&o, argc, argv, 1, "k:s:l:b:t:d:c:n:m:K:p:N:SAO:E:J:C:F:G:e:uB:", long_options)) >= 0) {
+	while ((c = ketopt(&o, argc, argv, 1, "k:s:l:b:t:d:c:n:m:K:p:N:SAO:E:J:C:F:G:e:uB:P:", long_options)) >= 0) {
 		if (c == 'k') io.kmer = atoi(o.arg);
 		else if (c == 's') io.smer = atoi(o.arg);
 		else if (c == 'b') io.bbit = atoi(o.arg);
@@ -100,10 +103,12 @@ int main(int argc, char *argv[])
 		else if (c == 'F') mo.fs = atoi(o.arg);
 		else if (c == 'B') mo.end_bonus = atoi(o.arg);
 		else if (c == 'e') mo.max_ext = mp_parse_num(o.arg);
+		else if (c == 'P') mo.gff_prefix = o.arg;
 		else if (c == 'u') mo.flag |= MP_F_SHOW_UNMAP;
-		else if (c == 301) mo.flag |= MP_F_GFF;
+		else if (c == 301) mo.flag |= MP_F_GFF; // --gff
 		else if (c == 302) mo.xdrop = atoi(o.arg); // --xdrop
 		else if (c == 303) mo.out_n = mp_parse_num(o.arg); // --outn
+		else if (c == 304) mo.flag |= MP_F_GFF | MP_F_NO_PAF; // --gff-only
 		else if (c == 501) mp_dbg_flag |= MP_DBG_NO_KALLOC; // --no-kalloc
 		else if (c == 502) mp_dbg_flag |= MP_DBG_QNAME; // --dbg-qname
 		else if (c == 503) mp_dbg_flag |= MP_DBG_NO_REFINE; // --dbg-no-refine

@@ -1,4 +1,4 @@
-.TH miniprot 1 "14 September 2022" "miniprot-0.2-dirty (r121)" "Bioinformatics tools"
+.TH miniprot 1 "14 September 2022" "miniprot-0.2-dirty (r122)" "Bioinformatics tools"
 .SH NAME
 .PP
 miniprot - protein-to-genome alignment with splicing and frameshifts
@@ -114,8 +114,11 @@ Number of threads [4]
 .B --gff
 Output in the GFF3 format. `##PAF' lines in the output provide detailed alignments.
 .TP
-.BI -K \ NUM
-Query batch size [2M]
+.B --gff-only
+Output in the GFF3 format without `##PAF' lines.
+.TP
+.BI -P \ STR
+Prefix for IDs in GFF3 [MP]
 .TP
 .B -u
 Print unmapped query proteins
@@ -125,6 +128,9 @@ Output up to
 .RI min{ NUM ,
 .BR -N }
 alignments per query [1000].
+.TP
+.BI -K \ NUM
+Query batch size [2M]
 .SH OUTPUT FORMAT
 .PP
 Miniprot outputs alignments in the extended Pairwise mApping Format (PAF) by

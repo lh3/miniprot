@@ -3,12 +3,13 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.2-r121-dirty"
+#define MP_VERSION "0.2-r122-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
 #define MP_F_SHOW_UNMAP   0x4
 #define MP_F_GFF          0x8
+#define MP_F_NO_PAF       0x10
 
 #define MP_CODON_STD 0
 #define MP_IDX_MAGIC "MPI\1"
