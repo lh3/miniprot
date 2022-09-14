@@ -1,4 +1,4 @@
-.TH miniprot 1 "12 September 2022" "miniprot-0.2 (r116)" "Bioinformatics tools"
+.TH miniprot 1 "14 September 2022" "miniprot-0.2-dirty (r121)" "Bioinformatics tools"
 .SH NAME
 .PP
 miniprot - protein-to-genome alignment with splicing and frameshifts
@@ -119,6 +119,12 @@ Query batch size [2M]
 .TP
 .B -u
 Print unmapped query proteins
+.TP
+.BI --outn \ NUM
+Output up to
+.RI min{ NUM ,
+.BR -N }
+alignments per query [1000].
 .SH OUTPUT FORMAT
 .PP
 Miniprot outputs alignments in the extended Pairwise mApping Format (PAF) by
@@ -154,7 +160,7 @@ r | c | l .
 Tag	Type	Description
 _
 AS	i	Alignment score from dynamic programming
-as	i	Alignment score excluding introns
+ms	i	Alignment score excluding introns
 np	i	Number of amino acid matches with positive scores
 da	i	Distance to the nearest start codon
 do	i	Distance to the nearest stop codon
@@ -200,7 +206,7 @@ _
 .SH LIMITATIONS
 .TP 2
 *
-Miniprot is not well tested.
+The DP alignment score (the AS tag) is not accurate.
 .TP
 *
-The DP alignment score (the AS tag) is not be accurate.
+Need to introduce more heuristics for improved accuracy.

@@ -237,7 +237,7 @@ static void *worker_pipeline(void *shared, int step, void *in)
 				mp_write_output(&p->str, 0, p->mi, &s->seq[i], 0, p->opt, 0);
 				fwrite(p->str.s, 1, p->str.l, stdout);
 			}
-			for (j = 0; j < s->n_reg[i]; ++j) {
+			for (j = 0; j < s->n_reg[i] && j < p->opt->out_n; ++j) {
 				mp_write_output(&p->str, 0, p->mi, &s->seq[i], &s->reg[i][j], p->opt, ++p->id);
 				fwrite(p->str.s, 1, p->str.l, stdout);
 				free(s->reg[i][j].p);
