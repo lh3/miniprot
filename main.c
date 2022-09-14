@@ -5,6 +5,7 @@
 
 static ko_longopt_t long_options[] = {
 	{ "gff",             ko_no_argument,       301 },
+	{ "xdrop",           ko_no_argument,       302 },
 	{ "version",         ko_no_argument,       401 },
 	{ "no-kalloc",       ko_no_argument,       501 },
 	{ "dbg-qname",       ko_no_argument,       502 },
@@ -100,6 +101,7 @@ int main(int argc, char *argv[])
 		else if (c == 'e') mo.max_ext = mp_parse_num(o.arg);
 		else if (c == 'u') mo.flag |= MP_F_SHOW_UNMAP;
 		else if (c == 301) mo.flag |= MP_F_GFF;
+		else if (c == 302) mo.xdrop = atoi(o.arg); // --xdrop
 		else if (c == 501) mp_dbg_flag |= MP_DBG_NO_KALLOC; // --no-kalloc
 		else if (c == 502) mp_dbg_flag |= MP_DBG_QNAME; // --dbg-qname
 		else if (c == 503) mp_dbg_flag |= MP_DBG_NO_REFINE; // --dbg-no-refine

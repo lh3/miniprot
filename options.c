@@ -37,6 +37,7 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 	mo->nc = 11;
 	mo->fs = 15;
 	mo->end_bonus = 5;
+	mo->xdrop = 100;
 	mo->asize = 22;
 	mo->mat = ns_mat_blosum62;
 

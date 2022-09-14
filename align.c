@@ -50,7 +50,7 @@ typedef struct {
 static inline void mp_map2ns_opt(const mp_mapopt_t *mo, ns_opt_t *no)
 {
 	ns_opt_init(no);
-	no->go = mo->go, no->ge = mo->ge, no->io = mo->io, no->fs = mo->fs, no->nc = mo->nc, no->sc = mo->mat;
+	no->go = mo->go, no->ge = mo->ge, no->io = mo->io, no->fs = mo->fs, no->nc = mo->nc, no->xdrop = mo->xdrop, no->sc = mo->mat;
 	no->end_bonus = mo->end_bonus;
 }
 
