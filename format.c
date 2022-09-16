@@ -166,7 +166,7 @@ void mp_write_paf(kstring_t *s, const mp_idx_t *mi, const mp_bseq1_t *seq, const
 	else mp_sprintf_lite(s, "%d\t%d\t", (int)r->vs, (int)r->ve);
 	if (r->p) {
 		int32_t k;
-		mp_sprintf_lite(s, "%d\t%d\t0\tAS:i:%d\tms:i:%d\tnp:i:%d\tda:i:%d\tdo:i:%d\t", r->p->n_iden * 3, r->p->clen, r->p->dp_score, r->p->dp_max, r->p->n_plus, r->p->dist_start, r->p->dist_stop);
+		mp_sprintf_lite(s, "%d\t%d\t0\tAS:i:%d\tms:i:%d\tnp:i:%d\tda:i:%d\tdo:i:%d\t", r->p->n_iden * 3, r->p->blen, r->p->dp_score, r->p->dp_max, r->p->n_plus, r->p->dist_start, r->p->dist_stop);
 		mp_sprintf_lite(s, "cg:Z:");
 		for (k = 0; k < r->p->n_cigar; ++k)
 			mp_sprintf_lite(s, "%d%c", r->p->cigar[k]>>4, NS_CIGAR_STR[r->p->cigar[k]&0xf]);
@@ -176,99 +176,44 @@ void mp_write_paf(kstring_t *s, const mp_idx_t *mi, const mp_bseq1_t *seq, const
 	mp_sprintf_lite(s, "\n");
 }
 
-#define MP_FEAT_EXON  0
-#define MP_FEAT_STOP  1
-
-typedef struct {
-	int64_t vs, ve;
-	int32_t qs, qe;
-	int32_t phase;
-	int32_t n_fs;
-	int32_t type;
-} mp_feat_t;
-
 void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *seq, const mp_reg1_t *r, const char *gff_prefix, int64_t id, const char *qname)
 {
 	const mp_ctg_t *ctg;
-	mp_feat_t *feat, *f;
-	int32_t k, j, n_intron = 0, n_feat;
+	const mp_feat_t *f, *feat = r->feat;
 	int64_t vs, ve, ve_mRNA;
-	int32_t qs, qe, phase, n_fs, tot_fs = 0, has_stop = 0;
+	int32_t j, has_stop = 0;
 	char buf[16], dec[16];
 
 	if (r == 0 || r->p == 0) return;
 	has_stop = (r->qe == seq->l_seq && r->p->dist_stop == 0);
 	ve_mRNA = has_stop? r->ve + 3 : r->ve;
-	for (k = 0; k < r->p->n_cigar; ++k) {
-		int32_t op = r->p->cigar[k]&0xf;
-		if (op == NS_CIGAR_N || op == NS_CIGAR_U || op == NS_CIGAR_V)
-			++n_intron;
-	}
-	n_feat = n_intron + 1 + (!!has_stop);
-	feat = Kmalloc(km, mp_feat_t, n_feat);
-
-	vs = ve = r->vs, qs = qe = r->qs, phase = 0, n_fs = 0;
-	for (k = j = 0; k < r->p->n_cigar; ++k) {
-		int32_t op = r->p->cigar[k]&0xf, len = r->p->cigar[k]>>4, len3 = len * 3;
-		if (op == NS_CIGAR_M) {
-			ve += len3, qe += len;
-		} else if (op == NS_CIGAR_I) {
-			qe += len;
-		} else if (op == NS_CIGAR_D) {
-			ve += len3;
-		} else if (op == NS_CIGAR_F) {
-			ve += len, n_fs += len, tot_fs += len;
-		} else if (op == NS_CIGAR_G) {
-			ve += len, ++qe, n_fs += len, tot_fs += len;
-		} else if (op == NS_CIGAR_N || op == NS_CIGAR_U || op == NS_CIGAR_V) {
-			f = &feat[j++];
-			f->phase = phase;
-			f->vs = vs, f->qs = qs, f->qe = qe, f->n_fs = n_fs, f->type = MP_FEAT_EXON;
-			if (op == NS_CIGAR_N) {
-				f->ve = ve;
-				vs = ve + len, phase = 0;
-			} else if (op == NS_CIGAR_U) {
-				f->ve = ve + 1;
-				vs = ve + len - 2, phase = 2;
-			} else if (op == NS_CIGAR_V) {
-				f->ve = ve + 2;
-				vs = ve + len - 1, phase = 1;
-			}
-			qs = qe, n_fs = 0;
-			ve += len, qe += (op != NS_CIGAR_N);
-		}
-	}
-	f = &feat[j++];
-	f->vs = vs, f->ve = ve, f->qs = qs, f->qe = qe, f->phase = phase, f->n_fs = n_fs, f->type = MP_FEAT_EXON;
-	if (has_stop) {
-		f = &feat[j++];
-		f->vs = ve_mRNA - 3, f->ve = ve_mRNA, f->qs = qe, f->qe = qe, f->phase = 0, f->n_fs = 0, f->type = MP_FEAT_STOP;
-	}
 
 	ctg = &mi->nt->ctg[r->vid>>1];
 	snprintf(buf, 16, "%.6ld", (long)id);
 	vs = r->vid&1? ctg->len - ve_mRNA : r->vs;
 	ve = r->vid&1? ctg->len - r->vs   : ve_mRNA;
 	mp_sprintf_lite(s, "%s\tminiprot\tmRNA\t%d\t%d\t%d\t%c\t.\tID=%s%s", ctg->name, (int)vs + 1, (int)ve, r->p->dp_max, "+-"[r->vid&1], gff_prefix, buf);
-	if (tot_fs > 0) mp_sprintf_lite(s, ";Frameshift=true");
-	snprintf(dec, 16, "%.4f", (double)r->p->n_iden * 3 / r->p->clen);
+	if (r->p->n_fs > 0) mp_sprintf_lite(s, ";Frameshift=%d", r->p->n_fs);
+	snprintf(dec, 16, "%.4f", (double)r->p->n_iden * 3 / r->p->blen);
 	mp_sprintf_lite(s, ";Identity=%s", dec);
-	snprintf(dec, 16, "%.4f", (double)r->p->n_plus * 3 / r->p->clen);
+	snprintf(dec, 16, "%.4f", (double)r->p->n_plus * 3 / r->p->blen);
 	mp_sprintf_lite(s, ";Positive=%s", dec);
 	mp_sprintf_lite(s, ";Target=%s %d %d\n", seq->name, r->qs + 1, r->qe);
 
-	for (j = 0; j < n_feat; ++j) {
+	for (j = 0; j < r->n_feat; ++j) {
 		f = &feat[j];
 		vs = r->vid&1? ctg->len - f->ve : f->vs;
 		ve = r->vid&1? ctg->len - f->vs : f->ve;
-		mp_sprintf_lite(s, "%s\tminiprot\t%s\t%d\t%d\t0\t%c\t%d\tParent=%s%s", ctg->name, f->type == MP_FEAT_STOP? "stop_codon" : "CDS",
-			(int)vs + 1, (int)ve, "+-"[r->vid&1], f->phase, gff_prefix, buf);
-		if (f->n_fs > 0) mp_sprintf_lite(s, ";Frameshift=true");
-		if (f->type == MP_FEAT_EXON)
+		mp_sprintf_lite(s, "%s\tminiprot\t%s\t%d\t%d\t%d\t%c\t%d\tParent=%s%s", ctg->name, f->type == MP_FEAT_STOP? "stop_codon" : "CDS",
+			(int)vs + 1, (int)ve, f->score, "+-"[r->vid&1], f->phase, gff_prefix, buf);
+		if (f->n_fs > 0) mp_sprintf_lite(s, ";Frameshift=%d", f->n_fs);
+		if (f->type == MP_FEAT_CDS) {
+			snprintf(dec, 16, "%.4f", (double)f->n_iden * 3 / f->blen);
+			mp_sprintf_lite(s, ";Identity=%s", dec);
 			mp_sprintf_lite(s, ";Target=%s %d %d", seq->name, f->qs + 1, f->qe);
+		}
 		mp_sprintf_lite(s, "\n");
 	}
-	kfree(km, feat);
 }
 
 void mp_write_output(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *seq, const mp_reg1_t *r, const mp_mapopt_t *opt, int64_t id)

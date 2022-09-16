@@ -3,13 +3,16 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.2-r122-dirty"
+#define MP_VERSION "0.2-r123-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
 #define MP_F_SHOW_UNMAP   0x4
 #define MP_F_GFF          0x8
 #define MP_F_NO_PAF       0x10
+
+#define MP_FEAT_CDS       0
+#define MP_FEAT_STOP      1
 
 #define MP_CODON_STD 0
 #define MP_IDX_MAGIC "MPI\1"
@@ -79,7 +82,8 @@ typedef struct {
 typedef struct {
 	int32_t dp_score, dp_max, dp_max2;
 	int32_t n_cigar, m_cigar;
-	int32_t clen; // CDS length in alignment
+	int32_t blen; // CDS length in alignment
+	int32_t n_fs; // number of frameshift events
 	int32_t dist_stop; // distance in bp to the closest stop codon
 	int32_t dist_start; // distance in bp the the closest 'M'
 	int32_t n_iden, n_plus;
@@ -87,15 +91,27 @@ typedef struct {
 } mp_extra_t;
 
 typedef struct {
+	int64_t vs, ve;
+	int32_t qs, qe;
+	int32_t type;
+	int32_t phase;
+	int32_t n_fs;
+	int32_t score, n_iden, blen;
+	char donor[2], acceptor[2];
+} mp_feat_t;
+
+typedef struct {
 	int32_t off, cnt;
 	int32_t id, parent;
 	int32_t n_sub, subsc;
+	int32_t n_feat, m_feat;
 	int32_t chn_sc;
 	uint32_t hash;
 	uint32_t vid;
 	int32_t qs, qe;
 	int64_t vs, ve;
 	uint64_t *a;
+	mp_feat_t *feat;
 	mp_extra_t *p;
 } mp_reg1_t;
 

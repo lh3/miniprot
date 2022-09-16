@@ -75,12 +75,27 @@ static int32_t mp_align_seq(void *km, const mp_mapopt_t *opt, int32_t nlen, cons
 	}
 }
 
-static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt, const char *aa)
+static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt, const char *aa, int32_t qlen)
 {
-	int32_t k, i, j, l, nl = 0, al = 0;
+	int32_t k, i, j, l, nl = 0, al = 0, ft, n_intron, has_stop;
+	int32_t blen0, n_iden0, phase0, qs0, n_fs0, score0;
+	int64_t vs0;
 	mp_extra_t *e = r->p;
-	e->clen = e->n_iden = e->n_plus = e->dp_max = 0, e->dist_stop = -1;
-	for (k = 0; k < e->n_cigar; ++k) {
+	mp_feat_t *f;
+
+	has_stop = (r->qe == qlen && r->p->dist_stop == 0); // IMPORTANT: call mp_extra_stop() before this function
+	for (k = 0, n_intron = 0; k < r->p->n_cigar; ++k) {
+		int32_t op = r->p->cigar[k]&0xf;
+		if (op == NS_CIGAR_N || op == NS_CIGAR_U || op == NS_CIGAR_V)
+			++n_intron;
+	}
+	r->n_feat = n_intron + 1 + (!!has_stop);
+	r->feat = Kcalloc(0, mp_feat_t, r->n_feat);
+
+	e->blen = e->n_iden = e->n_plus = e->n_fs = e->dp_max = 0;
+	blen0 = n_iden0 = score0 = n_fs0 = 0, phase0 = 0;
+	vs0 = r->vs, qs0 = r->qs;
+	for (k = 0, ft = 0; k < e->n_cigar; ++k) {
 		int32_t op = e->cigar[k]&0xf, len = e->cigar[k]>>4, len3 = len * 3;
 		if (op == NS_CIGAR_M) {
 			for (i = nl, j = al, l = 0; l < len; ++l, ++j, i += 3) {
@@ -93,37 +108,68 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 				e->n_plus += (s > 0);
 				e->dp_max += s;
 			}
-			nl += len3, al += len, e->clen += len3;
+			nl += len3, al += len, e->blen += len3;
 		} else if (op == NS_CIGAR_I) {
 			e->dp_max -= opt->go + opt->ge * len;
-			al += len, e->clen += len3;
+			al += len, e->blen += len3;
 		} else if (op == NS_CIGAR_D) {
 			e->dp_max -= opt->go + opt->ge * len;
-			nl += len3, e->clen += len3;
+			nl += len3, e->blen += len3;
 		} else if (op == NS_CIGAR_F) {
 			e->dp_max -= opt->fs;
-			nl += len, e->clen += len;
+			nl += len, e->blen += len, e->n_fs++;
 		} else if (op == NS_CIGAR_G) {
 			e->dp_max -= opt->fs;
-			nl += len, ++al, e->clen += 3;
-		} else if (op == NS_CIGAR_N) {
-			nl += len;
-		} else if (op == NS_CIGAR_U || op == NS_CIGAR_V) {
-			uint8_t n1, n2, n3, codon, nt_aa, aa_aa;
-			int32_t s;
-			if (op == NS_CIGAR_U) n1 = nt[nl], n2 = nt[nl + len - 2], n3 = nt[nl + len - 1];
-			else n1 = nt[nl], n2 = nt[nl + 1], n3 = nt[nl + len - 1];
-			codon = n1<<4 | n2<<2 | n3;
-			nt_aa = n1 > 3 || n2 > 3 || n3 > 3? ns_tab_aa20['X'] : ns_tab_codon[codon];
-			aa_aa = ns_tab_aa20[(uint8_t)aa[al]];
-			s = opt->mat[nt_aa * opt->asize + aa_aa];
-			//printf("%c:%c, score=%d\n", ns_tab_aa_i2c[nt_aa], ns_tab_aa_i2c[aa_aa], s);
-			e->n_iden += (nt_aa == aa_aa);
-			e->n_plus += (s > 0);
-			e->dp_max += s;
-			nl += len, ++al, e->clen += 3;
+			nl += len, ++al, e->blen += 3, e->n_fs++;
+		} else if (op == NS_CIGAR_N || op == NS_CIGAR_U || op == NS_CIGAR_V) {
+			if (op == NS_CIGAR_U || op == NS_CIGAR_V) {
+				uint8_t n1, n2, n3, codon, nt_aa, aa_aa;
+				int32_t s;
+				if (op == NS_CIGAR_U) n1 = nt[nl], n2 = nt[nl + len - 2], n3 = nt[nl + len - 1];
+				else n1 = nt[nl], n2 = nt[nl + 1], n3 = nt[nl + len - 1];
+				codon = n1<<4 | n2<<2 | n3;
+				nt_aa = n1 > 3 || n2 > 3 || n3 > 3? ns_tab_aa20['X'] : ns_tab_codon[codon];
+				aa_aa = ns_tab_aa20[(uint8_t)aa[al]];
+				s = opt->mat[nt_aa * opt->asize + aa_aa];
+				//printf("%c:%c, score=%d\n", ns_tab_aa_i2c[nt_aa], ns_tab_aa_i2c[aa_aa], s);
+				e->n_iden += (nt_aa == aa_aa);
+				e->n_plus += (s > 0);
+				e->dp_max += s;
+				e->blen += 3;
+			}
+			// calculate r->feat
+			f = &r->feat[ft++];
+			f->type = MP_FEAT_CDS;
+			f->vs = vs0, f->qs = qs0, f->qe = r->qs + al, f->n_fs = n_fs0, f->phase = phase0;
+			f->blen = e->blen - blen0, f->n_iden = e->n_iden - n_iden0, f->n_fs = e->n_fs - n_fs0, f->score = e->dp_max - score0;
+			if (op == NS_CIGAR_N) {
+				f->ve = r->vs + nl;
+				vs0 = r->vs + nl + len, phase0 = 0;
+			} else if (op == NS_CIGAR_U) {
+				f->ve = r->vs + nl + 1;
+				vs0 = r->vs + nl + len - 2, phase0 = 2;
+			} else if (op == NS_CIGAR_V) {
+				f->ve = r->vs + nl + 2;
+				vs0 = r->vs + nl + len - 1, phase0 = 1;
+			}
+			qs0 = f->qe, n_fs0 = 0, score0 = e->dp_max, blen0 = e->blen, n_iden0 = e->n_iden;
+			// progress length
+			nl += len, al += (op != NS_CIGAR_N);
 		}
 	}
+	// update the last exon and possibly stop codon
+	f = &r->feat[ft++];
+	f->type = MP_FEAT_CDS;
+	f->vs = vs0, f->ve = r->vs + nl, f->qs = qs0, f->qe = r->qe + al, f->phase = phase0;
+	f->blen = e->blen - blen0, f->n_iden = e->n_iden - n_iden0, f->n_fs = e->n_fs - n_fs0, f->score = e->dp_max - score0;
+	if (has_stop) {
+		int64_t ve_mRNA = has_stop? r->ve + 3 : r->ve;
+		f = &r->feat[ft++];
+		f->type = MP_FEAT_STOP;
+		f->vs = ve_mRNA - 3, f->ve = ve_mRNA, f->qs = f->qe = r->qe + al, f->phase = 0, f->n_fs = 0;
+		f->blen = 3, f->n_iden = 0;
+	}
+	// check errors
 	if (nl != r->ve - r->vs || al != r->qe - r->qs) {
 		fprintf(stderr, "BUG! %d == %d? %d == %d? ", nl, (int)(r->ve - r->vs), al, r->qe - r->qs);
 		for (k = 0; k < e->n_cigar; ++k)
@@ -132,7 +178,6 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 	}
 	assert(nl == r->ve - r->vs);
 	assert(al == r->qe - r->qs);
-	//printf("aa_score=%d, glen=%d, clen=%d, n_iden=%d, n_plus=%d\n", e->aa_score, e->glen, e->clen, e->n_iden, e->n_plus);
 }
 
 static void mp_extra_gen(void *km, mp_reg1_t *r, mp_cigar_t *cigar, int32_t score)
@@ -241,8 +286,8 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 
 	//for (i = 0; i < cigar.n; ++i) printf("%d%c", cigar.c[i]>>4, NS_CIGAR_STR[cigar.c[i]&0xf]); putchar('\n');
 	mp_extra_gen(km, r, &cigar, score);
-	mp_extra_cal(r, opt, &nt[r->vs - as], &aa[r->qs]);
 	r->p->dist_stop  = mp_extra_stop(r, nt, as, ae);
 	r->p->dist_start = mp_extra_start(r, nt, as, ae);
+	mp_extra_cal(r, opt, &nt[r->vs - as], &aa[r->qs], len);
 	kfree(km, nt);
 }

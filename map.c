@@ -240,6 +240,7 @@ static void *worker_pipeline(void *shared, int step, void *in)
 			for (j = 0; j < s->n_reg[i] && j < p->opt->out_n; ++j) {
 				mp_write_output(&p->str, 0, p->mi, &s->seq[i], &s->reg[i][j], p->opt, ++p->id);
 				fwrite(p->str.s, 1, p->str.l, stdout);
+				free(s->reg[i][j].feat);
 				free(s->reg[i][j].p);
 			}
 			free(s->reg[i]);
