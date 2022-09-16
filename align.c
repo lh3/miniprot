@@ -75,11 +75,12 @@ static int32_t mp_align_seq(void *km, const mp_mapopt_t *opt, int32_t nlen, cons
 	}
 }
 
-static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt, const char *aa, int32_t qlen)
+static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt, int32_t l_nt, const char *aa, int32_t qlen)
 {
 	int32_t k, i, j, l, nl = 0, al = 0, ft, n_intron, has_stop;
 	int32_t blen0, n_iden0, phase0, qs0, n_fs0, score0;
 	int64_t vs0;
+	char acceptor0[2];
 	mp_extra_t *e = r->p;
 	mp_feat_t *f;
 
@@ -121,8 +122,8 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 		} else if (op == NS_CIGAR_G) {
 			e->dp_max -= opt->fs;
 			nl += len, ++al, e->blen += 3, e->n_fs++;
-		} else if (op == NS_CIGAR_N || op == NS_CIGAR_U || op == NS_CIGAR_V) {
-			if (op == NS_CIGAR_U || op == NS_CIGAR_V) {
+		} else if (op == NS_CIGAR_N || op == NS_CIGAR_U || op == NS_CIGAR_V) { // intron
+			if (op == NS_CIGAR_U || op == NS_CIGAR_V) { // phase-1 or phase-2 intron
 				uint8_t n1, n2, n3, codon, nt_aa, aa_aa;
 				int32_t s;
 				if (op == NS_CIGAR_U) n1 = nt[nl], n2 = nt[nl + len - 2], n3 = nt[nl + len - 1];
@@ -142,6 +143,7 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 			f->type = MP_FEAT_CDS;
 			f->vs = vs0, f->qs = qs0, f->qe = r->qs + al, f->n_fs = n_fs0, f->phase = phase0;
 			f->blen = e->blen - blen0, f->n_iden = e->n_iden - n_iden0, f->n_fs = e->n_fs - n_fs0, f->score = e->dp_max - score0;
+			if (ft > 1) f->acceptor[0] = acceptor0[0], f->acceptor[1] = acceptor0[1];
 			if (op == NS_CIGAR_N) {
 				f->ve = r->vs + nl;
 				vs0 = r->vs + nl + len, phase0 = 0;
@@ -152,7 +154,11 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 				f->ve = r->vs + nl + 2;
 				vs0 = r->vs + nl + len - 1, phase0 = 1;
 			}
+			f->donor[0] = f->ve - r->vs     < l_nt? ns_tab_nt_i2c[nt[f->ve - r->vs]]     : '.';
+			f->donor[1] = f->ve - r->vs + 1 < l_nt? ns_tab_nt_i2c[nt[f->ve - r->vs + 1]] : '.';
 			qs0 = f->qe, n_fs0 = 0, score0 = e->dp_max, blen0 = e->blen, n_iden0 = e->n_iden;
+			acceptor0[0] = vs0 - r->vs >= 2? ns_tab_nt_i2c[nt[vs0 - r->vs - 2]] : '.';
+			acceptor0[1] = vs0 - r->vs >= 1? ns_tab_nt_i2c[nt[vs0 - r->vs - 1]] : '.';
 			// progress length
 			nl += len, al += (op != NS_CIGAR_N);
 		}
@@ -162,6 +168,7 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 	f->type = MP_FEAT_CDS;
 	f->vs = vs0, f->ve = r->vs + nl, f->qs = qs0, f->qe = r->qe + al, f->phase = phase0;
 	f->blen = e->blen - blen0, f->n_iden = e->n_iden - n_iden0, f->n_fs = e->n_fs - n_fs0, f->score = e->dp_max - score0;
+	if (ft > 1) f->acceptor[0] = acceptor0[0], f->acceptor[1] = acceptor0[1];
 	if (has_stop) {
 		int64_t ve_mRNA = has_stop? r->ve + 3 : r->ve;
 		f = &r->feat[ft++];
@@ -288,6 +295,6 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	mp_extra_gen(km, r, &cigar, score);
 	r->p->dist_stop  = mp_extra_stop(r, nt, as, ae);
 	r->p->dist_start = mp_extra_start(r, nt, as, ae);
-	mp_extra_cal(r, opt, &nt[r->vs - as], &aa[r->qs], len);
+	mp_extra_cal(r, opt, &nt[r->vs - as], l_nt - (r->vs - as), &aa[r->qs], len);
 	kfree(km, nt);
 }
