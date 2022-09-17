@@ -210,8 +210,8 @@ void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *
 		if (f->type == MP_FEAT_CDS) {
 			snprintf(dec, 16, "%.4f", (double)f->n_iden * 3 / f->blen);
 			mp_sprintf_lite(s, ";Identity=%s", dec);
-			if (f->acceptor[0]) mp_sprintf_lite(s, ";Acceptor=%c%c", f->acceptor[0], f->acceptor[1]);
-			if (f->donor[0])    mp_sprintf_lite(s, ";Donor=%c%c",    f->donor[0],    f->donor[1]);
+			if (f->acceptor[0] && strncmp(f->acceptor, "AG", 2) != 0) mp_sprintf_lite(s, ";Acceptor=%c%c", f->acceptor[0], f->acceptor[1]);
+			if (f->donor[0]    && strncmp(f->donor,    "GT", 2) != 0) mp_sprintf_lite(s, ";Donor=%c%c",    f->donor[0],    f->donor[1]);
 			mp_sprintf_lite(s, ";Target=%s %d %d", seq->name, f->qs + 1, f->qe);
 		}
 		mp_sprintf_lite(s, "\n");

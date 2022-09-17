@@ -96,6 +96,7 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 	e->blen = e->n_iden = e->n_plus = e->n_fs = e->dp_max = 0;
 	blen0 = n_iden0 = score0 = n_fs0 = 0, phase0 = 0;
 	vs0 = r->vs, qs0 = r->qs;
+	acceptor0[0] = acceptor0[1] = 0;
 	for (k = 0, ft = 0; k < e->n_cigar; ++k) {
 		int32_t op = e->cigar[k]&0xf, len = e->cigar[k]>>4, len3 = len * 3;
 		if (op == NS_CIGAR_M) {
@@ -156,7 +157,7 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 			}
 			f->donor[0] = f->ve - r->vs     < l_nt? ns_tab_nt_i2c[nt[f->ve - r->vs]]     : '.';
 			f->donor[1] = f->ve - r->vs + 1 < l_nt? ns_tab_nt_i2c[nt[f->ve - r->vs + 1]] : '.';
-			qs0 = f->qe, n_fs0 = 0, score0 = e->dp_max, blen0 = e->blen, n_iden0 = e->n_iden;
+			qs0 = f->qe, n_fs0 = e->n_fs, score0 = e->dp_max, blen0 = e->blen, n_iden0 = e->n_iden;
 			acceptor0[0] = vs0 - r->vs >= 2? ns_tab_nt_i2c[nt[vs0 - r->vs - 2]] : '.';
 			acceptor0[1] = vs0 - r->vs >= 1? ns_tab_nt_i2c[nt[vs0 - r->vs - 1]] : '.';
 			// progress length
@@ -166,7 +167,7 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 	// update the last exon and possibly stop codon
 	f = &r->feat[ft++];
 	f->type = MP_FEAT_CDS;
-	f->vs = vs0, f->ve = r->vs + nl, f->qs = qs0, f->qe = r->qe + al, f->phase = phase0;
+	f->vs = vs0, f->ve = r->vs + nl, f->qs = qs0, f->qe = r->qs + al, f->phase = phase0;
 	f->blen = e->blen - blen0, f->n_iden = e->n_iden - n_iden0, f->n_fs = e->n_fs - n_fs0, f->score = e->dp_max - score0;
 	if (ft > 1) f->acceptor[0] = acceptor0[0], f->acceptor[1] = acceptor0[1];
 	if (has_stop) {

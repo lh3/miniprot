@@ -36,7 +36,7 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 	mo->go = 11, mo->ge = 1;
 	mo->io = 31;
 	mo->nc = 11;
-	mo->fs = 15;
+	mo->fs = 17;
 	mo->end_bonus = 5;
 	mo->xdrop = 100;
 	mo->asize = 22;

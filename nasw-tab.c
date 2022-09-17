@@ -68,7 +68,7 @@ void ns_opt_init(ns_opt_t *opt)
 	opt->go = 11, opt->ge = 1;
 	opt->io = 31;
 	opt->nc = 11;
-	opt->fs = 15;
+	opt->fs = 17;
 	opt->xdrop = 100;
 	opt->end_bonus = 10;
 	opt->asize = 22;
