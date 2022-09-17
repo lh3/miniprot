@@ -9,8 +9,9 @@ cd miniprot && make
 ./miniprot --gff test/DPP3-hs.gen.fa.gz test/DPP3-mm.pep.fa.gz > aln.gff  # GFF3+PAF output
 
 # general command line
+./miniprot -t16 --gff genome.fna protein.faa > aln.gff   # indexing and alignment in one go
 ./miniprot -t16 -d genome.mpi genome.fna                 # indexing optional but recommended
-./miniprot -ut16 --gff genome.mpi protein.faa > aln.gff  # alignment
+./miniprot -ut16 --gff genome.mpi protein.faa > aln.gff  # alignment against a prebuilt index
 
 # output format
 man ./miniprot.1
@@ -69,8 +70,7 @@ Miniprot outputs alignment in the protein PAF format. Different from the more
 common nucleotide PAF format, miniprot uses more CIGAR operators to encode
 introns and frameshifts. Please refer to the manpage for detailed explanation.
 
-The PAF format gives full alignment information. For convenience, miniprot can
-also output GFF3 with option `--gff`:
+For convenience, miniprot can also output GFF3 with option `--gff`:
 ```sh
 miniprot -t8 --gff -d ref.mpi ref.fna > out.gff
 ```
