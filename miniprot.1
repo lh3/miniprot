@@ -1,4 +1,4 @@
-.TH miniprot 1 "14 September 2022" "miniprot-0.2-dirty (r122)" "Bioinformatics tools"
+.TH miniprot 1 "14 September 2022" "miniprot-0.2-dirty (r127)" "Bioinformatics tools"
 .SH NAME
 .PP
 miniprot - protein-to-genome alignment with splicing and frameshifts
@@ -86,7 +86,7 @@ fraction of the best chain [0.5]
 .BI -N \ NUM
 Retain at most
 .I NUM
-number of secondary chains/alignments [100]
+number of secondary chains/alignments [50]
 .SS Alignment options
 .TP 10
 .BI -O \ INT
@@ -127,7 +127,7 @@ Print unmapped query proteins
 Output up to
 .RI min{ NUM ,
 .BR -N }
-alignments per query [1000].
+alignments per query [100].
 .TP
 .BI -K \ NUM
 Query batch size [2M]

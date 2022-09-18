@@ -29,8 +29,8 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 	mo->mask_level = 0.5f;
 	mo->mask_len = INT32_MAX;
 	mo->pri_ratio = 0.7f;
-	mo->best_n = 100;
-	mo->out_n = 1000;
+	mo->best_n = 50;
+	mo->out_n = 100;
 	mo->kmer2 = 5;
 
 	mo->go = 11, mo->ge = 1;
