@@ -1,4 +1,4 @@
-.TH miniprot 1 "14 September 2022" "miniprot-0.2-dirty (r127)" "Bioinformatics tools"
+.TH miniprot 1 "21 September 2022" "miniprot-0.2-dirty (r128)" "Bioinformatics tools"
 .SH NAME
 .PP
 miniprot - protein-to-genome alignment with splicing and frameshifts
@@ -132,10 +132,36 @@ alignments per query [100].
 .BI -K \ NUM
 Query batch size [2M]
 .SH OUTPUT FORMAT
-.PP
-Miniprot outputs alignments in the extended Pairwise mApping Format (PAF) by
-default. PAF is a TAB-delimited text format with each line consisting of at
-least 12 fields as are described in the following table:
+.SS The GFF3 Format
+Miniprot outputs alignment in the extended Pairwise mApping Format (PAF) by
+default (see the next subsection). It can also output GFF3 with option
+.BR --gff .
+Miniprot may output three features: `mRNA', `CDS' or `stop_codon'. Here, a
+stop_codon is only reported if the alignment reaches the C-terminus of the
+protein and the next codon is a stop codon. Per GenCode rule, stop_codon is not
+part of CDS but it is part of mRNA.
+
+Miniprot may output the following attributes in GFF3:
+.TS
+center box;
+cb | cb | cb
+l | c | l .
+Attribute	Type	Description
+_
+ID	str	mRNA identifier
+Parent	str	identifier of the parent feature
+Identity	real	fraction of exact amino acid matches
+Positive	real	fraction of positive amino acid matches
+Donor	str	2bp at the donor site if not GT
+Accepter	str	2bp at the acceptor site if not AG
+Frameshift	int	number of frameshift events in alignment
+StopCodon	int	number of in-frame stop codons
+Target	str	Protein coordinate in alignment
+.TE
+
+.SS The PAF Format
+PAF gives detailed alignment. It is a TAB-delimited text format with each line
+consisting of at least 12 fields as are described in the following table:
 .TS
 center box;
 cb | cb | cb
