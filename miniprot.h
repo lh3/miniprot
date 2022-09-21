@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.2-r128-dirty"
+#define MP_VERSION "0.2-r133-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
@@ -49,12 +49,12 @@ typedef struct {
 	float pri_ratio;
 	int32_t best_n, out_n;
 	int32_t kmer2;
-	int32_t go, ge, io, nc, fs; // gap open, extension, intron open, non-conanical and frame-shift
+	int32_t go, ge, io, nc, fs; // gap open, extension, intron open, non-conanical and frame-shift/stop-codon
 	int32_t xdrop;
 	int32_t end_bonus;
-	int32_t asize; // size of the alphabet
-	const int8_t *mat;
+	int32_t asize; // size of the alphabet; always 22 in current implementation
 	const char *gff_prefix;
+	int8_t mat[484];
 } mp_mapopt_t;
 
 typedef struct {
@@ -125,8 +125,9 @@ extern uint8_t ns_tab_codon[64], ns_tab_codon13[64];
 
 void mp_start(void);
 
-void mp_mapopt_init(mp_mapopt_t *mo);
 void mp_idxopt_init(mp_idxopt_t *io);
+void mp_mapopt_init(mp_mapopt_t *mo);
+void mp_mapopt_set_fs(mp_mapopt_t *mo, int32_t fs);
 
 mp_idx_t *mp_idx_load(const char *fn, const mp_idxopt_t *io, int32_t n_threads);
 void mp_idx_destroy(mp_idx_t *mi);

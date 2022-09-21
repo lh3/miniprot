@@ -9,6 +9,7 @@
 #define MP_DBG_NO_KALLOC   0x1
 #define MP_DBG_QNAME       0x2
 #define MP_DBG_NO_REFINE   0x4
+#define MP_DBG_MORE_DP     0x8
 
 #define MP_PARENT_UNSET   (-1)
 #define MP_PARENT_TMP_PRI (-2)

@@ -271,18 +271,18 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 		ae0 = r->qs;
 	}
 
-	#if 1
-	for (i = i0; i < r->cnt; ++i) {
-		int32_t ne1, ae1;
-		if (!(r->a[i]>>31&1)) continue;
-		ne1 = (r->a[i]>>32) + 1, ae1 = ((int32_t)r->a[i]<<1>>1) + 1;
-		score += mp_align_seq(km, opt, ne1 - ne0, &nt[ne0 + vs0 - as], ae1 - ae0, &aa[ae0], &cigar);
-		i0 = i, ne0 = ne1, ae0 = ae1;
+	if (mp_dbg_flag & MP_DBG_MORE_DP) { // apply DP to the entire region; for debugging only
+		score = mp_align_seq(km, opt, r->ve - r->vs, &nt[r->vs - as], r->qe - ae0, &aa[ae0], &cigar);
+	} else { // patch gaps between anchors
+		for (i = i0; i < r->cnt; ++i) {
+			int32_t ne1, ae1;
+			if (!(r->a[i]>>31&1)) continue;
+			ne1 = (r->a[i]>>32) + 1, ae1 = ((int32_t)r->a[i]<<1>>1) + 1;
+			score += mp_align_seq(km, opt, ne1 - ne0, &nt[ne0 + vs0 - as], ae1 - ae0, &aa[ae0], &cigar);
+			i0 = i, ne0 = ne1, ae0 = ae1;
+		}
+		r->ve = ne0 + vs0, r->qe = ae0;
 	}
-	r->ve = ne0 + vs0, r->qe = ae0;
-	#else
-	score = mp_align_seq(km, opt, r->ve - r->vs, &nt[r->vs - as], r->qe - r->qs, aa, &cigar);
-	#endif
 
 	if (r->qe < len && r->ve < ae) { // right extension
 		ns_opt_t ns_opt;

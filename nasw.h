@@ -120,6 +120,8 @@ void ns_global_gs32(void *km, const char *ns, int32_t nl, const char *as, int32_
 // Non-SIMD implementation with transposed DP matrix. For debugging only. Not intended for general developers.
 void ns_splice_s1(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, ns_rst_t *r);
 
+void ns_set_stop_sc(int32_t asize, int8_t *mat, int8_t score);
+
 static inline uint32_t *ns_push_cigar(void *km, int32_t *n_cigar, int32_t *m_cigar, uint32_t *cigar, uint32_t op, int32_t len)
 {
 	if (*n_cigar == 0 || op != (cigar[(*n_cigar) - 1]&0xf) || op == NS_CIGAR_F || op == NS_CIGAR_G) {

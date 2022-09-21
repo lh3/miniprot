@@ -12,6 +12,7 @@ static ko_longopt_t long_options[] = {
 	{ "no-kalloc",       ko_no_argument,       501 },
 	{ "dbg-qname",       ko_no_argument,       502 },
 	{ "dbg-no-refine",   ko_no_argument,       503 },
+	{ "dbg-aflt",        ko_no_argument,       504 },
 	{ 0, 0, 0 }
 };
 
@@ -100,7 +101,7 @@ int main(int argc, char *argv[])
 		else if (c == 'E') mo.ge = atoi(o.arg);
 		else if (c == 'J') mo.io = atoi(o.arg);
 		else if (c == 'C') mo.nc = atoi(o.arg);
-		else if (c == 'F') mo.fs = atoi(o.arg);
+		else if (c == 'F') mp_mapopt_set_fs(&mo, atoi(o.arg));
 		else if (c == 'B') mo.end_bonus = atoi(o.arg);
 		else if (c == 'e') mo.max_ext = mp_parse_num(o.arg);
 		else if (c == 'P') mo.gff_prefix = o.arg;
@@ -112,6 +113,7 @@ int main(int argc, char *argv[])
 		else if (c == 501) mp_dbg_flag |= MP_DBG_NO_KALLOC; // --no-kalloc
 		else if (c == 502) mp_dbg_flag |= MP_DBG_QNAME; // --dbg-qname
 		else if (c == 503) mp_dbg_flag |= MP_DBG_NO_REFINE; // --dbg-no-refine
+		else if (c == 504) mp_dbg_flag |= MP_DBG_MORE_DP; // --dbg-aflt
 		else if (c == 401) {
 			printf("%s\n", MP_VERSION);
 			return 0;

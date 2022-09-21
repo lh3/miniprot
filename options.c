@@ -1,4 +1,5 @@
 #include <string.h>
+#include <assert.h>
 #include "miniprot.h"
 #include "nasw.h"
 
@@ -9,6 +10,13 @@ void mp_idxopt_init(mp_idxopt_t *io)
 	io->min_aa_len = 15;
 	io->kmer = 6;
 	io->smer = 4;
+}
+
+void mp_mapopt_set_fs(mp_mapopt_t *mo, int32_t fs)
+{
+	assert(fs >= INT8_MIN && fs <= INT8_MAX);
+	mo->fs = fs;
+	ns_set_stop_sc(mo->asize, mo->mat, mo->fs);
 }
 
 void mp_mapopt_init(mp_mapopt_t *mo)
@@ -40,7 +48,8 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 	mo->end_bonus = 5;
 	mo->xdrop = 100;
 	mo->asize = 22;
-	mo->mat = ns_mat_blosum62;
+	memcpy(mo->mat, ns_mat_blosum62, 484);
+	ns_set_stop_sc(mo->asize, mo->mat, mo->fs);
 
 	mo->gff_prefix = "MP";
 }
