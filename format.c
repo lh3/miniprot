@@ -193,11 +193,12 @@ void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *
 	vs = r->vid&1? ctg->len - ve_mRNA : r->vs;
 	ve = r->vid&1? ctg->len - r->vs   : ve_mRNA;
 	mp_sprintf_lite(s, "%s\tminiprot\tmRNA\t%d\t%d\t%d\t%c\t.\tID=%s%s", ctg->name, (int)vs + 1, (int)ve, r->p->dp_max, "+-"[r->vid&1], gff_prefix, buf);
-	if (r->p->n_fs > 0) mp_sprintf_lite(s, ";Frameshift=%d", r->p->n_fs);
 	snprintf(dec, 16, "%.4f", (double)r->p->n_iden * 3 / r->p->blen);
 	mp_sprintf_lite(s, ";Identity=%s", dec);
 	snprintf(dec, 16, "%.4f", (double)r->p->n_plus * 3 / r->p->blen);
 	mp_sprintf_lite(s, ";Positive=%s", dec);
+	if (r->p->n_fs > 0) mp_sprintf_lite(s, ";Frameshift=%d", r->p->n_fs);
+	if (r->p->n_stop > 0) mp_sprintf_lite(s, ";StopCodon=%d", r->p->n_stop);
 	mp_sprintf_lite(s, ";Target=%s %d %d\n", seq->name, r->qs + 1, r->qe);
 
 	for (j = 0; j < r->n_feat; ++j) {
@@ -206,12 +207,13 @@ void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *
 		ve = r->vid&1? ctg->len - f->vs : f->ve;
 		mp_sprintf_lite(s, "%s\tminiprot\t%s\t%d\t%d\t%d\t%c\t%d\tParent=%s%s", ctg->name, f->type == MP_FEAT_STOP? "stop_codon" : "CDS",
 			(int)vs + 1, (int)ve, f->score, "+-"[r->vid&1], f->phase, gff_prefix, buf);
-		if (f->n_fs > 0) mp_sprintf_lite(s, ";Frameshift=%d", f->n_fs);
 		if (f->type == MP_FEAT_CDS) {
 			snprintf(dec, 16, "%.4f", (double)f->n_iden * 3 / f->blen);
 			mp_sprintf_lite(s, ";Identity=%s", dec);
 			if (f->acceptor[0] && strncmp(f->acceptor, "AG", 2) != 0) mp_sprintf_lite(s, ";Acceptor=%c%c", f->acceptor[0], f->acceptor[1]);
 			if (f->donor[0]    && strncmp(f->donor,    "GT", 2) != 0) mp_sprintf_lite(s, ";Donor=%c%c",    f->donor[0],    f->donor[1]);
+			if (f->n_fs > 0) mp_sprintf_lite(s, ";Frameshift=%d", f->n_fs);
+			if (f->n_stop > 0) mp_sprintf_lite(s, ";StopCodon=%d", f->n_stop);
 			mp_sprintf_lite(s, ";Target=%s %d %d", seq->name, f->qs + 1, f->qe);
 		}
 		mp_sprintf_lite(s, "\n");

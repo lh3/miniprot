@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.2-r127-dirty"
+#define MP_VERSION "0.2-r128-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
@@ -84,6 +84,7 @@ typedef struct {
 	int32_t n_cigar, m_cigar;
 	int32_t blen; // CDS length in alignment
 	int32_t n_fs; // number of frameshift events
+	int32_t n_stop; // number of in-frame stop codons
 	int32_t dist_stop; // distance in bp to the closest stop codon
 	int32_t dist_start; // distance in bp the the closest 'M'
 	int32_t n_iden, n_plus;
@@ -93,9 +94,8 @@ typedef struct {
 typedef struct {
 	int64_t vs, ve;
 	int32_t qs, qe;
-	int32_t type;
-	int32_t phase;
-	int32_t n_fs;
+	int16_t type, phase;
+	int32_t n_fs, n_stop;
 	int32_t score, n_iden, blen;
 	char donor[2], acceptor[2];
 } mp_feat_t;

@@ -78,8 +78,9 @@ static int32_t mp_align_seq(void *km, const mp_mapopt_t *opt, int32_t nlen, cons
 static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt, int32_t l_nt, const char *aa, int32_t qlen)
 {
 	int32_t k, i, j, l, nl = 0, al = 0, ft, n_intron, has_stop;
-	int32_t blen0, n_iden0, phase0, qs0, n_fs0, score0;
+	int32_t blen0, n_iden0, phase0, qs0, n_fs0, n_stop0, score0;
 	int64_t vs0;
+	uint8_t aa_ambi = ns_tab_aa20['X'], aa_stop = ns_tab_aa20['*'];
 	char acceptor0[2];
 	mp_extra_t *e = r->p;
 	mp_feat_t *f;
@@ -93,8 +94,8 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 	r->n_feat = n_intron + 1 + (!!has_stop);
 	r->feat = Kcalloc(0, mp_feat_t, r->n_feat);
 
-	e->blen = e->n_iden = e->n_plus = e->n_fs = e->dp_max = 0;
-	blen0 = n_iden0 = score0 = n_fs0 = 0, phase0 = 0;
+	e->blen = e->n_iden = e->n_plus = e->n_fs = e->n_stop = e->dp_max = 0;
+	blen0 = n_iden0 = score0 = n_fs0 = n_stop0 = 0, phase0 = 0;
 	vs0 = r->vs, qs0 = r->qs;
 	acceptor0[0] = acceptor0[1] = 0;
 	for (k = 0, ft = 0; k < e->n_cigar; ++k) {
@@ -103,9 +104,10 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 			for (i = nl, j = al, l = 0; l < len; ++l, ++j, i += 3) {
 				uint8_t nt_aa, aa_aa, codon = nt[i]<<4 | nt[i+1]<<2 | nt[i+2];
 				int32_t s;
-				nt_aa = nt[i] > 3 || nt[i+1] > 3 || nt[i+2] > 3? ns_tab_aa20['X'] : ns_tab_codon[codon];
+				nt_aa = nt[i] > 3 || nt[i+1] > 3 || nt[i+2] > 3? aa_ambi : ns_tab_codon[codon];
 				aa_aa = ns_tab_aa20[(uint8_t)aa[j]];
 				s = opt->mat[nt_aa * opt->asize + aa_aa];
+				e->n_stop += (nt_aa == aa_stop);
 				e->n_iden += (nt_aa == aa_aa);
 				e->n_plus += (s > 0);
 				e->dp_max += s;
@@ -134,6 +136,7 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 				aa_aa = ns_tab_aa20[(uint8_t)aa[al]];
 				s = opt->mat[nt_aa * opt->asize + aa_aa];
 				//printf("%c:%c, score=%d\n", ns_tab_aa_i2c[nt_aa], ns_tab_aa_i2c[aa_aa], s);
+				e->n_stop += (nt_aa == aa_stop);
 				e->n_iden += (nt_aa == aa_aa);
 				e->n_plus += (s > 0);
 				e->dp_max += s;
@@ -142,8 +145,8 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 			// calculate r->feat
 			f = &r->feat[ft++];
 			f->type = MP_FEAT_CDS;
-			f->vs = vs0, f->qs = qs0, f->qe = r->qs + al, f->n_fs = n_fs0, f->phase = phase0;
-			f->blen = e->blen - blen0, f->n_iden = e->n_iden - n_iden0, f->n_fs = e->n_fs - n_fs0, f->score = e->dp_max - score0;
+			f->vs = vs0, f->qs = qs0, f->qe = r->qs + al, f->n_fs = n_fs0, f->n_stop = n_stop0, f->phase = phase0;
+			f->blen = e->blen - blen0, f->n_iden = e->n_iden - n_iden0, f->n_fs = e->n_fs - n_fs0, f->n_stop = e->n_stop - n_stop0, f->score = e->dp_max - score0;
 			if (ft > 1) f->acceptor[0] = acceptor0[0], f->acceptor[1] = acceptor0[1];
 			if (op == NS_CIGAR_N) {
 				f->ve = r->vs + nl;
@@ -157,7 +160,7 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 			}
 			f->donor[0] = f->ve - r->vs     < l_nt? ns_tab_nt_i2c[nt[f->ve - r->vs]]     : '.';
 			f->donor[1] = f->ve - r->vs + 1 < l_nt? ns_tab_nt_i2c[nt[f->ve - r->vs + 1]] : '.';
-			qs0 = f->qe, n_fs0 = e->n_fs, score0 = e->dp_max, blen0 = e->blen, n_iden0 = e->n_iden;
+			qs0 = f->qe, n_fs0 = e->n_fs, n_stop0 = e->n_stop, score0 = e->dp_max, blen0 = e->blen, n_iden0 = e->n_iden;
 			acceptor0[0] = vs0 - r->vs >= 2? ns_tab_nt_i2c[nt[vs0 - r->vs - 2]] : '.';
 			acceptor0[1] = vs0 - r->vs >= 1? ns_tab_nt_i2c[nt[vs0 - r->vs - 1]] : '.';
 			// progress length
@@ -168,7 +171,7 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 	f = &r->feat[ft++];
 	f->type = MP_FEAT_CDS;
 	f->vs = vs0, f->ve = r->vs + nl, f->qs = qs0, f->qe = r->qs + al, f->phase = phase0;
-	f->blen = e->blen - blen0, f->n_iden = e->n_iden - n_iden0, f->n_fs = e->n_fs - n_fs0, f->score = e->dp_max - score0;
+	f->blen = e->blen - blen0, f->n_iden = e->n_iden - n_iden0, f->n_fs = e->n_fs - n_fs0, f->n_stop = e->n_stop - n_stop0, f->score = e->dp_max - score0;
 	if (ft > 1) f->acceptor[0] = acceptor0[0], f->acceptor[1] = acceptor0[1];
 	if (has_stop) {
 		int64_t ve_mRNA = has_stop? r->ve + 3 : r->ve;

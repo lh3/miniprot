@@ -125,7 +125,6 @@ static inline int32_t comput_sc(uint64_t ai, uint64_t aj, int32_t max_dist_x, in
 		if (dr3 == 0) return INT32_MIN;
 		dd = dr3 > dq3? dr3 - dq3 : dq3 - dr3;
 	}
-//	if (ai>>32 == 25318 && (uint32_t)ai == 96 && aj>>32 == 25306 && (uint32_t)aj == 87) printf("here: %d,%d\n", dd, bw);
 	if (dd > bw) return INT32_MIN;
 	if (bbit > 0) {
 		sc = kmer < dq? kmer : dq;
