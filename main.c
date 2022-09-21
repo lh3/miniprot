@@ -58,7 +58,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -E INT       gap extension (a k-long gap costs O+k*E) [%d]\n", mo->ge);
 	fprintf(fp, "    -J INT       intron open penalty [%d]\n", mo->io);
 	fprintf(fp, "    -C INT       penalty for non-canonical splicing [%d]\n", mo->nc);
-	fprintf(fp, "    -F INT       frameshift penalty [%d]\n", mo->fs);
+	fprintf(fp, "    -F INT       penalty for frameshifts or in-frame stop codons [%d]\n", mo->fs);
 	fprintf(fp, "    -B INT       end bonus [%d]\n", mo->end_bonus);
 	fprintf(fp, "  Input/output:\n");
 	fprintf(fp, "    -t INT       number of threads [%d]\n", n_threads);
