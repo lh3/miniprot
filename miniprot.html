@@ -1,0 +1,431 @@
+<HTML><HEAD>
+<style type="text/css">
+a:link {
+	text-decoration: none;
+	color: #0092e8;
+}
+a:visited {
+	text-decoration: none;
+	color: #0092e8;
+}
+a:hover {
+	text-decoration: underline;
+	color: #0092e8;
+}
+body, td, th {
+	font: 12px consolas, andale mono, courier, mono;
+}
+body {
+	color: #000;
+	background: #fff;
+	margin: 0;
+	padding: 0;
+}
+table {
+	border: solid 0px #ccc;
+}
+td {
+	vertical-align: top;
+	padding: 0.2em;
+}
+th {
+	font-weight: bold;
+	text-align: left;
+	padding: 0.2em;
+}
+#tbl table {
+	border: solid 1px #ccc;
+}
+#tbl td {
+	border: solid 1px #ccc;
+	padding: 0.3em;
+}
+#wrap {
+  width: 780px;
+  text-align: left;
+  margin: 0 auto;
+}
+hr {
+	margin: 1em 0;
+	color: #C7C7C7;
+	background: #C7C7C7;
+	border-color: #C7C7C7;
+	border-style: none;
+	height: 1px;
+}
+h1, h2, h3, h4, h5, h6 {
+	font-family: "Trebuchet MS", arial, sans-serif;
+	font-weight: bold;
+}
+p {
+    text-align: justify;
+}
+</style>
+<TITLE>Manual Page - miniprot(1)</TITLE>
+</HEAD>
+<BODY bgcolor=#F0F0F0 text=#000000 link=#0000ff vlink=#C000C0 alink=#ff0000><div id="wrap"><A NAME=top></A>
+<CENTER>
+<H1><HR><I>Manual Reference Pages &nbsp;-&nbsp;</I><NOBR>miniprot (1)</NOBR><HR></H1>
+</CENTER>
+<A name=0></A>
+
+     <H3>NAME</H3>
+
+
+<BLOCKQUOTE>
+<P>
+miniprot - protein-to-genome alignment with splicing and frameshifts
+</BLOCKQUOTE>
+<A name=contents></A><H3>CONTENTS</H3></A>
+<BLOCKQUOTE>
+<A HREF=#1>Synopsis</A><BR>
+<A HREF=#2>Description</A><BR>
+<A HREF=#3>Options</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#4>Indexing options</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#5>Chaining options</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#6>Alignment options</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#7>Input/Output options</A><BR>
+<A HREF=#8>Output Format</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#9>The GFF3 Format</A><BR>
+&nbsp; &nbsp; &nbsp;<A HREF=#10>The PAF Format</A><BR>
+<A HREF=#11>Limitations</A><BR>
+</BLOCKQUOTE>
+<A name=12></A>
+
+     <H3>SYNOPSIS</H3>
+
+
+<BLOCKQUOTE>
+* Indexing a genome (recommended as indexing can be slow and memory hungry):
+<BLOCKQUOTE>
+miniprot
+[<B>-t</B> <I>nThreads</I>] <B>-d</B> <I>ref.mpi</I> <I>ref.fna</I> </BLOCKQUOTE>
+<P>
+* Aligning proteins to a genome:
+<BLOCKQUOTE>
+miniprot
+[<B>-t</B> <I>nThreads</I>] <I>ref.mpi</I> <I>protein.faa</I> &gt;
+<I>output.paf</I> <!-- Need break --><BR>
+miniprot
+[<B>-t</B> <I>nThreads</I>] <I>ref.fna</I> <I>protein.faa</I> &gt;
+<I>output.paf</I> </BLOCKQUOTE>
+</BLOCKQUOTE>
+<A name=2></A>
+
+     <H3>DESCRIPTION</H3>
+
+
+<BLOCKQUOTE>
+Miniprot aligns protein sequences to a genome allowing potential frameshifts and splicing.
+</BLOCKQUOTE>
+<A name=3></A>
+
+     <H3>OPTIONS</H3>
+
+
+<BLOCKQUOTE>
+</BLOCKQUOTE>
+<A name=4></A>
+
+    <H4>&nbsp; &nbsp; Indexing options</H4>
+
+<BLOCKQUOTE>
+<TABLE cellpadding=3>
+<TR valign=top><TD width=10% nowrap>
+<B>-k</B><I> INT</I> </TD><TD valign=bottom>
+K-mer size for genome-wide indexing [6]
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-s</B><I> INT</I> </TD><TD valign=bottom>
+Syncmer submer size [4]. In average, miniprot selects a k-mer every 2*(k-s)+1 residues.
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-b</B><I> INT</I> </TD><TD valign=bottom>
+Number of bits per bin [8]. Miniprot splits the genome into non-overlapping bins of 2^8 bp in size.
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-d</B><I> FILE</I> </TD><TD valign=bottom>
+Write the index to
+<I>FILE</I> [].
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<A name=5></A>
+
+    <H4>&nbsp; &nbsp; Chaining options</H4>
+
+<BLOCKQUOTE>
+<TABLE cellpadding=3>
+<TR valign=top><TD width=10% nowrap>
+<B>-S</B> </TD><TD valign=bottom>
+Disable splicing. It applies
+&#145;<B>-G1k</B> <B>-J1k</B> <B>-e1k</B>&#146; at the same time.
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-c</B><I> NUM</I> </TD><TD valign=bottom>
+Ignore k-mers occurring
+<I>NUM</I> times or more [50k]
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-G</B><I> NUM</I> </TD><TD valign=bottom>
+Max intron size [200k]
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-n</B><I> NUM</I> </TD><TD valign=bottom>
+Min number of syncmers in a chain [10]
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-m</B><I> NUM</I> </TD><TD valign=bottom>
+Min chaining score [0]
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-l</B><I> INT</I> </TD><TD valign=bottom>
+K-mer size for the second round of chaining [5]
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-e</B><I> NUM</I> </TD><TD valign=bottom>
+Max extension from chain ends for alignment or the second round of chaining [10k]
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-p</B><I> FLOAT</I> </TD><TD valign=bottom>
+Filter out a secondary chain/alignment if its score is
+<I>FLOAT</I> fraction of the best chain [0.5]
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-N</B><I> NUM</I> </TD><TD valign=bottom>
+Retain at most
+<I>NUM</I> number of secondary chains/alignments [50]
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<A name=6></A>
+
+    <H4>&nbsp; &nbsp; Alignment options</H4>
+
+<BLOCKQUOTE>
+<TABLE cellpadding=3>
+<TR valign=top><TD width=10% nowrap>
+<B>-O</B><I> INT</I> </TD><TD valign=bottom>
+Gap open penalty [11]
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-E</B><I> INT</I> </TD><TD valign=bottom>
+Gap extension penalty [1]. A gap of size
+<B>g</B> costs
+{<B>-O</B>}+{<B>-E</B>}*<B>g</B>. </TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-J</B><I> INT</I> </TD><TD valign=bottom>
+Intron open penalty [31]
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-C</B><I> INT</I> </TD><TD valign=bottom>
+Penalty for non-canonical splicing [11]
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-F</B><I> INT</I> </TD><TD valign=bottom>
+Frameshift penalty [17]
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<A name=7></A>
+
+    <H4>&nbsp; &nbsp; Input/Output options</H4>
+
+<BLOCKQUOTE>
+<TABLE cellpadding=3>
+<TR valign=top><TD width=10% nowrap>
+<B>-t</B><I> INT</I> </TD><TD valign=bottom>
+Number of threads [4]
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>--gff</B> </TD><TD valign=bottom>
+Output in the GFF3 format. &#145;##PAF&#146; lines in the output provide detailed alignments.
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>--gff-only</B> </TD><TD valign=bottom>
+Output in the GFF3 format without &#145;##PAF&#146; lines.
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-P</B><I> STR</I> </TD><TD valign=bottom>
+Prefix for IDs in GFF3 [MP]
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-u</B> </TD><TD valign=bottom>
+Print unmapped query proteins
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>--outn</B><I> NUM</I> </TD><TD valign=bottom>
+Output up to
+min{<I>NUM</I>, <B>-N</B>} alignments per query [100].
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-K</B><I> NUM</I> </TD><TD valign=bottom>
+Query batch size [2M]
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<A name=8></A>
+
+     <H3>OUTPUT FORMAT</H3>
+
+
+<BLOCKQUOTE>
+</BLOCKQUOTE>
+<A name=9></A>
+
+    <H4>&nbsp; &nbsp; The GFF3 Format</H4>
+
+<BLOCKQUOTE>
+Miniprot outputs alignment in the extended Pairwise mApping Format (PAF) by
+default (see the next subsection). It can also output GFF3 with option
+<B>--gff</B>. Miniprot may output three features: &#145;mRNA&#146;, &#145;CDS&#146; or &#145;stop_codon&#146;. Here, a
+stop_codon is only reported if the alignment reaches the C-terminus of the
+protein and the next codon is a stop codon. Per GenCode rule, stop_codon is not
+part of CDS but it is part of mRNA.
+<P>
+Miniprot may output the following attributes in GFF3:
+<P><BLOCKQUOTE><div id='tbl'><TABLE border=1 cellspacing=0 cellpadding=3>
+<TR valign=top>
+<TD align=center><B>Attribute</B></TD><TD align=center><B>Type</B></TD><TD align=center><B>Description</B></TD></TR>
+<TR></TR><TR></TR>
+<TR valign=top>
+<TD>ID</TD><TD align=center>str</TD><TD>mRNA identifier</TD></TR>
+<TR valign=top>
+<TD>Parent</TD><TD align=center>str</TD><TD>identifier of the parent feature</TD></TR>
+<TR valign=top>
+<TD>Identity</TD><TD align=center>real</TD><TD>fraction of exact amino acid matches</TD></TR>
+<TR valign=top>
+<TD>Positive</TD><TD align=center>real</TD><TD>fraction of positive amino acid matches</TD></TR>
+<TR valign=top>
+<TD>Donor</TD><TD align=center>str</TD><TD>2bp at the donor site if not GT</TD></TR>
+<TR valign=top>
+<TD>Accepter</TD><TD align=center>str</TD><TD>2bp at the acceptor site if not AG</TD></TR>
+<TR valign=top>
+<TD>Frameshift</TD><TD align=center>int</TD><TD>number of frameshift events in alignment</TD></TR>
+<TR valign=top>
+<TD>StopCodon</TD><TD align=center>int</TD><TD>number of in-frame stop codons</TD></TR>
+<TR valign=top>
+<TD>Target</TD><TD align=center>str</TD><TD>Protein coordinate in alignment</TD></TR>
+</TABLE></div></BLOCKQUOTE>
+<P>
+</BLOCKQUOTE>
+<A name=10></A>
+
+    <H4>&nbsp; &nbsp; The PAF Format</H4>
+
+<BLOCKQUOTE>
+PAF gives detailed alignment. It is a TAB-delimited text format with each line
+consisting of at least 12 fields as are described in the following table:
+<P><BLOCKQUOTE><div id='tbl'><TABLE border=1 cellspacing=0 cellpadding=3>
+<TR valign=top>
+<TD align=center><B>Col</B></TD><TD align=center><B>Type</B></TD><TD align=center><B>Description</B></TD></TR>
+<TR></TR><TR></TR>
+<TR valign=top>
+<TD align=right>1</TD><TD align=center>string</TD><TD>Protein sequence name</TD></TR>
+<TR valign=top>
+<TD align=right>2</TD><TD align=center>int</TD><TD>Protein sequence length</TD></TR>
+<TR valign=top>
+<TD align=right>3</TD><TD align=center>int</TD><TD>Protein start coordinate (0-based)</TD></TR>
+<TR valign=top>
+<TD align=right>4</TD><TD align=center>int</TD><TD>Protein end coordinate (0-based)</TD></TR>
+<TR valign=top>
+<TD align=right>5</TD><TD align=center>char</TD><TD>&#145;+&#146; for forward strand; &#145;-&#146; for reverse</TD></TR>
+<TR valign=top>
+<TD align=right>6</TD><TD align=center>string</TD><TD>Contig sequence name</TD></TR>
+<TR valign=top>
+<TD align=right>7</TD><TD align=center>int</TD><TD>Contig sequence length</TD></TR>
+<TR valign=top>
+<TD align=right>8</TD><TD align=center>int</TD><TD>Contig start coordinate on the original strand</TD></TR>
+<TR valign=top>
+<TD align=right>9</TD><TD align=center>int</TD><TD>Contig end coordinate on the original strand</TD></TR>
+<TR valign=top>
+<TD align=right>10</TD><TD align=center>int</TD><TD>Number of matching nucleotides</TD></TR>
+<TR valign=top>
+<TD align=right>11</TD><TD align=center>int</TD><TD>Number of nucleotides in alignment excl. introns</TD></TR>
+<TR valign=top>
+<TD align=right>12</TD><TD align=center>int</TD><TD>Mapping quality (0-255 with 255 for missing)</TD></TR>
+</TABLE></div></BLOCKQUOTE>
+<P>
+<P>
+PAF may optionally have additional fields in the SAM-like typed key-value
+format. Miniprot may output the following tags:
+<P><BLOCKQUOTE><div id='tbl'><TABLE border=1 cellspacing=0 cellpadding=3>
+<TR valign=top>
+<TD align=center><B>Tag</B></TD><TD align=center><B>Type</B></TD><TD align=center><B>Description</B></TD></TR>
+<TR></TR><TR></TR>
+<TR valign=top>
+<TD align=right>AS</TD><TD align=center>i</TD><TD>Alignment score from dynamic programming</TD></TR>
+<TR valign=top>
+<TD align=right>ms</TD><TD align=center>i</TD><TD>Alignment score excluding introns</TD></TR>
+<TR valign=top>
+<TD align=right>np</TD><TD align=center>i</TD><TD>Number of amino acid matches with positive scores</TD></TR>
+<TR valign=top>
+<TD align=right>da</TD><TD align=center>i</TD><TD>Distance to the nearest start codon</TD></TR>
+<TR valign=top>
+<TD align=right>do</TD><TD align=center>i</TD><TD>Distance to the nearest stop codon</TD></TR>
+<TR valign=top>
+<TD align=right>cg</TD><TD align=center>i</TD><TD>Protein CIGAR</TD></TR>
+<TR valign=top>
+<TD align=right>cs</TD><TD align=center>i</TD><TD>Difference string</TD></TR>
+</TABLE></div></BLOCKQUOTE>
+<P>
+<P>
+A protein CIGAR consists of the following operators:
+<P><BLOCKQUOTE><div id='tbl'><TABLE border=1 cellspacing=0 cellpadding=3>
+<TR valign=top>
+<TD align=center><B>Op</B></TD><TD align=center><B>Description</B></TD></TR>
+<TR></TR><TR></TR>
+<TR valign=top>
+<TD align=right>nM</TD><TD>Alignment match. Consuming n*3 nucleotides and n amino acids</TD></TR>
+<TR valign=top>
+<TD align=right>nI</TD><TD>Insertion. Consuming n amino acids</TD></TR>
+<TR valign=top>
+<TD align=right>nD</TD><TD>Delection. Consuming n*3 nucleotides</TD></TR>
+<TR valign=top>
+<TD align=right>nF</TD><TD>Frameshift deletion. Consuming n nucleotides</TD></TR>
+<TR valign=top>
+<TD align=right>nG</TD><TD>Frameshift match. Consuming n nucleotides and 1 amino acid</TD></TR>
+<TR valign=top>
+<TD align=right>nN</TD><TD>Phase-0 intron. Consuming n nucleotides</TD></TR>
+<TR valign=top>
+<TD align=right>nU</TD><TD>Phase-1 intron. Consuming n nucleotides and 1 amino acid</TD></TR>
+<TR valign=top>
+<TD align=right>nV</TD><TD>Phase-2 intron. Consuming n nucleotides and 1 amino acid</TD></TR>
+</TABLE></div></BLOCKQUOTE>
+<P>
+<P>
+The
+<B>cs</B> tag encodes difference sequences. It consists of a series of operations:
+<P><BLOCKQUOTE><div id='tbl'><TABLE border=1 cellspacing=0 cellpadding=3>
+<TR valign=top>
+<TD align=center><B>Op</B></TD><TD align=center><B>Regex</B></TD><TD align=center><B>Description</B></TD></TR>
+<TR></TR><TR></TR>
+<TR valign=top>
+<TD align=right> :</TD><TD>[0-9]+</TD><TD>Number of identical amino acids</TD></TR>
+<TR valign=top>
+<TD align=right> *</TD><TD>[acgtn]+[A-Z*]</TD><TD>Substitution: ref to query</TD></TR>
+<TR valign=top>
+<TD align=right> +</TD><TD>[A-Z]+</TD><TD># aa inserted to the reference</TD></TR>
+<TR valign=top>
+<TD align=right> -</TD><TD>[acgtn]+</TD><TD># nt deleted from the reference</TD></TR>
+<TR valign=top>
+<TD align=right> ~</TD><TD>[acgtn]{2}[0-9]+[acgtn]{2}</TD><TD>Intron length and splice signal</TD></TR>
+</TABLE></div></BLOCKQUOTE>
+<P>
+</BLOCKQUOTE>
+<A name=11></A>
+
+     <H3>LIMITATIONS</H3>
+
+
+<BLOCKQUOTE>
+<TABLE cellpadding=3>
+<TR valign=top><TD width=2% nowrap>
+*
+</TD><TD valign=bottom>
+The DP alignment score (the AS tag) is not accurate.
+</TD></TR>
+<TR valign=top><TD width=2% nowrap>
+*
+</TD><TD valign=bottom>
+Need to introduce more heuristics for improved accuracy.
+</TD></TR>
+<TR></TR></TABLE></BLOCKQUOTE>
+<P><HR>
+<TABLE width=100%><TR> <TD width=33%><I>miniprot-0.2-dirty (r128)</I></TD> <TD width=33% align=center>miniprot (1)</TD> <TD align=right width=33%><I>21 September 2022</I></TD> </TR></TABLE></div></BODY></HTML>
