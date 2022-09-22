@@ -90,20 +90,20 @@ practical for whole genomes. In addition, [Iwata and Gotoh (2012)][spaln2]
 suggest that spaln2 consistently outperforms exonerate, GeneWise, ProSplign and
 genBlastG.
 
-In the evaluation, both miniprot and spaln were set to use 16 CPU threads. We
-used option `-Q7 -O0 -Thomosapi` with spaln. This does global alignment with
-the human-specific splice model.
+In the evaluation, both miniprot-0.3 and spaln-2.4.12 were set to use 16 CPU
+threads. We used option `-Q7 -O0 -Thomosapi` with spaln. This does global
+alignment with the human-specific splice model.
 
 |Metric          |mouse/mp |mouse/sp |chicken/mp|zebrafish/mp|
 |:---------------|--------:|--------:|--------:|--------:|
-|Elapsed time (s)|     347 |   3,714 |     294 |     464 |
+|Elapsed time (s)|     367 |   3,714 |     318 |     494 |
 |# proteins      |  21,844 |  21,844 |  17,007 |  30,313 |
-|# mapped        |  19,253 |  18,847 |  13,284 |  19,797 |
-|# single-exon   |   2,878 |         |   1,110 |   1,857 |
-|# predicted junc| 164,718 | 173,475 | 131,346 | 176,044 |
-|# non-ovlp junc |     402 |   1,490 |     482 |     960 |
-|# confirmed junc| 157,400 | 162,303 | 117,416 | 151,912 |
-|% confirmed     |    95.6 |    93.6 |    89.4 |    86.3 |
+|# mapped        |  19,375 |  18,847 |  13,496 |  20,382 |
+|# single-exon   |   2,960 |         |   1,253 |   2,098 |
+|# predicted junc| 165,219 | 173,475 | 132,275 | 179,961 |
+|# non-ovlp junc |     377 |   1,490 |     435 |     800 |
+|# confirmed junc| 158,164 | 162,303 | 119,492 | 157,004 |
+|% confirmed     |    95.7 |    93.6 |    90.3 |    87.2 |
 
 On the human-mouse dataset, miniprot finds fewer novel splice junctions,
 implying higher specificity, but spaln finds more confirmed junctions, implying

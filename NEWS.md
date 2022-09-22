@@ -1,3 +1,29 @@
+Release 0.3-r137 (22 September 2022)
+------------------------------------
+
+Notable changes:
+
+ * Improvement: fine tune parameters and heuristics: higher non-GT-AG penalty,
+   higher frameshift penalty, higher penalty on in-frame stop codons and a
+   small penalty on long terminal introns. Miniprot is a little more sensitive
+   and a little more accurate, at a minor cost of performance.
+
+ * New feature: richer GFF output. Miniprot now reports per-exon alignment
+   score, number of frameshifts, number of in-frame stop codons and
+   non-canonical donor/acceptor sequences.
+
+ * New feature: added option `--outn` to control the number of alignments per
+   protein to output.
+
+ * New feature: added option `-P` to change the ID prefix in GFF output (#6).
+
+ * Bug fix: fixed a segmentation fault when there are no k-mers on a reference
+   sequence (#4).
+
+(0.3: 22 September 2022, r137)
+
+
+
 Release 0.2-r116 (12 September 2022)
 ------------------------------------
 
