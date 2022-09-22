@@ -109,7 +109,7 @@ static uint64_t *compact_a(void *km, int32_t n_u, uint64_t *u, int32_t n_v, int3
 	return b;
 }
 
-static inline int32_t comput_sc(uint64_t ai, uint64_t aj, int32_t max_dist_x, int32_t max_dist_y, int32_t bw, int32_t is_spliced, int32_t bbit, int32_t kmer)
+static inline int32_t comput_sc(uint64_t ai, uint64_t aj, int32_t max_dist_x, int32_t max_dist_y, int32_t bw, float chn_ceof_log, int32_t is_spliced, int32_t bbit, int32_t kmer)
 {
 	int32_t dq = (int32_t)ai - (int32_t)aj, dq3 = dq * 3, dr3, dd, sc;
 	if (dq <= 0 || dq3 > max_dist_x) return INT32_MIN;
@@ -139,11 +139,11 @@ static inline int32_t comput_sc(uint64_t ai, uint64_t aj, int32_t max_dist_x, in
 	if (dd > 0) { // TODO: consider frameshift
 		float lin_pen, log_pen;
 		lin_pen = (float)dd * .33334f;
-		log_pen = dd >= 1? mp_log2(dd + 1) : 0.0f; // mp_log2() only works for dd>=2
+		log_pen = dd >= 2? chn_ceof_log * (mp_log2(dd + 1) - 1.0f) + 1.0f : (float)dd; // mp_log2(x) only works for x>=2
 		if (is_spliced) {
 			if (dr3 > dq3) sc -= (int)(lin_pen < log_pen? lin_pen : log_pen);
-			else sc -= (int)(lin_pen + .5f * log_pen);
-		} else sc -= (int)(lin_pen + .5f * log_pen);
+			else sc -= (int)(lin_pen + log_pen);
+		} else sc -= (int)(lin_pen + log_pen);
 	}
 	return sc;
 }
@@ -155,7 +155,7 @@ static inline int32_t comput_sc(uint64_t ai, uint64_t aj, int32_t max_dist_x, in
  *   u[]: score<<32 | #anchors (sum of lower 32 bits of u[] is the returned length of a[])
  * input a[] is deallocated on return
  */
-uint64_t *mp_chain(int32_t max_dist_x, int32_t max_dist_y, int32_t bw, int32_t max_skip, int32_t max_iter, int32_t min_cnt, int32_t min_sc,
+uint64_t *mp_chain(int32_t max_dist_x, int32_t max_dist_y, int32_t bw, int32_t max_skip, int32_t max_iter, int32_t min_cnt, int32_t min_sc, float chn_ceof_log,
 				   int32_t is_spliced, int32_t kmer, int32_t bbit, int64_t n, uint64_t *a, int32_t *n_u_, uint64_t **_u, void *km)
 { // TODO: make sure this works when n has more than 32 bits
 	int32_t *f, *t, *v, n_u, n_v, mmax_f = 0, max_drop = bw;
@@ -183,7 +183,7 @@ uint64_t *mp_chain(int32_t max_dist_x, int32_t max_dist_y, int32_t bw, int32_t m
 		if (i - st > max_iter) st = i - max_iter;
 		for (j = i - 1; j >= st; --j) {
 			int32_t sc;
-			sc = comput_sc(a[i], a[j], max_dist_x, max_dist_y, bw, is_spliced, bbit, kmer);
+			sc = comput_sc(a[i], a[j], max_dist_x, max_dist_y, bw, chn_ceof_log, is_spliced, bbit, kmer);
 			++n_iter;
 			if (sc == INT32_MIN) continue;
 			sc += f[j];

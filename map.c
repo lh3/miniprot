@@ -81,7 +81,7 @@ static void mp_refine_reg(void *km, const mp_idx_t *mi, const mp_mapopt_t *opt, 
 	kfree(km, sd.a);
 
 	radix_sort_mp64(a, a + n_a);
-	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, opt->max_chn_max_skip, opt->max_chn_iter, opt->min_chn_cnt, opt->min_chn_sc, is_splice, kmer, 0, n_a, a, &n_u, &u, km);
+	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, opt->max_chn_max_skip, opt->max_chn_iter, opt->min_chn_cnt, opt->min_chn_sc, opt->chn_coef_log, is_splice, kmer, 0, n_a, a, &n_u, &u, km);
 	if (n_u == 0) {
 		r->cnt = 0, r->off = -1, r->a = 0;
 		return;
@@ -138,7 +138,8 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	kfree(km, sd.a);
 	radix_sort_mp64(a, a + n_a);
 
-	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, opt->max_chn_max_skip, opt->max_chn_iter, opt->min_chn_cnt, opt->min_chn_sc, is_splice, mi->opt.kmer, mi->opt.bbit, n_a, a, &n_u, &u, km);
+	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, opt->max_chn_max_skip, opt->max_chn_iter, opt->min_chn_cnt, opt->min_chn_sc, opt->chn_coef_log,
+				 is_splice, mi->opt.kmer, mi->opt.bbit, n_a, a, &n_u, &u, km);
 	reg = mp_reg_gen_from_block(0, mi, n_u, u, a, n_reg);
 	kfree(km, u);
 	mp_sort_reg(km, n_reg, reg);

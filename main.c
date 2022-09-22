@@ -46,6 +46,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -S           no splicing (applying -G1k -J1k -e1k)\n");
 	fprintf(fp, "    -c NUM       max k-mer occurrence [%d]\n", mo->max_occ);
 	fprintf(fp, "    -G NUM       max intron size [200k]\n");
+	fprintf(fp, "    -w FLOAT     weight of log gap penalty [%g]\n", mo->chn_coef_log);
 	fprintf(fp, "    -n NUM       minimum number of syncmers in a chain [%d]\n", mo->min_chn_cnt);
 	fprintf(fp, "    -m NUM       min chaining score [%d]\n", mo->min_chn_sc);
 	fprintf(fp, "    -l INT       k-mer size for the second round of chaining [%d]\n", mo->kmer2);

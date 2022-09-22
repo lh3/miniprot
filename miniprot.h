@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.2-log-end-r134-dirty"
+#define MP_VERSION "0.2-r136-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
@@ -44,6 +44,7 @@ typedef struct {
 	int32_t max_chn_max_skip;
 	int32_t max_chn_iter;
 	int32_t min_chn_sc;
+	float chn_coef_log;
 	float mask_level;
 	int32_t mask_len;
 	float pri_ratio;
