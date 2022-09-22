@@ -273,6 +273,16 @@ static inline __m128i _mm_insert_epi32(__m128i a, int b, const int ndx)
 }
 #endif
 
+static inline float ns_log2(float x) // NB: this doesn't work when x<2
+{
+	union { float f; uint32_t i; } z = { x };
+	float log_2 = ((z.i >> 23) & 255) - 128;
+	z.i &= ~(255 << 23);
+	z.i += 127 << 23;
+	log_2 += (-0.34484843f * z.f + 2.02466578f) * z.f - 0.67487759f;
+	return log_2;
+}
+
 void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, ns_rst_t *r)
 {
 	typedef int16_t ns_int_t;
@@ -283,7 +293,7 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 	NS_GEN_INIT1(epi16)
 
 	if (tb == 0) {
-		int32_t max_sc = INT32_MIN, tmp_sc, end_sc, max_i = -1;
+		int32_t max_sc = INT32_MIN, max_sc_log = INT32_MIN, tmp_sc, tmp_sc_log, end_sc, max_i = -1, pen_len = al * 3;
 		for (i = 2; i < nl; ++i) {
 			__m128i max;
 			NS_GEN_INIT2(epi16)
@@ -359,13 +369,14 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 			tmp_sc = ns_max_8(max);
 			end_sc = *((ns_int_t*)&H[(al-1)%slen] + (al-1)/slen) + opt->end_bonus;
 			tmp_sc = tmp_sc > end_sc? tmp_sc : end_sc;
-			if (tmp_sc > max_sc) {
-				max_sc = tmp_sc, max_i = i;
+			tmp_sc_log = tmp_sc - (i - pen_len < 2? 0 : (int32_t)(.5f * ns_log2(i - pen_len) + .5f));
+			if (tmp_sc_log > max_sc_log) {
+				max_sc = tmp_sc, max_sc_log = tmp_sc_log, max_i = i;
 				memcpy(&Hmax[-1], &H[-1], (slen + 1) * 16);
 			}
 			tmp = H3, H3 = H2, H2 = H1, H1 = H, H = tmp;
 			tmp = D3, D3 = D2, D2 = D1, D1 = D, D = tmp;
-			if (max_sc - tmp_sc > opt->xdrop) break;
+			if (max_sc_log - tmp_sc_log > opt->xdrop) break;
 		}
 		if (is_ext) {
 			for (j = 0; j < al; ++j) {
