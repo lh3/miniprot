@@ -82,7 +82,7 @@ int main(int argc, char *argv[])
 	mp_start();
 	mp_mapopt_init(&mo);
 	mp_idxopt_init(&io);
-	while ((c = ketopt(&o, argc, argv, 1, "k:s:l:b:t:d:c:n:m:K:p:N:SAO:E:J:C:F:G:e:uB:P:", long_options)) >= 0) {
+	while ((c = ketopt(&o, argc, argv, 1, "k:s:l:b:t:d:c:n:m:K:p:N:SAO:E:J:C:F:G:e:uB:P:w:", long_options)) >= 0) {
 		if (c == 'k') io.kmer = atoi(o.arg);
 		else if (c == 's') io.smer = atoi(o.arg);
 		else if (c == 'b') io.bbit = atoi(o.arg);
@@ -107,6 +107,7 @@ int main(int argc, char *argv[])
 		else if (c == 'e') mo.max_ext = mp_parse_num(o.arg);
 		else if (c == 'P') mo.gff_prefix = o.arg;
 		else if (c == 'u') mo.flag |= MP_F_SHOW_UNMAP;
+		else if (c == 'w') mo.chn_coef_log = atof(o.arg);
 		else if (c == 301) mo.flag |= MP_F_GFF; // --gff
 		else if (c == 302) mo.xdrop = atoi(o.arg); // --xdrop
 		else if (c == 303) mo.out_n = mp_parse_num(o.arg); // --outn
