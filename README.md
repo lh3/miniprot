@@ -1,6 +1,7 @@
 [![Release](https://img.shields.io/github/v/release/lh3/miniprot?include_prereleases)](https://github.com/lh3/miniprot/releases)
 [![BioConda Install](https://img.shields.io/conda/dn/bioconda/miniprot.svg?style=flag&label=BioConda%20install)](https://anaconda.org/bioconda/miniprot)
 [![Build Status](https://github.com/lh3/miniprot/actions/workflows/ci.yaml/badge.svg)](https://github.com/lh3/miniprot/actions)
+![Platform](https://img.shields.io/badge/platform-x86__64%20%7C%20arm64-lightgrey)
 ## <a name="started"></a>Getting Started
 ```sh
 # download and compile
