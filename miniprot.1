@@ -1,4 +1,4 @@
-.TH miniprot 1 "22 September 2022" "miniprot-0.3 (r137)" "Bioinformatics tools"
+.TH miniprot 1 "22 September 2022" "miniprot-0.3-dirty (r147)" "Bioinformatics tools"
 .SH NAME
 .PP
 miniprot - protein-to-genome alignment with splicing and frameshifts
@@ -112,13 +112,21 @@ Penalty for frameshifts or in-frame stop codons [17]
 Number of threads [4]
 .TP
 .B --gff
-Output in the GFF3 format. `##PAF' lines in the output provide detailed alignments.
+Output in the GFF3 format. `##PAF' lines in the output provide detailed
+alignments.
 .TP
 .B --gff-only
 Output in the GFF3 format without `##PAF' lines.
 .TP
 .BI -P \ STR
-Prefix for IDs in GFF3 [MP]
+Prefix for IDs in GFF3 [MP].
+.B --gff-delim
+overrides this option.
+.TP
+.BI --gff-delim \ CHAR
+Change the ID field in GFF3 to
+.RI QueryName CHAR HitIndex
+[]. If not specified, the default ID looks like `MP000012'.
 .TP
 .B -u
 Print unmapped query proteins

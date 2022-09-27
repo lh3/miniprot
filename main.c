@@ -8,6 +8,7 @@ static ko_longopt_t long_options[] = {
 	{ "xdrop",           ko_required_argument, 302 },
 	{ "outn",            ko_required_argument, 303 },
 	{ "gff-only",        ko_no_argument,       304 },
+	{ "gff-delim",       ko_required_argument, 305 },
 	{ "version",         ko_no_argument,       401 },
 	{ "no-kalloc",       ko_no_argument,       501 },
 	{ "dbg-qname",       ko_no_argument,       502 },
@@ -112,6 +113,7 @@ int main(int argc, char *argv[])
 		else if (c == 302) mo.xdrop = atoi(o.arg); // --xdrop
 		else if (c == 303) mo.out_n = mp_parse_num(o.arg); // --outn
 		else if (c == 304) mo.flag |= MP_F_GFF | MP_F_NO_PAF; // --gff-only
+		else if (c == 305) mo.gff_delim = o.arg[0]; // --gff-delim
 		else if (c == 501) mp_dbg_flag |= MP_DBG_NO_KALLOC; // --no-kalloc
 		else if (c == 502) mp_dbg_flag |= MP_DBG_QNAME; // --dbg-qname
 		else if (c == 503) mp_dbg_flag |= MP_DBG_NO_REFINE; // --dbg-no-refine

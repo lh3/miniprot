@@ -52,5 +52,6 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 	memcpy(mo->mat, ns_mat_blosum62, 484);
 	ns_set_stop_sc(mo->asize, mo->mat, mo->fs);
 
+	mo->gff_delim = -1;
 	mo->gff_prefix = "MP";
 }

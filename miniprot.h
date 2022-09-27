@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.3-r146-dirty"
+#define MP_VERSION "0.3-r147-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
@@ -54,6 +54,7 @@ typedef struct {
 	int32_t xdrop;
 	int32_t end_bonus;
 	int32_t asize; // size of the alphabet; always 22 in current implementation
+	int32_t gff_delim;
 	const char *gff_prefix;
 	int8_t mat[484];
 } mp_mapopt_t;

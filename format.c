@@ -176,23 +176,29 @@ void mp_write_paf(kstring_t *s, const mp_idx_t *mi, const mp_bseq1_t *seq, const
 	mp_sprintf_lite(s, "\n");
 }
 
-void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *seq, const mp_reg1_t *r, const char *gff_prefix, int64_t id, const char *qname)
+static void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *seq, const mp_reg1_t *r, const char *gff_prefix, int64_t id, const char *qname, int32_t gff_delim, int32_t hit_idx)
 {
 	const mp_ctg_t *ctg;
 	const mp_feat_t *f, *feat = r->feat;
 	int64_t vs, ve, ve_mRNA;
 	int32_t j, has_stop = 0;
-	char buf[16], dec[16];
+	char dec[16], *id_str = 0;
 
 	if (r == 0 || r->p == 0) return;
 	has_stop = (r->qe == seq->l_seq && r->p->dist_stop == 0);
 	ve_mRNA = has_stop? r->ve + 3 : r->ve;
 
+	if (gff_delim >= 33 && gff_delim <= 126 && hit_idx >= 0) {
+		id_str = Kmalloc(km, char, strlen(qname) + 16);
+		sprintf(id_str, "%s%c%d", qname, gff_delim, hit_idx);
+	} else {
+		id_str = Kmalloc(km, char, strlen(gff_prefix) + 16);
+		sprintf(id_str, "%s%.6ld", gff_prefix, (long)id);
+	}
 	ctg = &mi->nt->ctg[r->vid>>1];
-	snprintf(buf, 16, "%.6ld", (long)id);
 	vs = r->vid&1? ctg->len - ve_mRNA : r->vs;
 	ve = r->vid&1? ctg->len - r->vs   : ve_mRNA;
-	mp_sprintf_lite(s, "%s\tminiprot\tmRNA\t%d\t%d\t%d\t%c\t.\tID=%s%s", ctg->name, (int)vs + 1, (int)ve, r->p->dp_max, "+-"[r->vid&1], gff_prefix, buf);
+	mp_sprintf_lite(s, "%s\tminiprot\tmRNA\t%d\t%d\t%d\t%c\t.\tID=%s", ctg->name, (int)vs + 1, (int)ve, r->p->dp_max, "+-"[r->vid&1], id_str);
 	snprintf(dec, 16, "%.4f", (double)r->p->n_iden * 3 / r->p->blen);
 	mp_sprintf_lite(s, ";Identity=%s", dec);
 	snprintf(dec, 16, "%.4f", (double)r->p->n_plus * 3 / r->p->blen);
@@ -206,7 +212,7 @@ void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *
 		vs = r->vid&1? ctg->len - f->ve : f->vs;
 		ve = r->vid&1? ctg->len - f->vs : f->ve;
 		mp_sprintf_lite(s, "%s\tminiprot\t%s\t%d\t%d\t%d\t%c\t%d\tParent=%s%s", ctg->name, f->type == MP_FEAT_STOP? "stop_codon" : "CDS",
-			(int)vs + 1, (int)ve, f->score, "+-"[r->vid&1], f->phase, gff_prefix, buf);
+			(int)vs + 1, (int)ve, f->score, "+-"[r->vid&1], f->phase, id_str);
 		if (f->type == MP_FEAT_CDS) {
 			snprintf(dec, 16, "%.4f", (double)f->n_iden * 3 / f->blen);
 			mp_sprintf_lite(s, ";Identity=%s", dec);
@@ -218,9 +224,10 @@ void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *
 		}
 		mp_sprintf_lite(s, "\n");
 	}
+	kfree(km, id_str);
 }
 
-void mp_write_output(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *seq, const mp_reg1_t *r, const mp_mapopt_t *opt, int64_t id)
+void mp_write_output(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *seq, const mp_reg1_t *r, const mp_mapopt_t *opt, int64_t id, int32_t hit_idx)
 {
 	s->l = 0;
 	if (r == 0) {
@@ -230,6 +237,6 @@ void mp_write_output(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_
 		if (!(opt->flag&MP_F_NO_PAF))
 			mp_write_paf(s, mi, seq, r, opt->flag&MP_F_GFF);
 		if (opt->flag&MP_F_GFF)
-			mp_write_gff(s, km, mi, seq, r, opt->gff_prefix, id, seq->name);
+			mp_write_gff(s, km, mi, seq, r, opt->gff_prefix, id, seq->name, opt->gff_delim, hit_idx);
 	}
 }
