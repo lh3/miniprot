@@ -45,7 +45,7 @@ int32_t mp_idx_block2pos(const mp_idx_t *mi, uint32_t b)
 
 typedef struct {
 	const mp_idx_t *mi;
-	void **km;
+	void **km, **km_tmp;
 	mp64_v *a;
 } worker_aux_t;
 
@@ -54,13 +54,18 @@ static void build_worker(void *data, long j, int tid)
 	worker_aux_t *aux = (worker_aux_t*)data;
 	const mp_ntdb_t *nt = aux->mi->nt;
 	const mp_idxopt_t *io = &aux->mi->opt;
-	void *km = aux->km[tid];
+	void *km = aux->km[tid], *km_tmp = aux->km_tmp[tid];
 	int64_t len;
 	uint8_t *seq;
-	seq = Kmalloc(km, uint8_t, nt->ctg[j>>1].len);
+	mp64_v a = {0,0,0};
+	seq = Kmalloc(km_tmp, uint8_t, nt->ctg[j>>1].len);
 	len = mp_ntseq_get(nt, j>>1, 0, -1, j&1, seq);
-	mp_sketch_nt4(km, seq, len, io->min_aa_len, io->kmer, io->smer, io->bbit, aux->mi->bo[j], &aux->a[j]);
-	kfree(km, seq);
+	mp_sketch_nt4(km_tmp, seq, len, io->min_aa_len, io->kmer, io->smer, io->bbit, aux->mi->bo[j], &a);
+	aux->a[j].m = aux->a[j].n = a.n;
+	aux->a[j].a = Kmalloc(km, uint64_t, a.n);
+	memcpy(aux->a[j].a, a.a, a.n * sizeof(uint64_t));
+	kfree(km_tmp, a.a);
+	kfree(km_tmp, seq);
 }
 
 static void build_bidx(const mp_idxopt_t *io, mp_idx_t *mi, const mp64_v *a)
@@ -108,9 +113,12 @@ mp_idx_t *mp_idx_build(const char *fn, const mp_idxopt_t *io, int32_t n_threads)
 	memset(&aux, 0, sizeof(aux));
 	aux.mi = mi;
 	aux.km = Kcalloc(0, void*, n_threads);
+	aux.km_tmp = Kcalloc(0, void*, n_threads);
 	aux.a = Kcalloc(0, mp64_v, nt->n_ctg * 2);
-	for (i = 0; i < n_threads; ++i)
+	for (i = 0; i < n_threads; ++i) {
 		aux.km[i] = km_init();
+		aux.km_tmp[i] = km_init();
+	}
 	kt_for(n_threads, build_worker, &aux, nt->n_ctg * 2);
 	if (mp_verbose >= 3)
 		fprintf(stderr, "[M::%s@%.3f*%.2f] collected syncmers\n", __func__, mp_realtime(), mp_percent_cpu());
@@ -118,8 +126,10 @@ mp_idx_t *mp_idx_build(const char *fn, const mp_idxopt_t *io, int32_t n_threads)
 	if (mp_verbose >= 3)
 		fprintf(stderr, "[M::%s@%.3f*%.2f] %ld kmer-block pairs\n", __func__, mp_realtime(), mp_percent_cpu(), (long)mi->n_kb);
 
-	for (i = 0; i < n_threads; ++i)
+	for (i = 0; i < n_threads; ++i) {
 		km_destroy(aux.km[i]);
+		km_destroy(aux.km_tmp[i]);
+	}
 	free(aux.a); free(aux.km);
 	return mi;
 }
