@@ -211,7 +211,7 @@ static void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bs
 		f = &feat[j];
 		vs = r->vid&1? ctg->len - f->ve : f->vs;
 		ve = r->vid&1? ctg->len - f->vs : f->ve;
-		mp_sprintf_lite(s, "%s\tminiprot\t%s\t%d\t%d\t%d\t%c\t%d\tParent=%s%s", ctg->name, f->type == MP_FEAT_STOP? "stop_codon" : "CDS",
+		mp_sprintf_lite(s, "%s\tminiprot\t%s\t%d\t%d\t%d\t%c\t%d\tParent=%s", ctg->name, f->type == MP_FEAT_STOP? "stop_codon" : "CDS",
 			(int)vs + 1, (int)ve, f->score, "+-"[r->vid&1], f->phase, id_str);
 		if (f->type == MP_FEAT_CDS) {
 			snprintf(dec, 16, "%.4f", (double)f->n_iden * 3 / f->blen);
