@@ -157,13 +157,14 @@ l | c | l .
 Attribute	Type	Description
 _
 ID	str	mRNA identifier
-Parent	str	identifier of the parent feature
-Identity	real	fraction of exact amino acid matches
-Positive	real	fraction of positive amino acid matches
+Parent	str	Identifier of the parent feature
+Rank	int	Rank among all hits of the query
+Identity	real	Fraction of exact amino acid matches
+Positive	real	Fraction of positive amino acid matches
 Donor	str	2bp at the donor site if not GT
 Acceptor	str	2bp at the acceptor site if not AG
-Frameshift	int	number of frameshift events in alignment
-StopCodon	int	number of in-frame stop codons
+Frameshift	int	Number of frameshift events in alignment
+StopCodon	int	Number of in-frame stop codons
 Target	str	Protein coordinate in alignment
 .TE
 

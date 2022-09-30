@@ -198,7 +198,7 @@ static void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bs
 	ctg = &mi->nt->ctg[r->vid>>1];
 	vs = r->vid&1? ctg->len - ve_mRNA : r->vs;
 	ve = r->vid&1? ctg->len - r->vs   : ve_mRNA;
-	mp_sprintf_lite(s, "%s\tminiprot\tmRNA\t%d\t%d\t%d\t%c\t.\tID=%s", ctg->name, (int)vs + 1, (int)ve, r->p->dp_max, "+-"[r->vid&1], id_str);
+	mp_sprintf_lite(s, "%s\tminiprot\tmRNA\t%d\t%d\t%d\t%c\t.\tID=%s;Rank=%d", ctg->name, (int)vs + 1, (int)ve, r->p->dp_max, "+-"[r->vid&1], id_str, hit_idx);
 	snprintf(dec, 16, "%.4f", (double)r->p->n_iden * 3 / r->p->blen);
 	mp_sprintf_lite(s, ";Identity=%s", dec);
 	snprintf(dec, 16, "%.4f", (double)r->p->n_plus * 3 / r->p->blen);
@@ -211,8 +211,8 @@ static void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bs
 		f = &feat[j];
 		vs = r->vid&1? ctg->len - f->ve : f->vs;
 		ve = r->vid&1? ctg->len - f->vs : f->ve;
-		mp_sprintf_lite(s, "%s\tminiprot\t%s\t%d\t%d\t%d\t%c\t%d\tParent=%s", ctg->name, f->type == MP_FEAT_STOP? "stop_codon" : "CDS",
-			(int)vs + 1, (int)ve, f->score, "+-"[r->vid&1], f->phase, id_str);
+		mp_sprintf_lite(s, "%s\tminiprot\t%s\t%d\t%d\t%d\t%c\t%d\tParent=%s;Rank=%d", ctg->name, f->type == MP_FEAT_STOP? "stop_codon" : "CDS",
+			(int)vs + 1, (int)ve, f->score, "+-"[r->vid&1], f->phase, id_str, hit_idx);
 		if (f->type == MP_FEAT_CDS) {
 			snprintf(dec, 16, "%.4f", (double)f->n_iden * 3 / f->blen);
 			mp_sprintf_lite(s, ";Identity=%s", dec);
