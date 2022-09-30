@@ -88,32 +88,34 @@ found in the human Gencode annotation v41; a junction is non-overlapping if the
 intron in the junction does not overlap with any introns in the Gencode
 annotation.
 
-We only evaluated miniprot and [spaln][spaln] as these are the only tools
-practical for whole genomes. In addition, [Iwata and Gotoh (2012)][spaln2]
-suggest that spaln2 consistently outperforms exonerate, GeneWise, ProSplign and
-genBlastG.
+We only evaluated miniprot v0.3 and [spaln][spaln] v2.4.13a as these are the
+only tools practical for whole genomes. Running other tools would require to
+find approximate protein mapping first and then realign in each local region.
+This procedure is complex and does not evaluate the mapping step. In addition,
+[Iwata and Gotoh (2012)][spaln2] suggest that spaln2 consistently outperforms
+exonerate, GeneWise, ProSplign and genBlastG.
 
-In the evaluation, both miniprot-0.3 and spaln-2.4.12 were set to use 16 CPU
-threads. We used option `-Q7 -O0 -Thomosapi` with spaln. This does global
-alignment with the human-specific splice model.
+In the evaluation, both miniprot (mp) and spaln (sp) were set to use 16 CPU
+threads. We used option `-Q7 -O0 -Thomosapi -LS -yS` with spaln (local
+alignment with the human-specific splicing model). It gives the best accuracy
+for the mouse dataset. The same setting crashed on the chicken and the
+zebrafish datasets for the moment.
 
 |Metric          |mouse/mp |mouse/sp |chicken/mp|zebrafish/mp|
 |:---------------|--------:|--------:|--------:|--------:|
-|Elapsed time (s)|     367 |   3,714 |     318 |     494 |
+|Elapsed time (s)|     367 |   3,767 |     318 |     494 |
+|Peak RAM (Gb)   |    15.1 |     5.6 |    14.0 |    18.2 |
 |# proteins      |  21,844 |  21,844 |  17,007 |  30,313 |
-|# mapped        |  19,375 |  18,847 |  13,496 |  20,382 |
+|# mapped        |  19,375 |  18,840 |  13,496 |  20,382 |
 |# single-exon   |   2,960 |         |   1,253 |   2,098 |
-|# predicted junc| 165,219 | 173,475 | 132,275 | 179,961 |
-|# non-ovlp junc |     377 |   1,490 |     435 |     800 |
-|# confirmed junc| 158,164 | 162,303 | 119,492 | 157,004 |
-|% confirmed     |    95.7 |    93.6 |    90.3 |    87.2 |
+|# predicted junc| 165,219 | 171,241 | 132,275 | 179,961 |
+|# non-ovlp junc |     377 |     852 |     435 |     800 |
+|# confirmed junc| 158,164 | 162,551 | 119,492 | 157,004 |
+|% confirmed     |    95.7 |    94.9 |    90.3 |    87.2 |
 
 On the human-mouse dataset, miniprot finds fewer novel splice junctions,
 implying higher specificity, but spaln finds more confirmed junctions, implying
-higher sensitivity. This is partly because spaln forces global alignment.
-I have tried a few other options of spaln such as `-yS`, `-M` (more than one
-hits per query) and `-LS` (local mode), but spaln-2.4.12 crashed. Not using a
-species-specific splice model (`-T`) would lead to lower accuracy.
+higher sensitivity.
 
 ### <a name="algo"></a>Algorithm overview
 
