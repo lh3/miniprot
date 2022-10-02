@@ -170,7 +170,7 @@ void mp_write_paf(kstring_t *s, const mp_idx_t *mi, const mp_bseq1_t *seq, const
 		mp_sprintf_lite(s, "cg:Z:");
 		for (k = 0; k < r->p->n_cigar; ++k)
 			mp_sprintf_lite(s, "%d%c", r->p->cigar[k]>>4, NS_CIGAR_STR[r->p->cigar[k]&0xf]);
-	} else mp_sprintf_lite(s, "%d\t%d", r->chn_sc, r->cnt);
+	} else mp_sprintf_lite(s, "%d\t%d", r->chn_sc_rank, r->cnt);
 	mp_sprintf_lite(s, "\t");
 	mp_write_cs(s, mi, &seq->seq[r->qs], r);
 	mp_sprintf_lite(s, "\n");

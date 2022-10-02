@@ -3,6 +3,31 @@
 #include "mppriv.h"
 #include "kalloc.h"
 
+static int32_t mp_cal_chn_sc_rank_approx(const mp_reg1_t *r, const uint64_t *a, int32_t kmer)
+{
+	int32_t i, x = kmer;
+	for (i = 1; i < r->cnt; ++i) {
+		const uint64_t a0 = a[r->off + i - 1], a1 = a[r->off + i];
+		int32_t dq = (int32_t)a1 - (int32_t)a0;
+		x += dq < kmer? dq : kmer;
+	}
+	return x;
+}
+
+int32_t mp_cal_chn_sc_rank(int32_t n_a, const uint64_t *a, int32_t kmer)
+{
+	int32_t i, x = kmer;
+	for (i = 1; i < n_a; ++i) {
+		const uint64_t a0 = a[i - 1], a1 = a[i];
+		int32_t dq = (int32_t)a1 - (int32_t)a0, dr3 = (a1>>32) - (a0>>32);
+		int32_t dr = dr3 / 3, q = dr3 - dr * 3, dg;
+		dg = dq < dr? dq : dr;
+		if (dq >= dr && q != 0) --x;
+		else x += dg < kmer? dg : kmer;
+	}
+	return x;
+}
+
 mp_reg1_t *mp_reg_gen_from_block(void *km, const mp_idx_t *mi, int32_t n_u, const uint64_t *u, const uint64_t *a, int32_t *n_reg)
 {
 	int32_t i, k, nr;
@@ -42,6 +67,7 @@ mp_reg1_t *mp_reg_gen_from_block(void *km, const mp_idx_t *mi, int32_t n_u, cons
 		r->qs = (uint32_t)a[is];
 		r->qe = (uint32_t)a[ie] + 0;
 		r->chn_sc = ts == te? u[i]>>32 : (uint32_t)((double)(u[i]>>32) * (ie - is + 1) / n + .499);
+		r->chn_sc_rank = mp_cal_chn_sc_rank_approx(r, a, mi->opt.kmer);
 		k += n;
 	}
 	*n_reg = nr;
@@ -80,7 +106,7 @@ void mp_sort_reg(void *km, int *n_regs, mp_reg1_t *r)
 		if (r[i].cnt > 0) { // squeeze out elements with cnt==0 (soft deleted)
 			int score;
 			if (r[i].p) score = r[i].p->dp_max, has_cigar = 1;
-			else score = r[i].chn_sc, no_cigar = 1;
+			else score = r[i].chn_sc_rank, no_cigar = 1;
 			aux[n_aux].x = (uint64_t)score << 32 | r[i].hash;
 			aux[n_aux++].y = i;
 		} else if (r[i].p) {
@@ -139,7 +165,7 @@ skip_uncov:
 			max = ej - sj > ei - si? ej - sj : ei - si;
 			ol = si < sj? (ei < sj? 0 : ei < ej? ei - sj : ej - sj) : (ej < si? 0 : ej < ei? ej - si : ei - si); // overlap length; TODO: this can be simplified
 			if ((float)ol / min - (float)uncov_len / max > mask_level && uncov_len <= mask_len) { // then this is a secondary hit
-				int cnt_sub = 0, sci = ri->chn_sc;
+				int cnt_sub = 0, sci = ri->chn_sc_rank;
 				ri->parent = rp->parent;
 				rp->subsc = rp->subsc > sci? rp->subsc : sci;
 				if (ri->cnt >= rp->cnt) cnt_sub = 1;
@@ -188,8 +214,8 @@ void mp_select_sub(void *km, float pri_ratio, int min_diff, int best_n, int *n_,
 		int i, k, n = *n_, n_2nd = 0;
 		for (i = k = 0; i < n; ++i) {
 			int p = r[i].parent;
-			int sci = r[i].p? r[i].p->dp_max : r[i].chn_sc;
-			int scp = r[p].p? r[p].p->dp_max : r[p].chn_sc;
+			int sci = r[i].p? r[i].p->dp_max : r[i].chn_sc_rank;
+			int scp = r[p].p? r[p].p->dp_max : r[p].chn_sc_rank;
 			if (p == i) { // primary or inversion
 				r[k++] = r[i];
 			} else if ((sci >= scp * pri_ratio || sci + min_diff >= scp) && n_2nd < best_n) {
