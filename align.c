@@ -14,7 +14,7 @@ static void mp_filter_seed(int32_t cnt, uint64_t *a, int32_t max_aa_dist, int32_
 			if ((x1 - x0) % 3 != 0 || x1 - x0 > max_aa_dist * 3 || y1 - y0 > max_aa_dist)
 				break;
 		}
-		if (j - i >= min_cnt) {
+		if (j - i >= min_cnt) { // a tight chain block
 			int32_t k, t = (int32_t)a[j-1];
 			for (k = j - 2; k >= i; --k)
 				if (t - (int32_t)a[k] >= trim_back)
@@ -260,23 +260,23 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	{ // left extension
 		int64_t vs1 = vs0 + (r->a[i0]>>32) + 1;
 		int32_t as1 = ((int32_t)r->a[i0]<<1>>1) + 1;
+		int32_t nt_len, aa_len;
 		ns_opt_t ns_opt;
 		ns_rst_t rst;
 		mp_map2ns_opt(opt, &ns_opt);
 		ns_opt.flag |= NS_F_EXT_LEFT;
 		ns_rst_init(&rst);
 		ns_global_gs16(km, (const char*)nt, vs1 - as, aa, as1, &ns_opt, &rst);
-		r->vs = vs1 - rst.nt_len;
-		r->qs = as1 - rst.aa_len;
-		if (rst.aa_len != as1 && rst.nt_len < opt->max_ext && opt->io > opt->io_end) {
+		nt_len = rst.nt_len, aa_len = rst.aa_len;
+		if (rst.aa_len != as1 && rst.nt_len < opt->max_ext && opt->io > opt->io_end) { // special casing 5'-end exon
 			int64_t as_alt = vs1 - as > opt->max_ext? vs1 - opt->max_ext : as;
 			ns_opt.io = opt->io_end;
 			ns_global_gs16(km, (const char*)&nt[as_alt - as], vs1 - as_alt, aa, as1, &ns_opt, &rst);
-			if (rst.aa_len == as1) {
-				r->vs = vs1 - rst.nt_len;
-				r->qs = as1 - rst.aa_len;
-			}
+			if (rst.aa_len == as1)
+				nt_len = rst.nt_len, aa_len = rst.aa_len;
 		}
+		r->vs = vs1 - nt_len;
+		r->qs = as1 - aa_len;
 		ne0 = r->vs - vs0;
 		ae0 = r->qs;
 	}
@@ -297,12 +297,21 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	if (r->qe < len && r->ve < ae) { // right extension
 		ns_opt_t ns_opt;
 		ns_rst_t rst;
+		int32_t nt_len, aa_len;
 		mp_map2ns_opt(opt, &ns_opt);
 		ns_opt.flag |= NS_F_EXT_RIGHT;
 		ns_rst_init(&rst);
 		ns_global_gs16(km, (const char*)&nt[r->ve - as], ae - r->ve, &aa[r->qe], len - r->qe, &ns_opt, &rst);
-		score += mp_align_seq(km, opt, rst.nt_len, &nt[r->ve - as], rst.aa_len, &aa[r->qe], &cigar);
-		r->ve += rst.nt_len, r->qe += rst.aa_len;
+		nt_len = rst.nt_len, aa_len = rst.aa_len;
+		if (aa_len < len - r->qe && nt_len < opt->max_ext && opt->io > opt->io_end) { // special casing 3'-end exon
+			int32_t l_ext = ae - r->ve < opt->max_ext? ae - r->ve : opt->max_ext;
+			ns_opt.io = opt->io_end;
+			ns_global_gs16(km, (const char*)&nt[r->ve - as], l_ext, &aa[r->qe], len - r->qe, &ns_opt, &rst);
+			if (rst.aa_len == len - r->qe)
+				nt_len = rst.nt_len, aa_len = rst.aa_len;
+		}
+		score += mp_align_seq(km, opt, nt_len, &nt[r->ve - as], aa_len, &aa[r->qe], &cigar);
+		r->ve += nt_len, r->qe += aa_len;
 	}
 
 	//for (i = 0; i < cigar.n; ++i) printf("%d%c", cigar.c[i]>>4, NS_CIGAR_STR[cigar.c[i]&0xf]); putchar('\n');
