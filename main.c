@@ -97,7 +97,7 @@ int main(int argc, char *argv[])
 		else if (c == 'K') mo.mini_batch_size = mp_parse_num(o.arg);
 		else if (c == 'p') mo.pri_ratio = atof(o.arg);
 		else if (c == 'N') mo.best_n = mp_parse_num(o.arg);
-		else if (c == 'S') mo.flag |= MP_F_NO_SPLICE, mo.bw = mo.max_intron = mo.max_ext = 1000, mo.io = 10000;
+		else if (c == 'S') mo.flag |= MP_F_NO_SPLICE, mo.bw = mo.max_intron = mo.max_ext = 1000, mo.io = mo.io_end = 10000;
 		else if (c == 'A') mo.flag |= MP_F_NO_ALIGN;
 		else if (c == 'O') mo.go = atoi(o.arg);
 		else if (c == 'E') mo.ge = atoi(o.arg);

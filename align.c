@@ -268,6 +268,15 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 		ns_global_gs16(km, (const char*)nt, vs1 - as, aa, as1, &ns_opt, &rst);
 		r->vs = vs1 - rst.nt_len;
 		r->qs = as1 - rst.aa_len;
+		if (rst.aa_len != as1 && rst.nt_len < opt->max_ext && opt->io > opt->io_end) {
+			int64_t as_alt = vs1 - as > opt->max_ext? vs1 - opt->max_ext : as;
+			ns_opt.io = opt->io_end;
+			ns_global_gs16(km, (const char*)&nt[as_alt - as], vs1 - as_alt, aa, as1, &ns_opt, &rst);
+			if (rst.aa_len == as1) {
+				r->vs = vs1 - rst.nt_len;
+				r->qs = as1 - rst.aa_len;
+			}
+		}
 		ne0 = r->vs - vs0;
 		ae0 = r->qs;
 	}

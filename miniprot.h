@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.3-r154-dirty"
+#define MP_VERSION "0.3-tune-end-r155-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
@@ -51,6 +51,7 @@ typedef struct {
 	int32_t best_n, out_n;
 	int32_t kmer2;
 	int32_t go, ge, io, nc, fs; // gap open, extension, intron open, non-conanical and frame-shift/stop-codon
+	int32_t io_end;
 	int32_t xdrop;
 	int32_t end_bonus;
 	int32_t asize; // size of the alphabet; always 22 in current implementation
