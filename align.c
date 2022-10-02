@@ -91,7 +91,8 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 		if (op == NS_CIGAR_N || op == NS_CIGAR_U || op == NS_CIGAR_V)
 			++n_intron;
 	}
-	r->n_feat = n_intron + 1 + (!!has_stop);
+	r->n_exon = n_intron + 1;
+	r->n_feat = r->n_exon + (!!has_stop);
 	r->feat = Kcalloc(0, mp_feat_t, r->n_feat);
 
 	e->blen = e->n_iden = e->n_plus = e->n_fs = e->n_stop = e->dp_max = 0;

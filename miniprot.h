@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.3-r152-dirty"
+#define MP_VERSION "0.3-r153-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
@@ -106,7 +106,7 @@ typedef struct {
 	int32_t off, cnt;
 	int32_t id, parent;
 	int32_t n_sub, subsc;
-	int32_t n_feat, m_feat;
+	int32_t n_feat, m_feat, n_exon;
 	int32_t chn_sc;
 	int32_t chn_sc_rank; // used for ranking
 	uint32_t hash;

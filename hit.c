@@ -229,6 +229,20 @@ void mp_select_sub(void *km, float pri_ratio, int min_diff, int best_n, int *n_,
 	}
 }
 
+void mp_select_multi_exon(int32_t n, mp_reg1_t *r, int32_t single_penalty)
+{
+	int32_t i;
+	mp_reg1_t t;
+	if (n < 2 || r[0].n_exon != 1) return;
+	for (i = 1; i < n; ++i)
+		if (r[i].n_exon >= 2)
+			break;
+	if (i == n) return;
+	if (r[0].p == 0 || r[i].p == 0) return;
+	if (r[0].p->dp_max < r[i].p->dp_max + single_penalty)
+		t = r[0], r[0] = r[i], r[i] = t;
+}
+
 uint64_t *mp_cal_max_ext(void *km, int32_t n_reg, mp_reg1_t *reg, const uint64_t *a, int32_t min_ext, int32_t max_ext)
 {
 	uint64_t *ext, *b;

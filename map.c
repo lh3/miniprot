@@ -171,6 +171,7 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 		}
 		*n_reg = k;
 		mp_sort_reg(km, n_reg, reg);
+		mp_select_multi_exon(*n_reg, reg, opt->io);
 		mp_set_parent(km, opt->mask_level, opt->mask_len, *n_reg, reg, mi->opt.kmer, 0);
 		mp_select_sub(km, opt->pri_ratio, mi->opt.kmer * 2, opt->best_n, n_reg, reg);
 	}

@@ -70,6 +70,7 @@ void mp_set_parent(void *km, float mask_level, int mask_len, int n, mp_reg1_t *r
 void mp_select_sub(void *km, float pri_ratio, int min_diff, int best_n, int *n_, mp_reg1_t *r);
 uint64_t *mp_cal_max_ext(void *km, int32_t n_reg, mp_reg1_t *reg, const uint64_t *a, int32_t min_ext, int32_t max_ext);
 uint64_t *mp_collate_a(void *km, int32_t n_reg, mp_reg1_t *reg);
+void mp_select_multi_exon(int32_t n, mp_reg1_t *r, int32_t single_penalty);
 
 // from chain.c
 uint64_t *mp_chain(int32_t max_dist_x, int32_t max_dist_y, int32_t bw, int32_t max_skip, int32_t max_iter, int32_t min_cnt, int32_t min_sc, float chn_coef_log,
