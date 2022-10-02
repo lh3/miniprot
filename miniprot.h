@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.3-tune-end-r156-dirty"
+#define MP_VERSION "0.3-r157-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
