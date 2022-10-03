@@ -90,7 +90,7 @@ found in the human Gencode annotation v41; a junction is non-overlapping if the
 intron in the junction does not overlap with any introns in the Gencode
 annotation.
 
-We only evaluated miniprot v0.3 and [spaln][spaln] v2.4.13a as these are the
+We only evaluated miniprot r158 and [spaln][spaln] v2.4.13a as these are the
 only tools practical for whole genomes. Running other tools would require to
 find approximate protein mapping first and then realign in each local region.
 This procedure is complex and does not evaluate the mapping step. In addition,
@@ -105,15 +105,15 @@ zebrafish datasets for the moment.
 
 |Metric          |mouse/mp |mouse/sp |chicken/mp|zebrafish/mp|
 |:---------------|--------:|--------:|--------:|--------:|
-|Elapsed time (s)|     367 |   3,767 |     318 |     494 |
-|Peak RAM (Gb)   |    15.1 |     5.6 |    14.0 |    18.2 |
+|Elapsed time (s)|     382 |   3,767 |     323 |     509 |
+|Peak RAM (Gb)   |    15.4 |     5.6 |    14.8 |    18.8 |
 |# proteins      |  21,844 |  21,844 |  17,007 |  30,313 |
-|# mapped        |  19,375 |  18,840 |  13,496 |  20,382 |
-|# single-exon   |   2,960 |         |   1,253 |   2,098 |
-|# predicted junc| 165,219 | 171,241 | 132,275 | 179,961 |
-|# non-ovlp junc |     377 |     852 |     435 |     800 |
-|# confirmed junc| 158,164 | 162,551 | 119,492 | 157,004 |
-|% confirmed     |    95.7 |    94.9 |    90.3 |    87.2 |
+|# mapped        |  19,303 |  18,840 |  13,421 |  19,998 |
+|# single-exon   |   2,743 |         |   1,115 |   1,648 |
+|# predicted junc| 166,515 | 171,241 | 133,470 | 181,220 |
+|# non-ovlp junc |     409 |     852 |     467 |     836 |
+|# confirmed junc| 160,395 | 162,551 | 122,147 | 162,304 |
+|% confirmed     |    96.3 |    94.9 |    91.5 |    89.6 |
 
 On the human-mouse dataset, miniprot finds fewer novel splice junctions,
 implying higher specificity, but spaln finds more confirmed junctions, implying
