@@ -105,18 +105,21 @@ static uint8_t *ns_prep_seq(void *km, const char *ns, int32_t nl, const char *as
 	for (i = 0; i < nl; ++i) // nt4 encoding of ns[] for computing donor[] and acceptor[]
 		nas[i] = opt->nt4[(uint8_t)ns[i]];
 	for (i = 0; i < nl + 1; ++i)
-		donor[i] = acceptor[i] = opt->nc;
+		donor[i] = acceptor[i] = opt->sp[3];
 	for (i = 0; i < nl - 3; ++i) { // generate donor[]
-		int32_t t = 0;
-		if (nas[i+1] == 2 && nas[i+2] == 3) t = 1;
-		if (t && i + 3 < nl && (nas[i+3] == 0 || nas[i+3] == 2)) t = 2;
-		donor[i] = t == 2? 0 : t == 1? opt->nc/2 : opt->nc;
+		int32_t t = 3;
+		if (nas[i+1] == 2 && nas[i+2] == 3) // GT.
+			t = i + 3 < nl && (nas[i+3] == 0 || nas[i+3] == 2)? -1 : 0;
+		else if (nas[i+1] == 2 && nas[i+2] == 1) t = 1; // GC.
+		else if (nas[i+1] == 0 && nas[i+2] == 3) t = 2; // AT.
+		donor[i] = t < 0? 0 : opt->sp[t];
 	}
 	for (i = 1; i < nl; ++i) { // generate acceptor[]
-		int32_t t = 0;
-		if (nas[i-1] == 0 && nas[i] == 2) t = 1;
-		if (t && i >= 2 && (nas[i-2] == 1 || nas[i-2] == 3)) t = 2;
-		acceptor[i] = t == 2? 0 : t == 1? opt->nc/2 : opt->nc;
+		int32_t t = 3;
+		if (nas[i-1] == 0 && nas[i] == 2) // .AG
+			t = i >= 2 && (nas[i-2] == 1 || nas[i-2] == 3)? -1 : 0;
+		else if (nas[i-1] == 0 && nas[i] == 1) t = 2; // .AC
+		acceptor[i] = t < 0? 0 : opt->sp[t];
 	}
 	ns_prep_nas(ns, nl, opt, nas);
 	return nas;
@@ -135,18 +138,21 @@ static uint8_t *ns_prep_seq_left(void *km, const char *ns, int32_t nl, const cha
 	for (i = 0; i < nl; ++i) // nt4 encoding of ns[] for computing donor[] and acceptor[]
 		nas[nl - 1 - i] = opt->nt4[(uint8_t)ns[i]];
 	for (i = 0; i < nl + 1; ++i)
-		donor[i] = acceptor[i] = opt->nc;
-	for (i = 0; i < nl - 3; ++i) { // generate donor[]
-		int32_t t = 0;
-		if (nas[i+1] == 2 && nas[i+2] == 0) t = 1; // GA-- (because nas has been reversed)
-		if (t && i + 3 < nl && (nas[i+3] == 1 || nas[i+3] == 3)) t = 2;
-		donor[i] = t == 2? 0 : t == 1? opt->nc/2 : opt->nc;
+		donor[i] = acceptor[i] = opt->sp[3];
+	for (i = 0; i < nl - 3; ++i) { // generate acceptor[]
+		int32_t t = 3;
+		if (nas[i+1] == 2 && nas[i+2] == 0) // GA. (the reverse of .AG)
+			t = i + 3 < nl && (nas[i+3] == 1 || nas[i+3] == 3)? -1 : 0;
+		else if (nas[i+1] == 1 && nas[i+2] == 0) t = 2; // CA.
+		donor[i] = t < 0? 0 : opt->sp[t];
 	}
-	for (i = 1; i < nl; ++i) { // generate acceptor[]
-		int32_t t = 0;
-		if (nas[i-1] == 3 && nas[i] == 2) t = 1; // --TG
-		if (t && i >= 2 && (nas[i-2] == 0 || nas[i-2] == 2)) t = 2;
-		acceptor[i] = t == 2? 0 : t == 1? opt->nc/2 : opt->nc;
+	for (i = 1; i < nl; ++i) { // generate donor[]
+		int32_t t = 3;
+		if (nas[i-1] == 3 && nas[i] == 2) // .TG (the reverse of GT.)
+			t = i >= 2 && (nas[i-2] == 0 || nas[i-2] == 2)? -1 : 0;
+		else if (nas[i-1] == 1 && nas[i] == 2) t = 1; // .CG
+		else if (nas[i-1] == 3 && nas[i] == 0) t = 2; // .TA
+		acceptor[i] = t < 0? 0 : opt->sp[t];
 	}
 	ns_prep_nas(ns, nl, opt, nas);
 	for (i = 0; i < nl>>1; ++i) // reverse
