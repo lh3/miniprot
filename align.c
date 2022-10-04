@@ -57,16 +57,15 @@ static inline void mp_map2ns_opt(const mp_mapopt_t *mo, ns_opt_t *no)
 	no->end_bonus = mo->end_bonus;
 }
 
-static int32_t mp_align_seq(void *km, const mp_mapopt_t *opt, int32_t nlen, const uint8_t *nseq, int32_t alen, const char *aseq, mp_cigar_t *cigar)
+static int32_t mp_align_seq(void *km, const mp_mapopt_t *opt, const ns_opt_t *ns_opt0, int32_t nlen, const uint8_t *nseq, int32_t alen, const char *aseq, mp_cigar_t *cigar)
 {
 	int32_t i;
 	if (nlen == alen * 3 && alen <= opt->kmer2) {
 		cigar->c = ns_push_cigar(km, &cigar->n, &cigar->m, cigar->c, NS_CIGAR_M, alen);
 		return mp_score_ungapped(alen, nseq, aseq, opt->asize, opt->mat);
 	} else {
-		ns_opt_t ns_opt;
+		ns_opt_t ns_opt = *ns_opt0;
 		ns_rst_t rst;
-		mp_map2ns_opt(opt, &ns_opt);
 		ns_opt.flag |= NS_F_CIGAR;
 		ns_rst_init(&rst);
 		ns_global_gs16(km, (const char*)nseq, nlen, aseq, alen, &ns_opt, &rst);
@@ -236,6 +235,7 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	int32_t i, i0, ne0 = 0, ae0 = 0, score = 0, extl, extr;
 	int64_t as, ae, ctg_len, vs0, l_nt;
 	uint8_t *nt;
+	ns_opt_t ns_opt0;
 	mp_cigar_t cigar = {0,0,0};
 
 	assert(r->cnt > 0);
@@ -258,15 +258,15 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	l_nt = mp_ntseq_get_by_v(mi->nt, r->vid, as, ae, nt);
 	assert(l_nt == ae - as);
 	vs0 = r->vs;
+	mp_map2ns_opt(opt, &ns_opt0);
 	//fprintf(stderr, "X\t%s\t%c\t%ld\t%ld\n", mi->nt->ctg[r->vid>>1].name, "+-"[r->vid&1], (long)(r->vid&1? ctg_len - ae : as), (long)(r->vid&1? ctg_len - as : ae));
 
 	{ // left extension
 		int64_t vs1 = vs0 + (r->a[i0]>>32) + 1;
 		int32_t as1 = ((int32_t)r->a[i0]<<1>>1) + 1;
 		int32_t nt_len, aa_len;
-		ns_opt_t ns_opt;
+		ns_opt_t ns_opt = ns_opt0;
 		ns_rst_t rst;
-		mp_map2ns_opt(opt, &ns_opt);
 		ns_opt.flag |= NS_F_EXT_LEFT;
 		ns_rst_init(&rst);
 		ns_global_gs16(km, (const char*)nt, vs1 - as, aa, as1, &ns_opt, &rst);
@@ -285,23 +285,22 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	}
 
 	if (mp_dbg_flag & MP_DBG_MORE_DP) { // apply DP to the entire region; for debugging only
-		score = mp_align_seq(km, opt, r->ve - r->vs, &nt[r->vs - as], r->qe - ae0, &aa[ae0], &cigar);
+		score = mp_align_seq(km, opt, &ns_opt0, r->ve - r->vs, &nt[r->vs - as], r->qe - ae0, &aa[ae0], &cigar);
 	} else { // patch gaps between anchors
 		for (i = i0; i < r->cnt; ++i) {
 			int32_t ne1, ae1;
 			if (!(r->a[i]>>31&1)) continue;
 			ne1 = (r->a[i]>>32) + 1, ae1 = ((int32_t)r->a[i]<<1>>1) + 1;
-			score += mp_align_seq(km, opt, ne1 - ne0, &nt[ne0 + vs0 - as], ae1 - ae0, &aa[ae0], &cigar);
+			score += mp_align_seq(km, opt, &ns_opt0, ne1 - ne0, &nt[ne0 + vs0 - as], ae1 - ae0, &aa[ae0], &cigar);
 			i0 = i, ne0 = ne1, ae0 = ae1;
 		}
 		r->ve = ne0 + vs0, r->qe = ae0;
 	}
 
 	if (r->qe < len && r->ve < ae) { // right extension
-		ns_opt_t ns_opt;
+		ns_opt_t ns_opt = ns_opt0;
 		ns_rst_t rst;
 		int32_t nt_len, aa_len;
-		mp_map2ns_opt(opt, &ns_opt);
 		ns_opt.flag |= NS_F_EXT_RIGHT;
 		ns_rst_init(&rst);
 		ns_global_gs16(km, (const char*)&nt[r->ve - as], ae - r->ve, &aa[r->qe], len - r->qe, &ns_opt, &rst);
@@ -313,7 +312,7 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 			if (rst.aa_len == len - r->qe)
 				nt_len = rst.nt_len, aa_len = rst.aa_len;
 		}
-		score += mp_align_seq(km, opt, nt_len, &nt[r->ve - as], aa_len, &aa[r->qe], &cigar);
+		score += mp_align_seq(km, opt, &ns_opt0, nt_len, &nt[r->ve - as], aa_len, &aa[r->qe], &cigar);
 		r->ve += nt_len, r->qe += aa_len;
 	}
 
