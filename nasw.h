@@ -47,6 +47,9 @@
 #define NS_F_EXT_LEFT   0x2
 #define NS_F_EXT_RIGHT  0x4
 
+#define NS_S_NO_SIGNAL  0
+#define NS_S_HUMAN      1
+
 extern char *ns_tab_nt_i2c, *ns_tab_aa_i2c;
 extern uint8_t ns_tab_a2r[22], ns_tab_nt4[256], ns_tab_aa20[256], ns_tab_aa13[256];
 extern uint8_t ns_tab_codon[64], ns_tab_codon13[64];
@@ -54,7 +57,7 @@ extern int8_t ns_mat_blosum62[484];
 
 typedef struct {
 	int32_t flag;
-	int32_t go, ge, io, nc, fs; // gap open, extension, intron open, non-canonical penalty, frameshift
+	int32_t go, ge, io, fs; // gap open, extension, intron open, frameshift
 	int32_t xdrop, end_bonus; // xdrop for extension, and bonus for reaching end of proteins
 	int32_t asize; // alphabet size; always 22 in the current implementation
 	const int8_t *sc; // 22x22 scoring matrix
@@ -117,6 +120,8 @@ void ns_opt_init(ns_opt_t *opt);
  */
 void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, ns_rst_t *r);
 void ns_global_gs32(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, ns_rst_t *r);
+
+void ns_opt_set_sp(ns_opt_t *opt, int32_t model);
 
 // Non-SIMD implementation with transposed DP matrix. For debugging only. Not intended for general developers.
 void ns_splice_s1(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, ns_rst_t *r);

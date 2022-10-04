@@ -60,7 +60,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -O INT       gap open penalty [%d]\n", mo->go);
 	fprintf(fp, "    -E INT       gap extension (a k-long gap costs O+k*E) [%d]\n", mo->ge);
 	fprintf(fp, "    -J INT       intron open penalty [%d]\n", mo->io);
-	fprintf(fp, "    -C INT       penalty for non-canonical splicing [%d]\n", mo->nc);
+	fprintf(fp, "    -C FLOAT     weight of splicing penalty; 0 to ignore splicing signals [%g]\n", mo->sp_scale);
 	fprintf(fp, "    -F INT       penalty for frameshifts or in-frame stop codons [%d]\n", mo->fs);
 	fprintf(fp, "    -B INT       end bonus [%d]\n", mo->end_bonus);
 	fprintf(fp, "  Input/output:\n");
@@ -103,7 +103,7 @@ int main(int argc, char *argv[])
 		else if (c == 'O') mo.go = atoi(o.arg);
 		else if (c == 'E') mo.ge = atoi(o.arg);
 		else if (c == 'J') mo.io = atoi(o.arg);
-		else if (c == 'C') mo.nc = atoi(o.arg);
+		else if (c == 'C') mo.sp_scale = atof(o.arg);
 		else if (c == 'F') mp_mapopt_set_fs(&mo, atoi(o.arg));
 		else if (c == 'B') mo.end_bonus = atoi(o.arg);
 		else if (c == 'e') mo.max_ext = mp_parse_num(o.arg);
