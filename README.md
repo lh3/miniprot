@@ -104,24 +104,25 @@ exonerate, GeneWise, ProSplign and genBlastG.
 In the evaluation, both miniprot (mp) and spaln (sp) were set to use 16 CPU
 threads. We used option `-Q7 -O0 -Thomosapi -LS -yS` with spaln (local
 alignment with the human-specific splicing model). It gives the best accuracy
-for the mouse dataset. The same setting crashed on the chicken and the
-zebrafish datasets for the moment.
+on these dataset. Note spaln-2.4.13a crashed for a few zebrafish proteins. We
+used 98% of zebrafish proteins in the evaluation.
 
-|Metric          |mouse/mp |mouse/sp |chicken/mp|zebrafish/mp|
-|:---------------|--------:|--------:|--------:|--------:|
-|Elapsed time (s)|     328 |   3,767 |     277 |     472 |
-|Peak RAM (Gb)   |    15.3 |     5.6 |    14.7 |    18.7 |
-|# proteins      |  21,844 |  21,844 |  17,007 |  30,313 |
-|# mapped        |  19,303 |  18,840 |  13,421 |  19,998 |
-|# single-exon   |   2,777 |         |   1,127 |   1,698 |
-|# predicted junc| 166,433 | 171,241 | 133,399 | 181,014 |
-|# non-ovlp junc |     371 |     852 |     436 |     771 |
-|# confirmed junc| 161,017 | 162,551 | 122,917 | 163,522 |
-|% confirmed     |    96.7 |    94.9 |    92.1 |    90.3 |
+|Metric          |mouse/mp |mouse/sp |chicken/mp|zebrafish/mp|zebrafish/sp|
+|:---------------|--------:|--------:|--------:|--------:|---------------:|
+|Elapsed time (s)|     328 |   3,767 |     277 |     483 |   12703 |
+|Peak RAM (Gb)   |    15.3 |     5.6 |    14.7 |    18.7 |     5.5 |
+|# proteins      |  21,844 |  21,844 |  17,007 |  29,706 |  29,706 |
+|# mapped        |  19,303 |  18,840 |  13,421 |  19,594 |  17,491 |
+|# single-exon   |   2,777 |         |   1,127 |   1,662 |         |
+|# predicted junc| 166,433 | 171,241 | 133,399 | 177,844 | 180,117 |
+|# non-ovlp junc |     371 |     852 |     436 |     758 |   1,391 |
+|# confirmed junc| 161,017 | 162,551 | 122,917 | 160,650 | 162,757 |
+|% confirmed     |   96.75 |   94.93 |   92.14 |   90.33 |   90.36 |
 
 On the human-mouse dataset, miniprot finds fewer novel splice junctions,
 implying higher specificity, but spaln finds more confirmed junctions, implying
-higher sensitivity.
+higher sensitivity. Spaln is slightly more accurate on the zebrafish dataset
+but it is over 20 times lower.
 
 ### <a name="algo"></a>Algorithm overview
 
