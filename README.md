@@ -57,6 +57,10 @@ miniprot, type `make` in the source code directory. This will produce a
 standalone executable `miniprot`. This executable is all you need to invoke
 miniprot.
 
+For some unknown reason, the default gcc-4.8.5 on CentOS 7 may compile a binary
+that is very slow on certain sequences but gcc-10.3.0 has more stable
+performance. If possible, use a more recent gcc to compile miniprot.
+
 ### <a name="usage"></a>Usage
 
 To run miniprot, use
@@ -90,7 +94,7 @@ found in the human Gencode annotation v41; a junction is non-overlapping if the
 intron in the junction does not overlap with any introns in the Gencode
 annotation.
 
-We only evaluated miniprot r158 and [spaln][spaln] v2.4.13a as these are the
+We only evaluated miniprot-r162 and [spaln][spaln]-2.4.13a as these are the
 only tools practical for whole genomes. Running other tools would require to
 find approximate protein mapping first and then realign in each local region.
 This procedure is complex and does not evaluate the mapping step. In addition,
@@ -105,15 +109,15 @@ zebrafish datasets for the moment.
 
 |Metric          |mouse/mp |mouse/sp |chicken/mp|zebrafish/mp|
 |:---------------|--------:|--------:|--------:|--------:|
-|Elapsed time (s)|     382 |   3,767 |     323 |     509 |
-|Peak RAM (Gb)   |    15.4 |     5.6 |    14.8 |    18.8 |
+|Elapsed time (s)|     328 |   3,767 |     277 |     472 |
+|Peak RAM (Gb)   |    15.3 |     5.6 |    14.7 |    18.7 |
 |# proteins      |  21,844 |  21,844 |  17,007 |  30,313 |
 |# mapped        |  19,303 |  18,840 |  13,421 |  19,998 |
-|# single-exon   |   2,743 |         |   1,115 |   1,648 |
-|# predicted junc| 166,515 | 171,241 | 133,470 | 181,220 |
-|# non-ovlp junc |     409 |     852 |     467 |     836 |
-|# confirmed junc| 160,395 | 162,551 | 122,147 | 162,304 |
-|% confirmed     |    96.3 |    94.9 |    91.5 |    89.6 |
+|# single-exon   |   2,777 |         |   1,127 |   1,698 |
+|# predicted junc| 166,433 | 171,241 | 133,399 | 181,014 |
+|# non-ovlp junc |     371 |     852 |     436 |     771 |
+|# confirmed junc| 161,017 | 162,551 | 122,917 | 163,522 |
+|% confirmed     |    96.7 |    94.9 |    92.1 |    90.3 |
 
 On the human-mouse dataset, miniprot finds fewer novel splice junctions,
 implying higher specificity, but spaln finds more confirmed junctions, implying

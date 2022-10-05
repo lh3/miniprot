@@ -60,8 +60,8 @@ typedef struct {
 	int32_t go, ge, io, fs; // gap open, extension, intron open, frameshift
 	int32_t xdrop, end_bonus; // xdrop for extension, and bonus for reaching end of proteins
 	int32_t asize; // alphabet size; always 22 in the current implementation
-	const int8_t *sc; // 22x22 scoring matrix
 	int32_t sp[4];
+	const int8_t *sc; // 22x22 scoring matrix
 	uint8_t *nt4, *aa20, *codon; // char-to-int convertion table and codon table
 } ns_opt_t;
 

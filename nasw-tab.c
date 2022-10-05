@@ -1,5 +1,4 @@
 #include <string.h>
-#include <assert.h>
 #include <ctype.h>
 #include "nasw.h"
 
@@ -78,9 +77,8 @@ void ns_make_tables(int codon_type)
  */
 void ns_opt_set_sp(ns_opt_t *opt, int32_t model)
 {
-	assert(model == NS_S_NO_SIGNAL || model == NS_S_HUMAN);
-	if (model == NS_S_NO_SIGNAL) opt->sp[0] = opt->sp[1] = opt->sp[2] = opt->sp[3] = 0;
-	else if (model == NS_S_HUMAN) opt->sp[0] = 8, opt->sp[1] = 15, opt->sp[2] = 21, opt->sp[3] = 30;
+	if (model == NS_S_HUMAN) opt->sp[0] = 8, opt->sp[1] = 15, opt->sp[2] = 21, opt->sp[3] = 30;
+	else opt->sp[0] = opt->sp[1] = opt->sp[2] = opt->sp[3] = 0;
 }
 
 void ns_opt_init(ns_opt_t *opt)
