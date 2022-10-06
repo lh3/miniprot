@@ -52,7 +52,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -n NUM       minimum number of syncmers in a chain [%d]\n", mo->min_chn_cnt);
 	fprintf(fp, "    -m NUM       min chaining score [%d]\n", mo->min_chn_sc);
 	fprintf(fp, "    -l INT       k-mer size for the second round of chaining [%d]\n", mo->kmer2);
-	fprintf(fp, "    -e NUM       max extension for 2nd round of chaining and alignment [10k]\n");
+	fprintf(fp, "    -e NUM       max extension for 2nd round of chaining and alignment [%d]\n", mo->max_ext);
 	fprintf(fp, "    -p FLOAT     min secondary-to-primary score ratio [%g]\n", mo->pri_ratio);
 	fprintf(fp, "    -N NUM       consider at most INT secondary alignments [%d]\n", mo->best_n);
 	fprintf(fp, "  Alignment:\n");
@@ -60,14 +60,14 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -O INT       gap open penalty [%d]\n", mo->go);
 	fprintf(fp, "    -E INT       gap extension (a k-long gap costs O+k*E) [%d]\n", mo->ge);
 	fprintf(fp, "    -J INT       intron open penalty [%d]\n", mo->io);
-	fprintf(fp, "    -C FLOAT     weight of splicing penalty; 0 to ignore splicing signals [%g]\n", mo->sp_scale);
 	fprintf(fp, "    -F INT       penalty for frameshifts or in-frame stop codons [%d]\n", mo->fs);
-	fprintf(fp, "    -B INT       end bonus [%d]\n", mo->end_bonus);
+	fprintf(fp, "    -C FLOAT     weight of splice penalty; 0 to ignore splice signals [%g]\n", mo->sp_scale);
+	fprintf(fp, "    -B INT       bonus score for alignment reaching query ends [%d]\n", mo->end_bonus);
 	fprintf(fp, "  Input/output:\n");
 	fprintf(fp, "    -t INT       number of threads [%d]\n", n_threads);
 	fprintf(fp, "    --gff        output in the GFF3 format\n");
 	fprintf(fp, "    -P STR       prefix for IDs in GFF3 [%s]\n", mo->gff_prefix);
-	fprintf(fp, "    -u           print unmapped query proteins\n");
+	fprintf(fp, "    -u           print unmapped query proteins in PAF\n");
 	fprintf(fp, "    --outn=NUM   output up to min{NUM,-N} alignments per query [%d]\n", mo->out_n);
 	fprintf(fp, "    -K NUM       query batch size [2M]\n");
 }

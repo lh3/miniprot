@@ -101,11 +101,14 @@ costs
 .BI -J \ INT
 Intron open penalty [29]
 .TP
+.BI -F \ INT
+Penalty for frameshifts or in-frame stop codons [17]
+.TP
 .BI -C \ FLOAT
 Weight of splicing penalty [1]. Set to 0 to ignore splicing signals.
 .TP
-.BI -F \ INT
-Penalty for frameshifts or in-frame stop codons [17]
+.BI -B \ IN
+Bonus score for alignment reaching ends of proteins [5]
 .SS Input/Output options
 .TP 10
 .BI -t \ INT

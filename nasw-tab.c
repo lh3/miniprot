@@ -88,7 +88,7 @@ void ns_opt_init(ns_opt_t *opt)
 	opt->io = 29;
 	opt->fs = 17;
 	opt->xdrop = 100;
-	opt->end_bonus = 10;
+	opt->end_bonus = 5;
 	ns_opt_set_sp(opt, NS_S_HUMAN);
 	opt->asize = 22;
 	opt->sc = ns_mat_blosum62;
