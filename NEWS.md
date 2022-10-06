@@ -1,3 +1,24 @@
+Release 0.4-r165 (5 October 2022)
+---------------------------------
+
+This version implements a better splice model and pays a little more effort in
+aligning terminal exons. It improves both sensitivity and specificity by a few
+percent.
+
+Other notable changes:
+
+ * Breaking change: changed -C to scale the splice model
+
+ * Bugfix: implemented option -w (#12)
+
+ * Bugfix: reduced the indexing time for highly fragmented genomes (#12)
+
+ * New feature: output a Rank attribute in GFF
+
+(0.4: 5 October 2022, r165)
+
+
+
 Release 0.3-r137 (22 September 2022)
 ------------------------------------
 
