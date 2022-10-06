@@ -1,4 +1,4 @@
-[![Release](https://img.shields.io/github/v/release/lh3/miniprot?include_prereleases)](https://github.com/lh3/miniprot/releases)
+[![Release](https://img.shields.io/github/v/release/lh3/miniprot)](https://github.com/lh3/miniprot/releases)
 [![BioConda Install](https://img.shields.io/conda/dn/bioconda/miniprot.svg?style=flag&label=BioConda%20install)](https://anaconda.org/bioconda/miniprot)
 [![Build Status](https://github.com/lh3/miniprot/actions/workflows/ci.yaml/badge.svg)](https://github.com/lh3/miniprot/actions)
 ## <a name="started"></a>Getting Started
@@ -94,7 +94,7 @@ found in the human Gencode annotation v41; a junction is non-overlapping if the
 intron in the junction does not overlap with any introns in the Gencode
 annotation.
 
-We only evaluated miniprot-r162 and [spaln][spaln]-2.4.13a as these are the
+We only evaluated miniprot-0.4 and [spaln][spaln]-2.4.13a as these are the
 only tools practical for whole genomes. Running other tools would require to
 find approximate protein mapping first and then realign in each local region.
 This procedure is complex and does not evaluate the mapping step. In addition,
