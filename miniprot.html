@@ -61,7 +61,7 @@ p {
     text-align: justify;
 }
 </style>
-<TITLE>Manual Page - miniprot(1)</TITLE>
+<TITLE>miniprot.1</TITLE>
 </HEAD>
 <BODY bgcolor=#F0F0F0 text=#000000 link=#0000ff vlink=#C000C0 alink=#ff0000><div id="wrap"><A NAME=top></A>
 <CENTER>
@@ -193,7 +193,7 @@ Filter out a secondary chain/alignment if its score is
 <TR valign=top><TD width=10% nowrap>
 <B>-N</B><I> NUM</I> </TD><TD valign=bottom>
 Retain at most
-<I>NUM</I> number of secondary chains/alignments [50]
+<I>NUM</I> number of secondary chains/alignments [30]
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
 <A name=6></A>
@@ -213,15 +213,19 @@ Gap extension penalty [1]. A gap of size
 {<B>-O</B>}+{<B>-E</B>}*<B>g</B>. </TD></TR>
 <TR valign=top><TD width=10% nowrap>
 <B>-J</B><I> INT</I> </TD><TD valign=bottom>
-Intron open penalty [31]
-</TD></TR>
-<TR valign=top><TD width=10% nowrap>
-<B>-C</B><I> INT</I> </TD><TD valign=bottom>
-Penalty for non-canonical splicing [11]
+Intron open penalty [29]
 </TD></TR>
 <TR valign=top><TD width=10% nowrap>
 <B>-F</B><I> INT</I> </TD><TD valign=bottom>
 Penalty for frameshifts or in-frame stop codons [17]
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-C</B><I> FLOAT</I> </TD><TD valign=bottom>
+Weight of splicing penalty [1]. Set to 0 to ignore splicing signals.
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-B</B><I> IN</I> </TD><TD valign=bottom>
+Bonus score for alignment reaching ends of proteins [5]
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
 <A name=7></A>
@@ -236,7 +240,8 @@ Number of threads [4]
 </TD></TR>
 <TR valign=top><TD width=10% nowrap>
 <B>--gff</B> </TD><TD valign=bottom>
-Output in the GFF3 format. &#145;##PAF&#146; lines in the output provide detailed alignments.
+Output in the GFF3 format. &#145;##PAF&#146; lines in the output provide detailed
+alignments.
 </TD></TR>
 <TR valign=top><TD width=10% nowrap>
 <B>--gff-only</B> </TD><TD valign=bottom>
@@ -244,7 +249,13 @@ Output in the GFF3 format without &#145;##PAF&#146; lines.
 </TD></TR>
 <TR valign=top><TD width=10% nowrap>
 <B>-P</B><I> STR</I> </TD><TD valign=bottom>
-Prefix for IDs in GFF3 [MP]
+Prefix for IDs in GFF3 [MP].
+<B>--gff-delim</B> overrides this option.
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>--gff-delim</B><I> CHAR</I> </TD></TR><TR valign=top><TD width=10%>&nbsp;</TD><TD>
+Change the ID field in GFF3 to
+QueryName<I>CHAR</I>HitIndex []. If not specified, the default ID looks like &#145;MP000012&#146;.
 </TD></TR>
 <TR valign=top><TD width=10% nowrap>
 <B>-u</B> </TD><TD valign=bottom>
@@ -253,7 +264,7 @@ Print unmapped query proteins
 <TR valign=top><TD width=10% nowrap>
 <B>--outn</B><I> NUM</I> </TD><TD valign=bottom>
 Output up to
-min{<I>NUM</I>, <B>-N</B>} alignments per query [100].
+min{<I>NUM</I>, <B>-N</B>} alignments per query [1000].
 </TD></TR>
 <TR valign=top><TD width=10% nowrap>
 <B>-K</B><I> NUM</I> </TD><TD valign=bottom>
@@ -287,19 +298,21 @@ Miniprot may output the following attributes in GFF3:
 <TR valign=top>
 <TD>ID</TD><TD align=center>str</TD><TD>mRNA identifier</TD></TR>
 <TR valign=top>
-<TD>Parent</TD><TD align=center>str</TD><TD>identifier of the parent feature</TD></TR>
+<TD>Parent</TD><TD align=center>str</TD><TD>Identifier of the parent feature</TD></TR>
 <TR valign=top>
-<TD>Identity</TD><TD align=center>real</TD><TD>fraction of exact amino acid matches</TD></TR>
+<TD>Rank</TD><TD align=center>int</TD><TD>Rank among all hits of the query</TD></TR>
 <TR valign=top>
-<TD>Positive</TD><TD align=center>real</TD><TD>fraction of positive amino acid matches</TD></TR>
+<TD>Identity</TD><TD align=center>real</TD><TD>Fraction of exact amino acid matches</TD></TR>
+<TR valign=top>
+<TD>Positive</TD><TD align=center>real</TD><TD>Fraction of positive amino acid matches</TD></TR>
 <TR valign=top>
 <TD>Donor</TD><TD align=center>str</TD><TD>2bp at the donor site if not GT</TD></TR>
 <TR valign=top>
 <TD>Acceptor</TD><TD align=center>str</TD><TD>2bp at the acceptor site if not AG</TD></TR>
 <TR valign=top>
-<TD>Frameshift</TD><TD align=center>int</TD><TD>number of frameshift events in alignment</TD></TR>
+<TD>Frameshift</TD><TD align=center>int</TD><TD>Number of frameshift events in alignment</TD></TR>
 <TR valign=top>
-<TD>StopCodon</TD><TD align=center>int</TD><TD>number of in-frame stop codons</TD></TR>
+<TD>StopCodon</TD><TD align=center>int</TD><TD>Number of in-frame stop codons</TD></TR>
 <TR valign=top>
 <TD>Target</TD><TD align=center>str</TD><TD>Protein coordinate in alignment</TD></TR>
 </TABLE></div></BLOCKQUOTE>
@@ -428,4 +441,4 @@ Need to introduce more heuristics for improved accuracy.
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>miniprot-0.3 (r137)</I></TD> <TD width=33% align=center>miniprot (1)</TD> <TD align=right width=33%><I>22 September 2022</I></TD> </TR></TABLE></div></BODY></HTML>
+<TABLE width=100%><TR> <TD width=33%><I>miniprot-0.4 (r165)</I></TD> <TD width=33% align=center>miniprot (1)</TD> <TD align=right width=33%><I>5 October 2022</I></TD> </TR></TABLE></div></BODY></HTML>
