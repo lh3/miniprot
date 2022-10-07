@@ -123,6 +123,8 @@ int main(int argc, char *argv[])
 		else if (c == 401) {
 			printf("%s\n", MP_VERSION);
 			return 0;
+		} else {
+			fprintf(stderr, "[WARNING]\033[1;31m unrecognized option\033[0m\n");
 		}
 	}
 	if (argc - o.ind == 0 || (argc - o.ind == 1 && fn_idx == 0)) {
