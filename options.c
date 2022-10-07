@@ -44,7 +44,7 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 
 	mo->go = 11, mo->ge = 1;
 	mo->io = 29;
-	mo->fs = 17;
+	mo->fs = 21;
 	mo->io_end = 19;
 	mo->sp_model = NS_S_HUMAN;
 	mo->sp_scale = 1.0f;
