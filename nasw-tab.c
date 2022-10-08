@@ -79,7 +79,8 @@ void ns_make_tables(int codon_type)
  */
 void ns_opt_set_sp(ns_opt_t *opt, int32_t model)
 {
-	if (model == NS_S_HUMAN) opt->sp[0] = 8, opt->sp[1] = 15, opt->sp[2] = 21, opt->sp[3] = 30, opt->sp[4] = 4, opt->sp[5] = 4;
+	if (model == NS_S_MAMMAL) opt->sp[0] = 8, opt->sp[1] = 15, opt->sp[2] = 21, opt->sp[3] = 30, opt->sp[4] = 4, opt->sp[5] = 4;
+	else if (model == NS_S_GENERIC) opt->sp[0] = 8, opt->sp[1] = 15, opt->sp[2] = 21, opt->sp[3] = 30, opt->sp[4] = opt->sp[5] = 0;
 	else opt->sp[0] = opt->sp[1] = opt->sp[2] = opt->sp[3] = opt->sp[4] = opt->sp[5] = 0;
 }
 
@@ -91,7 +92,7 @@ void ns_opt_init(ns_opt_t *opt)
 	opt->fs = 17;
 	opt->xdrop = 100;
 	opt->end_bonus = 5;
-	ns_opt_set_sp(opt, NS_S_HUMAN);
+	ns_opt_set_sp(opt, NS_S_MAMMAL);
 	opt->asize = 22;
 	opt->sc = ns_mat_blosum62;
 	opt->nt4 = ns_tab_nt4;

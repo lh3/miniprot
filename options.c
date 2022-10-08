@@ -1,4 +1,5 @@
 #include <string.h>
+#include <stdio.h>
 #include <assert.h>
 #include "miniprot.h"
 #include "nasw.h"
@@ -46,7 +47,7 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 	mo->io = 29;
 	mo->fs = 23;
 	mo->io_end = 19;
-	mo->sp_model = NS_S_HUMAN;
+	mo->sp_model = NS_S_MAMMAL;
 	mo->sp_scale = 1.0f;
 	mo->end_bonus = 5;
 	mo->xdrop = 100;
@@ -56,4 +57,13 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 
 	mo->gff_delim = -1;
 	mo->gff_prefix = "MP";
+}
+
+int32_t mp_mapopt_check(const mp_mapopt_t *mo)
+{
+	if (mo->sp_model < 0 || mo->sp_model > 2) {
+		fprintf(stderr, "[ERROR]\033[1;31m --model should be between 0 and 2\033[0m\n");
+		return -1;
+	}
+	return 0;
 }

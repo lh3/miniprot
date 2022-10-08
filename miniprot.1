@@ -109,6 +109,15 @@ Weight of splicing penalty [1]. Set to 0 to ignore splicing signals.
 .TP
 .BI -B \ IN
 Bonus score for alignment reaching ends of proteins [5]
+.TP
+.BI -j \ INT
+Splice model for the target genome: 2=mammal, 1=general, 0=none [1]. The mammal
+model considers `G|GTR...YYYNYAG|' as the optimal splicing sequence and
+penalizes other sequences based on profiles in Sibley et al (2016). According
+to Irimia and Roy (2008) and Sheth et al (2006), the first `G' in the donor
+exon and the poly-Y close to the acceptor may not be conserved in some species.
+The general model takes `|GTR...YAG|' as the optimal sequence. Both models also
+consider less frequent splice sites including `G|GC...YAG|' and `|AT...AC|'.
 .SS Input/Output options
 .TP 10
 .BI -t \ INT

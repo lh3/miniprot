@@ -47,8 +47,9 @@
 #define NS_F_EXT_LEFT   0x2
 #define NS_F_EXT_RIGHT  0x4
 
-#define NS_S_NO_SIGNAL  0
-#define NS_S_HUMAN      1
+#define NS_S_NONE       0
+#define NS_S_GENERIC    1
+#define NS_S_MAMMAL     2
 
 extern char *ns_tab_nt_i2c, *ns_tab_aa_i2c;
 extern uint8_t ns_tab_a2r[22], ns_tab_nt4[256], ns_tab_aa20[256], ns_tab_aa13[256];

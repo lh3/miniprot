@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.4-r172-dirty"
+#define MP_VERSION "0.4-r173-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
@@ -134,6 +134,7 @@ void mp_start(void);
 void mp_idxopt_init(mp_idxopt_t *io);
 void mp_mapopt_init(mp_mapopt_t *mo);
 void mp_mapopt_set_fs(mp_mapopt_t *mo, int32_t fs);
+int32_t mp_mapopt_check(const mp_mapopt_t *mo);
 
 mp_idx_t *mp_idx_load(const char *fn, const mp_idxopt_t *io, int32_t n_threads);
 void mp_idx_destroy(mp_idx_t *mi);

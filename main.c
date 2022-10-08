@@ -63,6 +63,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -F INT       penalty for frameshifts or in-frame stop codons [%d]\n", mo->fs);
 	fprintf(fp, "    -C FLOAT     weight of splice penalty; 0 to ignore splice signals [%g]\n", mo->sp_scale);
 	fprintf(fp, "    -B INT       bonus score for alignment reaching query ends [%d]\n", mo->end_bonus);
+	fprintf(fp, "    -j INT       splice model: 2=mammal, 1=general, 0=none (see manual) [%d]\n", mo->sp_model);
 	fprintf(fp, "  Input/output:\n");
 	fprintf(fp, "    -t INT       number of threads [%d]\n", n_threads);
 	fprintf(fp, "    --gff        output in the GFF3 format\n");
@@ -84,7 +85,7 @@ int main(int argc, char *argv[])
 	mp_start();
 	mp_mapopt_init(&mo);
 	mp_idxopt_init(&io);
-	while ((c = ketopt(&o, argc, argv, 1, "k:s:l:b:t:d:c:n:m:K:p:N:SAO:E:J:C:F:G:e:uB:P:w:", long_options)) >= 0) {
+	while ((c = ketopt(&o, argc, argv, 1, "k:s:l:b:t:d:c:n:m:K:p:N:SAO:E:J:C:F:G:e:uB:P:w:j:", long_options)) >= 0) {
 		if (c == 'k') io.kmer = atoi(o.arg);
 		else if (c == 's') io.smer = atoi(o.arg);
 		else if (c == 'b') io.bbit = atoi(o.arg);
@@ -110,6 +111,7 @@ int main(int argc, char *argv[])
 		else if (c == 'P') mo.gff_prefix = o.arg;
 		else if (c == 'u') mo.flag |= MP_F_SHOW_UNMAP;
 		else if (c == 'w') mo.chn_coef_log = atof(o.arg);
+		else if (c == 'j') mo.sp_model = atoi(o.arg);
 		else if (c == 301) mo.flag |= MP_F_GFF; // --gff
 		else if (c == 302) mo.xdrop = atoi(o.arg); // --xdrop
 		else if (c == 303) mo.out_n = mp_parse_num(o.arg); // --outn
@@ -127,6 +129,7 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "[WARNING]\033[1;31m unrecognized option\033[0m\n");
 		}
 	}
+	if (mp_mapopt_check(&mo) < 0) return 1;
 	if (argc - o.ind == 0 || (argc - o.ind == 1 && fn_idx == 0)) {
 		print_usage(stderr, &io, &mo, n_threads);
 		return 1;

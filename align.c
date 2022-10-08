@@ -54,7 +54,7 @@ static inline void mp_map2ns_opt(const mp_mapopt_t *mo, ns_opt_t *no)
 	no->go = mo->go, no->ge = mo->ge, no->io = mo->io, no->fs = mo->fs, no->xdrop = mo->xdrop, no->sc = mo->mat;
 	no->end_bonus = mo->end_bonus;
 	ns_opt_set_sp(no, mo->sp_model);
-	for (i = 0; i < 4; ++i) no->sp[i] = (int32_t)(no->sp[i] * mo->sp_scale + .499f);
+	for (i = 0; i < 6; ++i) no->sp[i] = (int32_t)(no->sp[i] * mo->sp_scale + .499f);
 }
 
 static int32_t mp_align_seq(void *km, const mp_mapopt_t *opt, const ns_opt_t *ns_opt0, int32_t nlen, const uint8_t *nseq, int32_t alen, const char *aseq, mp_cigar_t *cigar)
