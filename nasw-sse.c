@@ -109,8 +109,8 @@ static uint8_t *ns_prep_seq(void *km, const char *ns, int32_t nl, const char *as
 	for (i = 0; i < nl - 3; ++i) { // generate donor[]
 		int32_t t = 3;
 		if (nas[i+1] == 2 && nas[i+2] == 3) // GT.
-			t = i + 3 < nl && (nas[i+3] == 0 || nas[i+3] == 2)? -1 : 0;
-		else if (nas[i+1] == 2 && nas[i+2] == 1) t = 1; // GC.
+			t = i + 3 < nl && (nas[i+3] == 0 || nas[i+3] == 2)? (nas[i] == 2? -1 : 4) : 0;
+		else if (nas[i+1] == 2 && nas[i+2] == 1 && nas[i] == 2) t = 1; // GC.
 		else if (nas[i+1] == 0 && nas[i+2] == 3) t = 2; // AT.
 		donor[i] = t < 0? 0 : opt->sp[t];
 	}
@@ -149,8 +149,8 @@ static uint8_t *ns_prep_seq_left(void *km, const char *ns, int32_t nl, const cha
 	for (i = 1; i < nl; ++i) { // generate donor[]
 		int32_t t = 3;
 		if (nas[i-1] == 3 && nas[i] == 2) // .TG (the reverse of GT.)
-			t = i >= 2 && (nas[i-2] == 0 || nas[i-2] == 2)? -1 : 0;
-		else if (nas[i-1] == 1 && nas[i] == 2) t = 1; // .CG
+			t = i >= 2 && (nas[i-2] == 0 || nas[i-2] == 2)? (i+1 < nl && nas[i+1] == 2? -1 : 4) : 0;
+		else if (nas[i-1] == 1 && nas[i] == 2 && i+1 < nl && nas[i+1] == 1) t = 1; // .CG
 		else if (nas[i-1] == 3 && nas[i] == 0) t = 2; // .TA
 		acceptor[i] = t < 0? 0 : opt->sp[t];
 	}

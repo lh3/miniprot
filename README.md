@@ -94,7 +94,7 @@ found in the human Gencode annotation v41; a junction is non-overlapping if the
 intron in the junction does not overlap with any introns in the Gencode
 annotation.
 
-We only evaluated miniprot-0.4 and [spaln][spaln]-2.4.13a as these are the
+We only evaluated miniprot-r171 and [spaln][spaln]-2.4.13a as these are the
 only tools practical for whole genomes. Running other tools would require to
 find approximate protein mapping first and then realign in each local region.
 This procedure is complex and does not evaluate the mapping step. In addition,
@@ -109,20 +109,19 @@ used 98% of zebrafish proteins in the evaluation.
 
 |Metric          |mouse/mp |mouse/sp |chicken/mp|zebrafish/mp|zebrafish/sp|
 |:---------------|--------:|--------:|--------:|--------:|---------------:|
-|Elapsed time (s)|     328 |   3,767 |     277 |     483 |   12703 |
-|Peak RAM (Gb)   |    15.3 |     5.6 |    14.7 |    18.7 |     5.5 |
+|Elapsed time (s)|     314 |   3,767 |     260 |     461 |   12703 |
+|Peak RAM (Gb)   |    15.3 |     5.6 |    14.6 |    19.2 |     5.5 |
 |# proteins      |  21,844 |  21,844 |  17,007 |  29,706 |  29,706 |
-|# mapped        |  19,303 |  18,840 |  13,421 |  19,594 |  17,491 |
-|# single-exon   |   2,777 |         |   1,127 |   1,662 |         |
-|# predicted junc| 166,433 | 171,241 | 133,399 | 177,844 | 180,117 |
-|# non-ovlp junc |     371 |     852 |     436 |     758 |   1,391 |
-|# confirmed junc| 161,017 | 162,551 | 122,917 | 160,650 | 162,757 |
-|% confirmed     |   96.75 |   94.93 |   92.14 |   90.33 |   90.36 |
+|# mapped        |  19,303 |  18,840 |  13,421 |  19,571 |  17,491 |
+|# single-exon   |   2,781 |         |   1,169 |   1,688 |         |
+|# predicted junc| 166,140 | 171,241 | 132,473 | 176,776 | 180,117 |
+|# non-ovlp junc |     337 |     852 |     363 |     590 |   1,391 |
+|# confirmed junc| 161,312 | 162,551 | 123,490 | 161,838 | 162,757 |
+|% confirmed     |   97.09 |   94.93 |   93.22 |   91.55 |   90.36 |
 
-On the human-mouse dataset, miniprot finds fewer novel splice junctions,
-implying higher specificity, but spaln finds more confirmed junctions, implying
-higher sensitivity. Spaln is slightly more accurate on the zebrafish dataset
-but it is over 20 times lower.
+Generally, miniprot finds fewer novel splice junctions, implying higher
+specificity, but spaln finds more confirmed junctions, implying higher
+sensitivity.
 
 ### <a name="algo"></a>Algorithm overview
 
