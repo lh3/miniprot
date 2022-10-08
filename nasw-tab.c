@@ -79,8 +79,8 @@ void ns_make_tables(int codon_type)
  */
 void ns_opt_set_sp(ns_opt_t *opt, int32_t model)
 {
-	if (model == NS_S_HUMAN) opt->sp[0] = 8, opt->sp[1] = 15, opt->sp[2] = 21, opt->sp[3] = 30, opt->sp[4] = 4;
-	else opt->sp[0] = opt->sp[1] = opt->sp[2] = opt->sp[3] = opt->sp[4] = 0;
+	if (model == NS_S_HUMAN) opt->sp[0] = 8, opt->sp[1] = 15, opt->sp[2] = 21, opt->sp[3] = 30, opt->sp[4] = 4, opt->sp[5] = 4;
+	else opt->sp[0] = opt->sp[1] = opt->sp[2] = opt->sp[3] = opt->sp[4] = opt->sp[5] = 0;
 }
 
 void ns_opt_init(ns_opt_t *opt)
