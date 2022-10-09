@@ -115,11 +115,11 @@ accuracy for aligning against the human genome.
 |Peak RAM (Gb)   |    15.3 |     5.6 |    14.6 |    18.7 |     18.9 |     5.5 |
 |# proteins      |  21,844 |  21,844 |  17,007 |  29,706 |   29,706 |  29,706 |
 |# mapped        |  19,303 |  18,840 |  13,421 |  19,594 |   19,594 |  17,491 |
-|# single-exon   |   2,781 |         |   1,169 |   1,798 |    1,667 |         |
-|# predicted junc| 166,140 | 171,241 | 132,473 | 174,975 |  177,995 | 180,117 |
-|# non-ovlp junc |     337 |     852 |     363 |     457 |      737 |   1,391 |
-|# confirmed junc| 161,312 | 162,551 | 123,490 | 162,195 |  161,225 | 162,757 |
-|% confirmed     |   97.09 |   94.93 |   93.22 |   92.70 |    90.58 |   90.36 |
+|# single-exon   |   2,810 |         |   1,227 |   1,798 |    1,667 |         |
+|# predicted junc| 165,458 | 171,241 | 132,473 | 174,975 |  177,995 | 180,117 |
+|# non-ovlp junc |     316 |     852 |     258 |     457 |      737 |   1,391 |
+|# confirmed junc| 161,113 | 162,551 | 123,523 | 162,195 |  161,225 | 162,757 |
+|% confirmed     |   97.37 |   94.93 |   94.29 |   92.70 |    90.58 |   90.36 |
 
 Generally, miniprot finds fewer novel splice junctions, implying higher
 specificity, but spaln finds more confirmed junctions, implying higher
