@@ -1,0 +1,570 @@
+\documentclass{bioinfo}
+\copyrightyear{2022}
+\pubyear{2022}
+
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{url}
+\usepackage{tabularx}
+\usepackage{amsmath}
+\usepackage[ruled,vlined]{algorithm2e}
+\newcommand\mycommfont[1]{\footnotesize\rmfamily{\it #1}}
+\SetCommentSty{mycommfont}
+\SetKwComment{Comment}{$\triangleright$\ }{}
+
+\usepackage{natbib}
+\bibliographystyle{apalike}
+
+\DeclareMathOperator*{\argmax}{argmax}
+
+\begin{document}
+\firstpage{1}
+
+\title[Aligning proteins to genomes with miniprot]{Protein-to-genome alignment with miniprot}
+\author[Li]{Heng Li$^{1,2}$}
+\address{$^1$Dana-Farber Cancer Institute, 450 Brookline Ave, Boston, MA 02215, USA,
+$^2$Harvard Medical School, 10 Shattuck St, Boston, MA 02215, USA}
+
+\maketitle
+
+\begin{abstract}
+
+\section{Motivation:} Protein-to-genome alignment is critical to annotating
+genes in non-model organisms. While there are a few tools for this purpose, all
+of them were developed over ten years ago and did not incorporate the latest
+advances in alignment algorithms. They are inefficient and could not keep up
+with the rapid production of new genomes and quickly growing protein databases.
+
+\section{Results:} Here we describe miniprot, a new aligner for mapping
+protein sequences to a complete genome. Miniprot integrates recent techniques
+such as syncmer sketch and SIMD-based dynamic programming. It is tens of times
+faster than existing tools while achieving comparable accuracy on real data.
+
+\section{Availability and implementation:}
+\href{https://github.com/lh3/miniprot}{https://github.com/lh3/miniprot}
+
+\section{Contact:} hli@ds.dfci.harvard.edu
+\end{abstract}
+
+\section{Introduction}
+
+Sequencing technologies have been rapidly evolving in recent years. The advent
+of long-read sequencing, especially accurate long-read
+sequencing~\citep{Wenger:2019ab}, have enabled high-quality genome assembly at
+scale~\citep{Nurk:2020we,Cheng:2021aa,Cheng:2022aa}. After we sequence and
+assemble the genome of a new species, the immediate next step is to annotate
+genes.
+
+There are three ways to annotate gene structures: \emph{ab initio} gene
+prediction, aligning RNA-seq data from the same species and mapping known genes
+with cross-species alignment.  While \emph{ab initio} gene prediction works
+well for bacterial genomes, it is error-prone for Eukaryotic
+genomes that may contain large introns. In a recent
+benchmark~\citep{Scalzitti:2020wg}, all the evaluated gene finders miss
+$\sim$50\% nucleotides in annotated exons and predict $\sim$50\% extra
+sequences not in exons. If we have RNA-seq data, we can map short or long
+RNA-seq reads~\citep{Dobin:2013kx,Li:2018ab} and reconstruct transcripts from
+the alignment~\citep{Kovaka:2019wf}. This will give much more accurate gene
+structures than \emph{ab initio} gene prediction. Unfortunately, RNA sequencing
+adds extra cost and may miss genes lowly expressed in the tissues being
+sequenced. We still rely on cross-species alignment to derive a complete gene
+set and to transfer known functional annotations to the new genome.
+
+For very closely related genomes, we can reconstruct gene structures from
+whole-genome alignment~\citep{Fiddes:2018wn} or from the alignment of gene
+regions~\citep{Shumate:2020ty}. These methods would not work well for genomes
+at longer evolutionary distances because intron sequences are less conserved
+this will affect the quality of the alignment. Aligning the more conserved
+coding regions~\citep{Li:2007aa,Gotoh:2008aa} may alleviate the issue. However,
+for distantly related species, even coding nucleotide sequences are not
+conserved well. We almost exclusively use protein sequences to
+reconstruct the phylogeny of distant homologs instead.
+Ensembl~\citep{Aken:2016wr} and mainstream gene annotation
+pipelines~\citep{Holt:2011tt,Bruna:2021ug} also heavily rely on
+protein-to-genome alignment especially when the annotation of closely related
+species is not available.
+
+There are several protein-to-genome aligners that pinpoint exact splice sites:
+GeneWise~\citep{Birney:1997vr,Birney:2004uy}, Exonerate~\citep{Slater:2005aa},
+GeneSeqer~\citep{Usuka:2000vi},
+GenomeThreader~\citep{DBLP:journals/infsof/GremmeBSK05},
+genBlastG~\citep{She:2011aa}, ProSplign~\citep{Kapustin:2008tq} and
+Spaln2~\citep{Gotoh:2008aa,Iwata:2012aa}. Among these, Spaln2 and
+GenomeThreader are the only tools practical for whole-genome alignment. They
+can align several hundred proteins per CPU hour and may take a couple of days
+to align a few hundred thousand proteins often needed to annotate a genome
+without closely homology. The alignment step time consuming.
+
+It is challenging to develop a fast and accurate protein-to-genome alignment
+algorithm. The core of such alignment is a dynamic programming (DP) that
+jointly considers affine gap penalties, introns and frameshift. It is perhaps
+the most complex DP for pairwise alignment. In addition, as we will show later,
+a successful aligner functions like a gene finder and has to properly model
+splice signals, which is not a trivial task, either. On top of these, we need
+to fit these complex methods to an efficient implementation with modern
+computing techniques. This is partly why we have over a hundred short-read
+mappers~\citep{Alser:2021tk} but only two protein-to-genome mappers capable of
+whole-genome alignment.
+
+In this article, we will describe miniprot, a new protein-to-genome aligner
+developed from scratch. We will demonstrate its performance and accuracy on
+real data along with the few existing algorithms.
+
+\begin{methods}
+\section{Methods}
+
+Miniprot broadly follows the seed-chain-extend strategy used by
+minimap2~\citep{Li:2018ab}. It indexes the genome with open
+syncmers~\citep{Edgar:2021vk} in all six open reading frames (ORFs) on both
+strands. During alignment, miniprot extracts syncmers on a query protein,
+finds seed matches (aka anchors), and then performs chaining. It closes
+unaligned regions between anchors and extends from terminal anchors with
+dynamic programming (DP).
+
+\subsection{Notations of strings}
+
+For a string $T$, let $|T|$ be its length and $T[i]$, $i=1\ldots|T|$, be
+the $i$-th symbol in $T$. $T[i,j]$, $1\le i\le j\le|T|$, is the substring
+starting at $i$ and ending at $j$ inclusively. In this article, $T$ denotes the
+genome sequence over the nucleotide alphabet and $P$ denotes the protein
+sequence over the amino acid alphabet.
+
+An integer can be represented by a bit string. The notations above are also
+applicable to bit strings.
+
+\subsection{Reduced alphabet}
+
+There are twenty amino acids. We need at least five bits to encode each amino
+acid. To encode protein sequences more compactly, we reduce the amino acid
+alphabet using the SE-B(14) scheme by ~\citet{Edgar:2004aa}, except that we
+merge N and D. More exactly, we map amino acid groups to integers as
+follows: A$\to$0, ST$\to$1, RK$\to$2, H$\to$3, ND$\to$4, EQ$\to$5, C$\to$6,
+P$\to$7, G$\to$8, IV$\to$10, LM$\to$11, FY$\to$12, W$\to$13, $\ast$$\to$14 and
+X$\to$15, where $\ast$ denotes the stop codon and X denotes an amino acid.
+
+Under this encoding, if two amino acid groups only differ at the lowest bit
+(e.g. group `A' and `ST'), the two groups tend to be similar. We may flip the
+lowest bit of an integer to generate more seeds and thus to increase the
+seeding sensitivity. We did not use this strategy as miniprot seems reasonably
+sensitive on real data.
+
+\subsection{Random open syncmers}
+
+Suppose $\phi(a)$ maps an amino acid $a$ to an integer. The integer encoding
+of a $k$-long protein sequence $P$ can be recursively defined as 
+$\phi(P)=\phi(P[1,k-1])\times16+\phi(P[k])$. $\phi(P)$ has $4k$ bits. Let
+$B=\psi(\phi(P))$ where $\psi(\cdot)$ is an invertible integer hash
+function~\citep{Li:2016aa} over $[0,2^{4k})$. Then $B$ can be considered as a
+bit string with $4k$ bits, too. For $s\le k$, we can generate
+$\lfloor4(k-s)/d\rfloor+1$ shorter integers of $4s$ bits each: $B[1,4s],
+B[1+d,4s+d], \ldots,
+B[1+\lfloor4(k-s)/d\rfloor\cdot d,4s+\lfloor4(k-s)/d\rfloor\cdot d]$. $P$ is considered
+to be a $(k,s,d)$-syncmer if $B[1,4s]$ is the smallest among these integers.
+The sample rate is $1/(\lfloor4(k-s)/d\rfloor+1)$.
+
+Different from the original definition of open syncmer~\citep{Edgar:2021vk},
+the miniprot definition operates in the bit space instead of the residue space
+and it applies an invertible hash function for randomization. This makes our
+strategy robust to uneven amino acid frequencies.
+
+\subsection{Indexing the genome}
+
+Internally, miniprot treats each genome sequence and its reverse complement as
+two independent sequences. It enumerates all ORFs of 15 amino acids or longer
+and extracts (6,4,2)-syncmers from translated ORFs. This samples 6-mers at a
+rate of 20\% in average. For each syncmer $R$ at position $x$, miniprot stores
+$(\psi(\phi(R)), \lfloor x/256\rfloor)$ in a hash table with the key being
+$\psi(\phi(R))$ and the value being an array of positions. We do not retain the
+base resolution at the indexing step such that we can use 32-bit integers to
+store positions for a genome up to $2^{39}$ ($=2^{32}\cdot 256/2$) base pairs
+in size. Without binning, miniprot would have to use 64-bit integers to store
+positions in a human genome, which would double the index size.
+
+\subsection{Chaining}
+
+The miniprot chaining algorithm is very similar to the minimap2 algorithm.
+However, because the miniprot index does not keep the exact genome positions,
+the gap size calculation needs to be modified. For completeness, we will
+describe the full chaining equation here.
+
+Let 2-tuple $(x,y)$ denote a seed match (aka anchor) between binned position
+$x$ on the genome and residue position $y$ on the protein. Suppose $(x_i,y_i)$
+and $(x_j,y_j)$ are two seed matches with $x_i\le x_j$ and $y_i<y_j$. The
+minimum possible gap size between the two anchors, in the unit of base pair,
+can be calculated by
+\begin{equation}\label{eq:gap}
+g(i,j)=\left\{\begin{array}{ll}
+3\Delta y-256(\Delta x-1) & \mbox{if $3\Delta y<256(\Delta x-1)$}\\
+3\Delta y-256(\Delta x+1) & \mbox{if $3\Delta y>256(\Delta x+1)$}\\
+0 & \mbox{otherwise}
+\end{array}\right.
+\end{equation}
+with $\Delta x=x_j-x_i$ and $\Delta y=y_j-y_i$. When $g(i,j)=0$, we do not know
+if there is a gap due to binning. Meanwhile, $g(i,j)>0$ indicates a definitive
+insertion to the genome and $g(i,j)<0$ indicates a definitive deletion.
+
+Given a list of anchors sorted by genomic position $x$, let $f(j)$ be the
+maximal chaining score up to the $j$-th anchor in the list. $f(j)$ can be
+calculated with
+\begin{equation}
+f(j)=\max\big\{\max_{1\le i<j}\{f(i)+\alpha(i,j)-\gamma(g(i,j))\},k\big\}
+\end{equation}
+where $k$ is the length of open syncmers (6 amino acids by default), $g(i,j)$
+is calculated by Eq.~(\ref{eq:gap}) and $\alpha(i,j)=\min\{y_j-y_i,k\}$ is the
+number of matching residues between the anchors. The gap penalty function
+$\gamma(\cdot)$ is
+\begin{equation}\label{eq:gap-pen}
+\gamma(g)=\left\{\begin{array}{ll}
+0 & \mbox{if $g=0$}\\
+\infty & \mbox{if $|g|\ge G$}\\
+g/3+\beta\log_2(g+1) & \mbox{if $0<g<G$}\\
+\min\{|g|/3,\beta\log_2(|g|+1)\} & \mbox{if $-G<g<0$}\\
+\end{array}\right.
+\end{equation}
+Here $G$ is the maximum intron size (200 kb by default) and $\beta$ is the
+weight of the logarithm gap penalty (0.75 by default).  The logarithm term
+allows miniprot to join exons over introns.
+
+After the initial round of chaining, miniprot selects top 30 chains and
+performs another round of chaining in local regions around these top chains. In
+the second round, miniprot chooses all 5-mers on both the genome and the
+protein without binning. This finds better chains and retains the base
+resolution of each anchor. Miniprot uses $g'(i,j)=3\Delta y-\Delta x$ as the
+gap cost function.
+
+\subsection{Residue alignment with dynamic programming}
+
+Miniprot uses DP to close gaps between anchors in chains and to extend from
+terminal anchors. The DP aims to find gaps, frameshift and splicing at the
+same time as is demonstrated as follows (``Geno'' for the genome sequence,
+``Tran'' for the translated protein sequence in the alignment and ``Prot'' for
+the query protein sequence):
+\begin{verbatim}
+Geno: GAGGCC---CGCTCACCgt...agCACAAGCGCTATAGCCTAC
+Tran: E..A..---R..S..P.       .T..$$R..Y..+A..Y..
+      |  |     |     |         |    |  |   |  |
+Prot: E  A  F  R  -  P         T  E R  Y   A  Y
+\end{verbatim}
+In this example, symbol ``{\tt \$}'' denotes frameshift substitutions and
+``{\tt +}'' denotes frameshift insertions. In this section, we will first
+review the AE86 DP formulation for affine gap cost~\citep{Altschul:1986aa}, and
+then derive the DP equation for protein-to-genome alignment.
+
+\subsubsection{DP with affine gap cost}
+
+Under the affine gap cost, a gap of length $g$ costs $q+e\cdot g$. A direct
+formulation of the DP looks like
+\begin{equation}\label{eq:durbin}
+\left\{\begin{array}{lll}
+M_{ij}&=&\max\{ M_{i-1,j-1}, I_{i-1,j-1}, D_{i-1,j-1} \} + s(i,j) \\
+I_{ij}&=&\max\{ M_{i,j-1} - q, I_{i,j-1}, D_{i,j-1} - q \} - e\\
+D_{ij}&=&\max\{ M_{i-1,j} - q, D_{i,j-1} - q, D_{i-1,j} \} - e\\
+\end{array}\right.
+\end{equation}
+where `$M$' represents the matching state, `$I$' the insertion state, `$D$` the
+deletion state and $s(i,j)$ gives the score between the residue at position $i$
+on the target sequence and the residue at position $j$ on the query. If we
+define
+$$
+H_{ij} = \max\{M_{ij},I_{ij},D_{ij}\}
+$$
+Eq.~(\ref{eq:durbin}) becomes
+\begin{equation}\label{eq:ae86}
+\left\{\begin{array}{lll}
+I_{ij}&=&\max\{ H_{i,j-1} - q, I_{i,j-1} \} - e\\
+D_{ij}&=&\max\{ H_{i-1,j} - q, D_{i-1,j} \} - e\\
+H_{ij}&=&\max\{ H_{i-1,j-1} + s(i,j), I_{ij}, D_{ij} \} \\
+\end{array}\right.
+\end{equation}
+Eq.~(\ref{eq:ae86}) is the AE86 formulation. It invokes fewer comparisons. When
+there are more states, AE86 may save more comparisons and simplify the DP
+equation.
+
+\subsubsection{DP for protein-to-DNA alignment}
+
+In a similar manner, we can derive the DP for protein-to-DNA alignment,
+allowing frameshifts but not splicing:
+\begin{equation}\label{eq:fs}
+\left\{\begin{array}{lll}
+I_{ij}&=&\max\{ H_{i,j-1} - q, I_{i,j-1} \} - e \\
+D_{ij}&=&\max\{ H_{i-3,j} - q, D_{i-3,j} \} - e \\
+H_{ij}&=&\max\{ H_{i-3,j}+s(i,j), I_{ij}, D_{ij}, H_{i-1,j-1}-f, \\
+       && H_{i-2,j-1}-f, H_{i-1,j}-f, H_{i-2,j}-f \} \\
+\end{array}\right.
+\end{equation}
+It is similar to Eq.~(\ref{eq:ae86}) except for codon phase transitions with a
+penalty of $f$. We have two types of frameshift. The first type is created by
+inserting one or two bases to the DNA sequence (symbol `{\tt +}' in the example
+above) and the second type by deleting one or two bases in a codon (`{\tt \$}'
+in the example). These are modeled by the four $H_{\cdot,\cdot}$ terms on the
+last line of Eq.~(\ref{eq:fs}).  This equation is broadly similar
+to~\citet{Zhang:1997tq}.
+
+\subsubsection{DP for protein-to-genome alignment}
+
+When aligning proteins to genomes, we need to keep phases through introns. We
+add three additional states, $A$, $B$ and $C$, for phase-0, phase-1 and phase-2
+introns, respectively.  Our final formulation is
+\begin{equation}\label{eq:full}
+\left\{\begin{array}{lll}
+I_{ij}&=&\max\{ H_{i,j-1} - q, I_{i,j-1} \} - e \\
+D_{ij}&=&\max\{ H_{i-3,j} - q, D_{i-3,j} \} - e \\
+A_{ij}&=&\max\{ H_{i-1,j} - r - d(i-1), A_{i-1,j} \} \\
+B_{ij}&=&\max\{ H_{i-1,j-1} - r - d(i), B_{i-1,j} \} \\
+C_{ij}&=&\max\{ H_{i-1,j-1} - r - d(i+1), C_{i-1,j} \} \\
+H_{ij}&=&\max\{ H_{i-3,j}+s(i,j), I_{ij}, D_{ij}, H_{i-1,j-1}-f, \\
+       && H_{i-2,j-1}-f, H_{i-1,j}-f, H_{i-2,j}-f, \\
+	   && A_{ij}-a(i), B_{ij}-a(i-2), C_{ij}-a(i-1) \}
+\end{array}\right.
+\end{equation}
+where $r$ is cost of an intron, and $d(\cdot)$ and $a(\cdot)$ model splice
+signals. The great majority of introns start with ${\tt GT}$ and end with ${\tt
+AG}$ across all species. For a simple model, we may let
+$$
+d(i)=\left\{\begin{array}{ll}
+0 & \mbox{if $T[i-2,i]={\tt AG}$}\\
+0 & \mbox{otherwise}\\
+\end{array}\right.
+$$
+and
+$$
+a(i)=\left\{\begin{array}{ll}
+0 & \mbox{if $T[i+1,i+2]={\tt GT}$}\\
+0 & \mbox{otherwise}\\
+\end{array}\right.
+$$
+This still allows non-${\tt GT}$-${\tt AG}$ splicing but penalizes such introns
+by cost $p$. We will describe a more sophisticated model in the next section.
+
+It is worth noting that when the DP transitions from state $H$ to $B$ at
+position $i$, the phase-1 intron $B$ represents starts at $i+1$; when the DP
+transitions from $B$ to $H$ at $j$, the intron ends at $j-2$. The DP ignores
+the split codon bridging the two exons around the phase-1 intron. Phase-2
+intron state $C$ is treated similarly. Not scoring split codons is a weakness
+of our equation.
+
+Though not explicitly derived from a Hidden Markov Model (HMM),
+Eq.~(\ref{eq:full}) is broadly equivalent to the Viterbi decoding of the HMM
+employed by GeneWise~\citep{Birney:2004uy} and Exonerate~\citep{Slater:2005aa}.
+To that end, our formulation should not be more accurate than the two older
+tools if they are parameterized the same way.
+
+We implemented Eq.(\ref{eq:full}) with striped DP~\citep{Farrar:2007hs}.
+We used 16-bit integers to keep scores and achieved 8-way parallelization
+for x86\_64 CPUs with SSE2 or ARM64 CPUs with the NEON instruction set.
+Our implementation is over 50 times times faster than GeneWise and Exonerate in
+their exact mode. Actually for large genomes, residue alignment is not the
+performance bottleneck. Miniprot spends more time on initial chaining.
+
+\subsection{Splice models}
+
+We observed that under distant homology, the splice model may have a large
+influence on the junction accuracy, confirming~\citet{Iwata:2012aa}.
+
+The most common splice pattern in all species is ${\tt GT}$-${\tt AG}$ with
+${\tt GT}$ at the donor site (5'-end of an intron) and ${\tt AG}$ at the
+acceptor site (3'-end of an intron). We occasionally see ${\tt GC}$-${\tt AG}$
+and ${\tt AT}$-${\tt AC}$ at $\sim$1\% frequency in total~\citep{Sheth:2006vg}.
+Among the ${\tt GT}$-${\tt AG}$ class, we more often observe ${\tt GTR}$-${\tt
+YAG}$ from yeasts to mammals~\citep{Irimia:2008aa}.
+
+The default miniprot splice model considers the signals above. Using human data
+from~\citet{Sibley:2016vh}, we estimated that 99.81\% of acceptor sites are ${\tt
+AG}$ and only 0.10\% are ${\tt AC}$. In the BLOSUM
+scaling~\citep{Henikoff:1992tk}, an ${\tt AC}$ acceptor site would be penalized
+by $2\log_2 99.81/0.10\approx 20$. We can adapt this approach for three bases at
+either the donor or the acceptor sites. In our final model, miniprot does not
+penalize if it sees ${\tt GTR}$ at donor or ${\tt YAG}$ at acceptor. It applies
+a penalty of 8 for ${\tt GTY}$ at donor or ${\tt RAG}$ at acceptor; 15 for
+${\tt GC}$ at donor; 21 for ${\tt AT}$ at donor or ${\tt AC}$ at acceptor; 30
+for all other types of donor or acceptor sites.
+
+In mammals and even \emph{Drosophila}, the last exon base adjacent to a donor site
+is more often a ${\tt G}$ and we often see a poly-pyrimidine (i.e. ${\tt C}$ or
+${\tt T}$) sequence close to an acceptor site. Our human splice model
+considers these signals. It is also applicable to species with the sequence
+features above, including \emph{Drosophila}.
+
+Exonerate uses a position-specific weight matrix over $\sim$10 positions to
+model splice sites. Spaln2 additionally considers branching sites and provides
+pre-trained models for a variety of species. Miniprot adopts a relatively
+simple model with fewer parameters. This makes the model more general but may
+affect the accuracy of alignment. We are considering a second pass with a
+splice model trained from the first pass. This strategy is often used in
+mainstream gene finders~\citep{Bruna:2021ug}.
+
+\subsection{Avoiding pseudogenes}
+
+If a spliced gene has an unspliced pseudogene, the unspliced pseudogene may get
+a better DP score because the alignment to the pseudogene does not pay intron
+penalties. To reduce the effect of pseudogenes, miniprot recalculates a DP
+score between the query protein and the translated coding region without
+introns. In addition, miniprot further penalizes single-exon alignment by
+intron open score $r$ in Eq.(\ref{eq:full}) in case a pseudogene is aligned
+better by chance.
+
+\end{methods}
+
+\section{Results}
+
+\subsection{Evaluation datasets}
+
+To evaluate the accuracy of miniprot, we collected the protein-coding gene
+annotations of various species: human (\emph{Homo sapiens}) from Gencode v41,
+mouse (\emph{Mus musculus}) from Gencode M30, zebrafish (\emph{Danio rerio})
+and fruit fly (\emph{Drosophila melanogaster}) from Ensembl v107 and mosquito
+(\emph{Anopheles gambiae}) from Ensembl metazoan v54. We selected the longest
+protein for each gene to reduce redundant sequences. We mapped zebrafish and
+mouse proteins to the primary assembly of the human reference genome GRCh38 and
+mapped mosquito proteins to the Drosophila BDGP6 genome.
+
+\subsection{Evaluated tools}
+
+To evaluate what aligners can map proteins to a whole genome, we randomly
+sampled 1\% of zebrafish proteins and mapped with various aligners. Only
+miniprot-0.5, Spaln2-2.4.13c~\citep{Iwata:2012aa} and
+GenomeThreader-1.7.3~\citep{DBLP:journals/infsof/GremmeBSK05} could finish the
+alignment in an hour.  GenomeThreader found less than 30\% of coding regions in
+Spaln2 or miniprot alignment. It is not sensitive enough for the human-fish
+divergence and thus not evaluated on the full dataset. We also evaluated
+MetaEuk-r6~\citep{Levy-Karin:2020to}. Although MetaEuk does not find exact
+splice sites, it may be still useful for locating coding
+regions~\citep{Manni:2021ww}.
+
+In principle, we could localize a protein with a whole-genome mapper above and
+then run GeneWise, GeneSeqer and Exonerate in local regions. However, this
+would not evaluate mapping accuracy. In addition, \citet{Iwata:2012aa} have
+already shown Spaln2 outperformed these older tools. We thus ignored them in
+evaluation.
+
+When running Spaln2, we applied option ``-Q7 -T\# -yS -LS -yB -yZ -yX2'' where
+``\#'' specifies the species-specific splice model. Option ``-LS'' enables
+local alignment and yields sligtly better alignment overall. Option ``-yB -yZ
+-yX2'' apparently has no effect for human-zebrafish alignment but it greatly
+improves the junction accuracy of the fly-mosquito alignment. We let Spaln2
+choose the maximum intron and gene size automatically. Miniprot finds introns
+up to 200 kbp in length by default. We changed this value to 50 kbp for
+fly-mosquito alignment. We tuned the maximum intron size to 200 kb in the
+MetaEuk human-zebrafish alignment, in consistent with the miniprot setting.
+
+\subsection{Evaluating protein-to-genome alignment}
+
+\begin{table*}[!tb]
+\processtable{Evaluation on the human-mouse dataset}
+{\label{tab:eval}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrrrrrrrr}
+\toprule
+Genome species     & human   & human   & human   & human   & human   & human   & human   &fruit fly&fruit fly \\
+Protein species    &zebrafish&zebrafish&zebrafish&zebrafish&zebrafish& mouse   & mouse   & mosquito& mosquito \\
+Aligner            & miniprot& miniprot& Spaln2  & Spaln2  & MetaEuk & miniprot& Spaln2  & miniprot& Spaln2 \\
+Splice model       & human   & general & human   & default &     N/A & human   & human   & human   &fruit fly \\
+\midrule                                                                                 
+Elapsed time (sec) &     460 &     471 &  12,716 &  13,024 &   2,518 &     314 &   3,736 &      29 &   2,528 \\
+Peak RAM (GB)      &    18.0 &    18.6 &     9.2 &     9.6 &    22.0 &    15.3 &     5.6 &     3.2 &     2.7 \\
+\# proteins        &  30,313 &  30,313 &  30,313 &  30,313 &  30,313 &  21,844 &  21,844 &  13,094 &  13,094 \\
+\# mapped          &  19,998 &  19,998 &  17,860 &  17,780 &  12,665 &  19,303 &  18,840 &   7,211 &   6,125 \\
+\# single-exon     &   1,836 &   1,703 &     990 &     606 &   2,230 &   2,810 &   1,975 &   1,308 &     495 \\
+\# predicted junc. & 178,096 & 181,169 & 183,519 & 252,893 &  79,656 & 165,458 & 171,241 &  21,178 &  27,582 \\
+\# non-ovlp. junc. &     462 &     750 &   1,426 &  18,738 &     216 &     316 &     852 &     459 &     877 \\
+\# confirmed junc. & 165,084 & 164,102 & 165,826 & 156,980 &   5,761 & 161,113 & 162,551 &  18,630 &  22,606 \\
+\% confirmed junc. & 92.69\% & 90.58\% & 90.36\% & 62.07\% &  7.23\% & 97.37\% & 94.93\% & 87.97\% & 81.96\% \\
+\% base SN         & 59.92\% & 59.97\% & 57.69\% & 56.28\% & 48.32\% & 89.48\% & 88.62\% & 52.71\% & 50.13\% \\
+\% base SP         & 95.76\% & 95.28\% & 92.54\% & 84.30\% & 91.58\% & 97.44\% & 95.27\% & 96.78\% & 97.38\% \\
+\botrule
+\end{tabular*}
+}{Protein-to-genome alignments are compared to the annotated genes in ``Genome
+species''. A splice junction (junc.) is confirmed if it is annotated in
+``Genome species'' with exact boundaries; is non-overlapping (non-ovlp.) if the
+intron in the junction is not overlapping with annotated introns. Base
+sensitivity (base SN) is the fraction of annotated coding regions on the
+longest transcripts that are covered by alignments. Base specificity (base SP)
+is the fraction of genomic bases in alignments that are covered by annotated
+coding regions.}
+\end{table*}
+
+We aligned zebrafish proteins to GRCh38 with miniprot, Spaln2 and MetaEuk
+(Table~\ref{tab:eval}). When we apply human-specific splice models to both
+miniprot and Spaln2, miniprot is doing slightly better than Spaln2 at the base
+level and on junction specificity. Spaln2 finds 0.5\% more confirmed junctions,
+implying higher sensitivity. We looked at proteins Spaln2 aligned better. It
+seems that Spaln2 is more sensitive to small introns and small exons, while
+miniprot tends to merge them to adjacent alignments. We speculate this may be
+caused by two factors. First, Spaln2 uses a more sophisticated splice model and
+may be putting more weight on splice signals than residue alignment. It may
+create an intron even if the alignment is weak. Second, the Spaln2 developers
+observed that heuristics may be doing better than strict DP around short
+introns or exons. In one case, Spaln2 correctly created an exon with one amino
+acid. Miniprot under the current setting would never produce such an alignment.
+
+For both miniprot and Spaln2, species-specific models improved alignment though
+the default Spaln2 model performed worse. MetaEuk did not pinpoint exact splice
+junctions, as is expected. It also aligned fewer proteins and had lower
+base-level sensitivity. We therefore did not evaluate it on other datasets.
+
+For the human-mouse alignment, Spaln2 again has higher junction sensitivity and
+miniprot is better on other metrics. On the more challenging fly-mosquito
+dataset, the trend continues. Overall miniprot and Spaln2 have comparable
+accuracy.
+
+Miniprot is over an order of magnitude faster than Spaln2. The performance gap
+increases with divergence. This is potentially because Spaln2 has to invoke DP
+through introns more often when it does not see overlapping high-scoring
+segment pairs (HSPs) and cannot initiate ``sandwich DP''~\citep{Wu:2005vn} to
+skip introns. With a much faster DP implementation, miniprot can afford to
+align through all introns regardless of sequence divergence. It thus has more
+stable performance. Always aligning through introns might be a contributing
+factor to the higher specificity of miniprot even though Spaln2 has a more
+careful algorithm.
+
+Table~\ref{tab:eval} only considers the best hit of each protein. Miniprot by
+default may output multiple suboptimal alignments. If we count all
+human-zebrafish alignments, we could improve the base sensitivity to 65.32\%
+but with junction accuracy dropped to 90.87\%. The base specificity drops
+further to 84.96\% because miniprot starts to report pseudogenes.
+
+\section{Discussions}
+
+Miniprot is a fast protein-to-genome aligner comparable to existing tools in
+accuracy. It can assist gene annotation but does not replace full-pledge gene
+annotation pipelines such as BRAKER2~\citep{Bruna:2021ug}.  Miniprot aligns
+each protein independently. When multiple proteins are mapped to the same
+locus, miniprot is unable to merge identical gene models or resolve conflicts
+between alignments. In addition, although miniprot has a realistic splice
+model, it is not as sophisticated as the BRAKER2 model and is not trained on
+the target genome. More importantly, BRAKER2 has an \emph{ab initio} gene
+prediction component and may find genes with weak homology to the input
+proteins. We are considering to improve our splice model and to develop a
+separate tool to reconcile overlapping gene models in simple cases. This may
+provide a convenient annotation pipeline when closely related species are
+available.
+
+We are also evaluating the possibility to support HMMER
+profiles~\citep{Eddy:2011tg} as queries. As a HMMER profile summarizes a gene
+family from multiple species, it may reduce the number of queries and improve
+the sensitivity of miniprot for distant homologs. There are two algorithmic
+challenges: seeding and alignment.  For seeding, we could generate seeds from
+the most probable protein or sample multiple seeds directly from the profile;
+for alignment, we could introduce position-specific substitution cost and gap
+cost. Nonetheless, the exact solution to these challenges and how much HMMER
+profiles may improve the alignment remain unknown.
+
+The Vertebrate Genome Project~\citep{Rhie:2021ug}, the Darwin Tree of Life
+project, the Earth Biogenome Project~\citep{Lewin:2018ve} and many other sequencing efforts are
+going to sequence hundreds of thousands of species to the reference quality in
+coming years. The annotation of these genomes is as important as the assembly.
+While we have seen rapid evolution of sequencing technologies and assembly
+algorithms in recent years, we still heavily rely on core annotation tools
+developed more than a decade ago. Miniprot is one effort to replace the
+protein-to-genome alignment step with modern techniques. We are keen to see
+renewed development of other core annotation tools from the community.
+
+\section*{Acknowledgements}
+
+We thank Fergal Martin, Richard Durbin and Ewan Birney for helpful discussions
+on the miniprot algorithm.
+
+\paragraph{Funding\textcolon} NHGRI R01HG010040 and Chan-Zuckerberg Initiative
+
+\bibliography{miniprot}
+
+\end{document}
