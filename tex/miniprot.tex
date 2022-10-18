@@ -322,15 +322,15 @@ signals. The great majority of introns start with ${\tt GT}$ and end with ${\tt
 AG}$ across all species. For a simple model, we may let
 $$
 d(i)=\left\{\begin{array}{ll}
-0 & \mbox{if $T[i-2,i]={\tt AG}$}\\
-0 & \mbox{otherwise}\\
+0 & \mbox{if $T[i-1,i]={\tt AG}$}\\
+p & \mbox{otherwise}\\
 \end{array}\right.
 $$
 and
 $$
 a(i)=\left\{\begin{array}{ll}
 0 & \mbox{if $T[i+1,i+2]={\tt GT}$}\\
-0 & \mbox{otherwise}\\
+p & \mbox{otherwise}\\
 \end{array}\right.
 $$
 This still allows non-${\tt GT}$-${\tt AG}$ splicing but penalizes such introns
@@ -344,10 +344,10 @@ intron state $C$ is treated similarly. Not scoring split codons is a weakness
 of our equation.
 
 Though not explicitly derived from a Hidden Markov Model (HMM),
-Eq.~(\ref{eq:full}) is broadly equivalent to the Viterbi decoding of the HMM
+Eq.~(\ref{eq:full}) is similar to the Viterbi decoding of the 6-state HMM
 employed by GeneWise~\citep{Birney:2004uy} and Exonerate~\citep{Slater:2005aa}.
-To that end, our formulation should not be more accurate than the two older
-tools if they are parameterized the same way.
+To that end,  our formulation should have comparable accuracy to the two older
+aligners if they are parameterized the same way.
 
 We implemented Eq.(\ref{eq:full}) with striped DP~\citep{Farrar:2007hs}.
 We used 16-bit integers to keep scores and achieved 8-way parallelization
@@ -485,7 +485,7 @@ coding regions.}
 We aligned zebrafish proteins to GRCh38 with miniprot, Spaln2 and MetaEuk
 (Table~\ref{tab:eval}). When we apply human-specific splice models to both
 miniprot and Spaln2, miniprot is doing slightly better than Spaln2 at the base
-level and on junction specificity. Spaln2 finds 0.5\% more confirmed junctions,
+level and on the junction specificity. Spaln2 finds 0.5\% more confirmed junctions,
 implying higher sensitivity. We looked at proteins Spaln2 aligned better. It
 seems that Spaln2 is more sensitive to small introns and small exons, while
 miniprot tends to merge them to adjacent alignments. We speculate this may be
@@ -555,7 +555,7 @@ coming years. The annotation of these genomes is as important as the assembly.
 While we have seen rapid evolution of sequencing technologies and assembly
 algorithms in recent years, we still heavily rely on core annotation tools
 developed more than a decade ago. Miniprot is one effort to replace the
-protein-to-genome alignment step with modern techniques. We are keen to see
+protein-to-genome alignment step with modern techniques. We look forward to
 renewed development of other core annotation tools from the community.
 
 \section*{Acknowledgements}
