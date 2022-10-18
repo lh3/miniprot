@@ -1,3 +1,17 @@
+Release 0.5-r179 (17 October 2022)
+----------------------------------
+
+Notable changes:
+
+ * Improvement: more detailed splice model considering G|GTR..YYYNYAG|. This is
+   not enabled by default. Added option `-j` to change the splice model.
+
+ * Added the miniprot preprint. Available at http://arxiv.org/abs/2210.08052
+
+(0.5: 17 October 2022, r179)
+
+
+
 Release 0.4-r165 (5 October 2022)
 ---------------------------------
 
