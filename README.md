@@ -31,6 +31,7 @@ man ./miniprot.1
   - [Usage](#usage)
   - [Evaluation](#eval)
   - [Algorithm overview](#algo)
+  - [Citing miniprot](#cite)
 - [Limitations](#limit)
 
 ## <a name="intro"></a>Introduction
@@ -147,6 +148,12 @@ sensitivity.
    introns or long gaps. Perform striped dynamic programming between remaining
    anchors and also extend from the first or last anchors. This gives the final
    alignment.
+
+### <a name="cite"></a>Citing miniprot
+
+The miniprot algorithm is described in the following preprint:
+
+> Li, H. (2022). Protein-to-genome alignment with miniprot. [arXiv:2210.08052](https://arxiv.org/abs/2210.08052).
 
 ## <a name="limit"></a>Limitations
 
