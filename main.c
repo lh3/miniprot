@@ -10,6 +10,7 @@ static ko_longopt_t long_options[] = {
 	{ "gff-only",        ko_no_argument,       304 },
 	{ "gff-delim",       ko_required_argument, 305 },
 	{ "J2",              ko_required_argument, 306 },
+	{ "gtf",             ko_no_argument,       307 },
 	{ "version",         ko_no_argument,       401 },
 	{ "no-kalloc",       ko_no_argument,       501 },
 	{ "dbg-qname",       ko_no_argument,       502 },
@@ -67,6 +68,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "  Input/output:\n");
 	fprintf(fp, "    -t INT       number of threads [%d]\n", n_threads);
 	fprintf(fp, "    --gff        output in the GFF3 format\n");
+	fprintf(fp, "    --gtf        basic GTF output\n");
 	fprintf(fp, "    -P STR       prefix for IDs in GFF3 [%s]\n", mo->gff_prefix);
 	fprintf(fp, "    -u           print unmapped query proteins in PAF\n");
 	fprintf(fp, "    --outn=NUM   output up to min{NUM,-N} alignments per query [%d]\n", mo->out_n);
@@ -118,6 +120,7 @@ int main(int argc, char *argv[])
 		else if (c == 304) mo.flag |= MP_F_GFF | MP_F_NO_PAF; // --gff-only
 		else if (c == 305) mo.gff_delim = o.arg[0]; // --gff-delim
 		else if (c == 306) mo.io_end = atoi(o.arg); // --J2
+		else if (c == 307) mo.flag |= MP_F_GTF; // --gtf
 		else if (c == 501) mp_dbg_flag |= MP_DBG_NO_KALLOC; // --no-kalloc
 		else if (c == 502) mp_dbg_flag |= MP_DBG_QNAME; // --dbg-qname
 		else if (c == 503) mp_dbg_flag |= MP_DBG_NO_REFINE; // --dbg-no-refine

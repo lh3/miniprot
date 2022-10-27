@@ -3,13 +3,14 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.5-r179"
+#define MP_VERSION "0.5-r181"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
 #define MP_F_SHOW_UNMAP   0x4
 #define MP_F_GFF          0x8
 #define MP_F_NO_PAF       0x10
+#define MP_F_GTF          0x20
 
 #define MP_FEAT_CDS       0
 #define MP_FEAT_STOP      1
