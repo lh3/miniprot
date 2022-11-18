@@ -41,6 +41,7 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 	mo->pri_ratio = 0.7f;
 	mo->best_n = 30;
 	mo->out_n = 1000;
+	mo->out_sim = 0.99f;
 	mo->kmer2 = 5;
 
 	mo->go = 11, mo->ge = 1;

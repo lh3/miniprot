@@ -11,6 +11,7 @@ static ko_longopt_t long_options[] = {
 	{ "gff-delim",       ko_required_argument, 305 },
 	{ "J2",              ko_required_argument, 306 },
 	{ "gtf",             ko_no_argument,       307 },
+	{ "outs",            ko_required_argument, 308 },
 	{ "version",         ko_no_argument,       401 },
 	{ "no-kalloc",       ko_no_argument,       501 },
 	{ "dbg-qname",       ko_no_argument,       502 },
@@ -72,6 +73,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -P STR       prefix for IDs in GFF3 [%s]\n", mo->gff_prefix);
 	fprintf(fp, "    -u           print unmapped query proteins in PAF\n");
 	fprintf(fp, "    --outn=NUM   output up to min{NUM,-N} alignments per query [%d]\n", mo->out_n);
+	fprintf(fp, "    --outs=FLOAT output if score at least FLOAT*bestScore [%g]\n", mo->out_sim);
 	fprintf(fp, "    -K NUM       query batch size [2M]\n");
 }
 
@@ -117,6 +119,7 @@ int main(int argc, char *argv[])
 		else if (c == 301) mo.flag |= MP_F_GFF; // --gff
 		else if (c == 302) mo.xdrop = atoi(o.arg); // --xdrop
 		else if (c == 303) mo.out_n = mp_parse_num(o.arg); // --outn
+		else if (c == 308) mo.out_sim = atof(o.arg); // --outs
 		else if (c == 304) mo.flag |= MP_F_GFF | MP_F_NO_PAF; // --gff-only
 		else if (c == 305) mo.gff_delim = o.arg[0]; // --gff-delim
 		else if (c == 306) mo.io_end = atoi(o.arg); // --J2

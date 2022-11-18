@@ -236,13 +236,20 @@ static void *worker_pipeline(void *shared, int step, void *in)
 		for (i = 0; i < p->n_threads; ++i) mp_tbuf_destroy(s->buf[i]);
 		free(s->buf);
 		for (i = 0; i < s->n_seq; ++i) {
+			int32_t best_sc = -1;
 			if (s->n_reg[i] == 0) {
 				mp_write_output(&p->str, 0, p->mi, &s->seq[i], 0, p->opt, 0, 0);
 				fwrite(p->str.s, 1, p->str.l, stdout);
+			} else {
+				best_sc = s->reg[i][0].p? s->reg[i][0].p->dp_max : s->reg[i][0].chn_sc;
 			}
 			for (j = 0; j < s->n_reg[i] && j < p->opt->out_n; ++j) {
+				int32_t sc = s->reg[i][j].p? s->reg[i][j].p->dp_max : s->reg[i][j].chn_sc;
+				if (sc <= 0 || sc < (double)best_sc * p->opt->out_sim) continue;
 				mp_write_output(&p->str, 0, p->mi, &s->seq[i], &s->reg[i][j], p->opt, ++p->id, j + 1);
 				fwrite(p->str.s, 1, p->str.l, stdout);
+			}
+			for (j = 0; j < s->n_reg[i]; ++j) {
 				free(s->reg[i][j].feat);
 				free(s->reg[i][j].p);
 			}

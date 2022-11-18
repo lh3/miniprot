@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.5-r181"
+#define MP_VERSION "0.5-r182-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
@@ -49,6 +49,7 @@ typedef struct {
 	float mask_level;
 	int32_t mask_len;
 	float pri_ratio;
+	float out_sim;
 	int32_t best_n, out_n;
 	int32_t kmer2;
 	int32_t go, ge, io, fs; // gap open, extension, intron open, and frame-shift/stop-codon
