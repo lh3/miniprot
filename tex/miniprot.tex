@@ -77,10 +77,10 @@ at longer evolutionary distances because intron sequences are less conserved
 this will affect the quality of the alignment. Aligning the more conserved
 coding regions~\citep{Li:2007aa,Gotoh:2008aa} may alleviate the issue. However,
 for distantly related species, even coding nucleotide sequences are not
-conserved well. We almost exclusively use protein sequences to
-reconstruct the phylogeny of distant homologs instead.
-Ensembl~\citep{Aken:2016wr} and mainstream gene annotation
-pipelines~\citep{Holt:2011tt,Bruna:2021ug} also heavily rely on
+conserved well. Just as we almost exclusively use protein sequences to
+reconstruct the phylogeny of distant homologs,
+Ensembl~\citep{Aken:2016wr} and other gene annotation
+pipelines~\citep{Haas:2008tv,Holt:2011tt,Bruna:2021ug} also heavily rely on
 protein-to-genome alignment especially when the annotation of closely related
 species is not available.
 
@@ -123,7 +123,7 @@ dynamic programming (DP).
 
 \subsection{Notations of strings}
 
-For a string $T$, let $|T|$ be its length and $T[i]$, $i=1\ldots|T|$, be
+For a string $T$, let $|T|$ be its length and $T[i]$, $i=1,\ldots,|T|$, be
 the $i$-th symbol in $T$. $T[i,j]$, $1\le i\le j\le|T|$, is the substring
 starting at $i$ and ending at $j$ inclusively. In this article, $T$ denotes the
 genome sequence over the nucleotide alphabet and $P$ denotes the protein
@@ -319,17 +319,17 @@ H_{ij}&=&\max\{ H_{i-3,j}+s(i,j), I_{ij}, D_{ij}, H_{i-1,j-1}-f, \\
 \end{equation}
 where $r$ is cost of an intron, and $d(\cdot)$ and $a(\cdot)$ model splice
 signals. The great majority of introns start with ${\tt GT}$ and end with ${\tt
-AG}$ across all species. For a simple model, we may let
+AG}$ across all species. For a simple model, we may define:
 $$
 d(i)=\left\{\begin{array}{ll}
-0 & \mbox{if $T[i-1,i]={\tt AG}$}\\
+0 & \mbox{if $T[i+1,i+2]={\tt GT}$}\\
 p & \mbox{otherwise}\\
 \end{array}\right.
 $$
 and
 $$
 a(i)=\left\{\begin{array}{ll}
-0 & \mbox{if $T[i+1,i+2]={\tt GT}$}\\
+0 & \mbox{if $T[i-1,i]={\tt AG}$}\\
 p & \mbox{otherwise}\\
 \end{array}\right.
 $$
@@ -366,18 +366,33 @@ ${\tt GT}$ at the donor site (5'-end of an intron) and ${\tt AG}$ at the
 acceptor site (3'-end of an intron). We occasionally see ${\tt GC}$-${\tt AG}$
 and ${\tt AT}$-${\tt AC}$ at $\sim$1\% frequency in total~\citep{Sheth:2006vg}.
 Among the ${\tt GT}$-${\tt AG}$ class, we more often observe ${\tt GTR}$-${\tt
-YAG}$ from yeasts to mammals~\citep{Irimia:2008aa}.
+YAG}$ from yeasts to mammals~\citep{Irimia:2008aa}, where ${\tt R}$ denotes
+${\tt A}$ or ${\tt G}$ and ${\tt Y}$ denotes ${\tt C}$ or ${\tt T}$.
 
 The default miniprot splice model considers the signals above. Using human data
 from~\citet{Sibley:2016vh}, we estimated that 99.81\% of acceptor sites are ${\tt
 AG}$ and only 0.10\% are ${\tt AC}$. In the BLOSUM
 scaling~\citep{Henikoff:1992tk}, an ${\tt AC}$ acceptor site would be penalized
 by $2\log_2 99.81/0.10\approx 20$. We can adapt this approach for three bases at
-either the donor or the acceptor sites. In our final model, miniprot does not
-penalize if it sees ${\tt GTR}$ at donor or ${\tt YAG}$ at acceptor. It applies
-a penalty of 8 for ${\tt GTY}$ at donor or ${\tt RAG}$ at acceptor; 15 for
-${\tt GC}$ at donor; 21 for ${\tt AT}$ at donor or ${\tt AC}$ at acceptor; 30
-for all other types of donor or acceptor sites.
+either the donor or the acceptor sites. In our final model,
+$$
+d(i)=\left\{\begin{array}{ll}
+0 & \mbox{if $T[i+1,i+3]={\tt GTA}$ or ${\tt GTG}$}\\
+8 & \mbox{if $T[i+1,i+3]={\tt GTC}$ or ${\tt GTT}$}\\
+15 & \mbox{if $T[i+1,i+2]={\tt GC}$}\\
+21 & \mbox{if $T[i+1,i+2]={\tt AT}$}\\
+30 & \mbox{otherwise}\\
+\end{array}\right.
+$$
+and
+$$
+a(i)=\left\{\begin{array}{ll}
+0 & \mbox{if $T[i-2,i]={\tt CAG}$ or ${\tt TAG}$}\\
+8 & \mbox{if $T[i-2,i]={\tt AAG}$ or ${\tt GAG}$}\\
+21 & \mbox{if $T[i-1,i]={\tt AC}$}\\
+30 & \mbox{otherwise}\\
+\end{array}\right.
+$$
 
 In mammals and even \emph{Drosophila}, the last exon base adjacent to a donor site
 is more often a ${\tt G}$ and we often see a poly-pyrimidine (i.e. ${\tt C}$ or
