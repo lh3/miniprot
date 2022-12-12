@@ -88,8 +88,9 @@ There are several protein-to-genome aligners that pinpoint exact splice sites:
 GeneWise~\citep{Birney:1997vr,Birney:2004uy}, Exonerate~\citep{Slater:2005aa},
 GeneSeqer~\citep{Usuka:2000vi},
 GenomeThreader~\citep{DBLP:journals/infsof/GremmeBSK05},
-genBlastG~\citep{She:2011aa}, ProSplign~\citep{Kapustin:2008tq} and
-Spaln2~\citep{Gotoh:2008aa,Iwata:2012aa}. Among these, Spaln2 and
+genBlastG~\citep{She:2011aa}, ProSplign~\citep{Kapustin:2008tq},
+Spaln2~\citep{Gotoh:2008aa,Iwata:2012aa} and GeMoMa~\citep{Keilwagen:2019wz}.
+Among these, Spaln2, GeMoMa and
 GenomeThreader are the only tools practical for whole-genome alignment. They
 can align several hundred proteins per CPU hour and may take a couple of days
 to align a few hundred thousand proteins often needed to annotate a genome
@@ -103,7 +104,7 @@ a successful aligner functions like a gene finder and has to properly model
 splice signals, which is not a trivial task, either. On top of these, we need
 to fit these complex methods to an efficient implementation with modern
 computing techniques. This is partly why we have over a hundred short-read
-mappers~\citep{Alser:2021tk} but only two protein-to-genome mappers capable of
+mappers~\citep{Alser:2021tk} but only three protein-to-genome mappers capable of
 whole-genome alignment.
 
 In this article, we will describe miniprot, a new protein-to-genome aligner
@@ -437,7 +438,7 @@ mapped mosquito proteins to the Drosophila BDGP6 genome.
 
 To evaluate what aligners can map proteins to a whole genome, we randomly
 sampled 1\% of zebrafish proteins and mapped with various aligners. Only
-miniprot-0.5, Spaln2-2.4.13c~\citep{Iwata:2012aa} and
+miniprot-0.5, Spaln2-2.4.13c~\citep{Iwata:2012aa}, GeMoMa-1.9~\citep{Keilwagen:2019wz}
 GenomeThreader-1.7.3~\citep{DBLP:journals/infsof/GremmeBSK05} could finish the
 alignment in an hour.  GenomeThreader found less than 30\% of coding regions in
 Spaln2 or miniprot alignment. It is not sensitive enough for the human-fish
@@ -446,12 +447,6 @@ MetaEuk-r6~\citep{Levy-Karin:2020to}. Although MetaEuk does not find exact
 splice sites, it may be still useful for locating coding
 regions~\citep{Manni:2021ww}.
 
-In principle, we could localize a protein with a whole-genome mapper above and
-then run GeneWise, GeneSeqer and Exonerate in local regions. However, this
-would not evaluate mapping accuracy. In addition, \citet{Iwata:2012aa} have
-already shown Spaln2 outperformed these older tools. We thus ignored them in
-evaluation.
-
 When running Spaln2, we applied option ``-Q7 -T\# -yS -LS -yB -yZ -yX2'' where
 ``\#'' specifies the species-specific splice model. Option ``-LS'' enables
 local alignment and yields sligtly better alignment overall. Option ``-yB -yZ
@@ -459,32 +454,41 @@ local alignment and yields sligtly better alignment overall. Option ``-yB -yZ
 improves the junction accuracy of the fly-mosquito alignment. We let Spaln2
 choose the maximum intron and gene size automatically. Miniprot finds introns
 up to 200 kbp in length by default. We changed this value to 50 kbp for
-fly-mosquito alignment. We tuned the maximum intron size to 200 kb in the
-MetaEuk human-zebrafish alignment, in consistent with the miniprot setting.
+fly-mosquito alignment. We tuned the maximum intron size to 200 kb for the
+MetaEuk and GeMoMa human-zebrafish alignment, in consistent with the miniprot
+setting. We ran GeMoMa with MMseqs2~\citep{Steinegger:2017aa} as the underlying
+engine. We evaluated the best unfiltered alignment of each protein as GeMoMa
+discarded most alignments in the final output.
+
+In principle, we could localize a protein with a whole-genome mapper above and
+then run GeneWise, GeneSeqer and Exonerate in local regions. However, this
+would not evaluate mapping accuracy. In addition, \citet{Iwata:2012aa} have
+already shown Spaln2 outperformed these older tools. We thus ignored them in
+evaluation.
 
 \subsection{Evaluating protein-to-genome alignment}
 
 \begin{table*}[!tb]
 \processtable{Evaluation on the human-mouse dataset}
 {\label{tab:eval}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrrrrrrrr}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrrrrrrrrr}
 \toprule
-Genome species     & human   & human   & human   & human   & human   & human   & human   &fruit fly&fruit fly \\
-Protein species    &zebrafish&zebrafish&zebrafish&zebrafish&zebrafish& mouse   & mouse   & mosquito& mosquito \\
-Aligner            & miniprot& miniprot& Spaln2  & Spaln2  & MetaEuk & miniprot& Spaln2  & miniprot& Spaln2 \\
-Splice model       & human   & general & human   & default &     N/A & human   & human   & human   &fruit fly \\
-\midrule                                                                                 
-Elapsed time (sec) &     460 &     471 &  12,716 &  13,024 &   2,518 &     314 &   3,736 &      29 &   2,528 \\
-Peak RAM (GB)      &    18.0 &    18.6 &     9.2 &     9.6 &    22.0 &    15.3 &     5.6 &     3.2 &     2.7 \\
-\# proteins        &  30,313 &  30,313 &  30,313 &  30,313 &  30,313 &  21,844 &  21,844 &  13,094 &  13,094 \\
-\# mapped          &  19,998 &  19,998 &  17,860 &  17,780 &  12,665 &  19,303 &  18,840 &   7,211 &   6,125 \\
-\# single-exon     &   1,836 &   1,703 &     990 &     606 &   2,230 &   2,810 &   1,975 &   1,308 &     495 \\
-\# predicted junc. & 178,096 & 181,169 & 183,519 & 252,893 &  79,656 & 165,458 & 171,241 &  21,178 &  27,582 \\
-\# non-ovlp. junc. &     462 &     750 &   1,426 &  18,738 &     216 &     316 &     852 &     459 &     877 \\
-\# confirmed junc. & 165,084 & 164,102 & 165,826 & 156,980 &   5,761 & 161,113 & 162,551 &  18,630 &  22,606 \\
-\% confirmed junc. & 92.69\% & 90.58\% & 90.36\% & 62.07\% &  7.23\% & 97.37\% & 94.93\% & 87.97\% & 81.96\% \\
-\% base SN         & 59.92\% & 59.97\% & 57.69\% & 56.28\% & 48.32\% & 89.48\% & 88.62\% & 52.71\% & 50.13\% \\
-\% base SP         & 95.76\% & 95.28\% & 92.54\% & 84.30\% & 91.58\% & 97.44\% & 95.27\% & 96.78\% & 97.38\% \\
+Genome species     & human   & human   & human   & human   & human   & human   & human   & human   &fruit fly&fruit fly \\
+Protein species    &zebrafish&zebrafish&zebrafish&zebrafish&zebrafish&zebrafish& mouse   & mouse   & mosquito& mosquito \\
+Aligner            & miniprot& miniprot& Spaln2  & Spaln2  &  GeMoMa & MetaEuk & miniprot& Spaln2  & miniprot& Spaln2 \\
+Splice model       & human   & general & human   & default &     N/A &     N/A & human   & human   & human   &fruit fly \\
+\midrule
+Elapsed time (sec) &     460 &     471 &  12,716 &  13,024 &   5,787 &   2,518 &     314 &   3,736 &      29 &   2,528 \\
+Peak RAM (GB)      &    18.0 &    18.6 &     9.2 &     9.6 &   137.3 &    22.0 &    15.3 &     5.6 &     3.2 &     2.7 \\
+\# proteins        &  30,313 &  30,313 &  30,313 &  30,313 &  30,313 &  30,313 &  21,844 &  21,844 &  13,094 &  13,094 \\
+\# mapped          &  19,998 &  19,998 &  17,860 &  17,780 &  25,096 &  12,665 &  19,303 &  18,840 &   7,211 &   6,125 \\
+\# single-exon     &   1,836 &   1,703 &     990 &     606 &   1,969 &   2,230 &   2,810 &   1,975 &   1,308 &     495 \\
+\# predicted junc. & 178,096 & 181,169 & 183,519 & 252,893 & 199,252 &  79,656 & 165,458 & 171,241 &  21,178 &  27,582 \\
+\# non-ovlp. junc. &     462 &     750 &   1,426 &  18,738 &   5,603 &     216 &     316 &     852 &     459 &     877 \\
+\# confirmed junc. & 165,084 & 164,102 & 165,826 & 156,980 & 142,521 &   5,761 & 161,113 & 162,551 &  18,630 &  22,606 \\
+\% confirmed junc. & 92.69\% & 90.58\% & 90.36\% & 62.07\% & 71.53\% &  7.23\% & 97.37\% & 94.93\% & 87.97\% & 81.96\% \\
+\% base SN         & 59.92\% & 59.97\% & 57.69\% & 56.28\% & 61.78\% & 48.32\% & 89.48\% & 88.62\% & 52.71\% & 50.13\% \\
+\% base SP         & 95.76\% & 95.28\% & 92.54\% & 84.30\% & 86.79\% & 91.58\% & 97.44\% & 95.27\% & 96.78\% & 97.38\% \\
 \botrule
 \end{tabular*}
 }{Protein-to-genome alignments are compared to the annotated genes in ``Genome
@@ -497,7 +501,7 @@ is the fraction of genomic bases in alignments that are covered by annotated
 coding regions.}
 \end{table*}
 
-We aligned zebrafish proteins to GRCh38 with miniprot, Spaln2 and MetaEuk
+We aligned zebrafish proteins to GRCh38 with miniprot, Spaln2, GeMoMa and MetaEuk
 (Table~\ref{tab:eval}). When we apply human-specific splice models to both
 miniprot and Spaln2, miniprot is doing slightly better than Spaln2 at the base
 level and on the junction specificity. Spaln2 finds 0.5\% more confirmed junctions,
@@ -509,12 +513,14 @@ may be putting more weight on splice signals than residue alignment. It may
 create an intron even if the alignment is weak. Second, the Spaln2 developers
 observed that heuristics may be doing better than strict DP around short
 introns or exons. In one case, Spaln2 correctly created an exon with one amino
-acid. Miniprot under the current setting would never produce such an alignment.
+acid. Miniprot under the current setting would not produce such an alignment.
 
 For both miniprot and Spaln2, species-specific models improved alignment though
-the default Spaln2 model performed worse. MetaEuk did not pinpoint exact splice
-junctions, as is expected. It also aligned fewer proteins and had lower
-base-level sensitivity. We therefore did not evaluate it on other datasets.
+the default Spaln2 model performed worse. GeMoMa did better than the default
+Spaln2 but were not as accurate as Spaln2 with a proper splice model. MetaEuk
+did not pinpoint exact splice junctions, as is expected. It also aligned fewer
+proteins and had lower base-level sensitivity. We therefore only evaluated
+miniprot and Spaln2 on other datasets.
 
 For the human-mouse alignment, Spaln2 again has higher junction sensitivity and
 miniprot is better on other metrics. On the more challenging fly-mosquito
