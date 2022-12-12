@@ -438,7 +438,7 @@ mapped mosquito proteins to the Drosophila BDGP6 genome.
 
 To evaluate what aligners can map proteins to a whole genome, we randomly
 sampled 1\% of zebrafish proteins and mapped with various aligners. Only
-miniprot-0.5, Spaln2-2.4.13c~\citep{Iwata:2012aa}, GeMoMa-1.9~\citep{Keilwagen:2019wz}
+miniprot-0.6, Spaln2-2.4.13c~\citep{Iwata:2012aa}, GeMoMa-1.9~\citep{Keilwagen:2019wz}
 GenomeThreader-1.7.3~\citep{DBLP:journals/infsof/GremmeBSK05} could finish the
 alignment in an hour.  GenomeThreader found less than 30\% of coding regions in
 Spaln2 or miniprot alignment. It is not sensitive enough for the human-fish
@@ -538,10 +538,10 @@ factor to the higher specificity of miniprot even though Spaln2 has a more
 careful algorithm.
 
 Table~\ref{tab:eval} only considers the best hit of each protein. Miniprot by
-default may output multiple suboptimal alignments. If we count all
-human-zebrafish alignments, we could improve the base sensitivity to 65.32\%
-but with junction accuracy dropped to 90.87\%. The base specificity drops
-further to 84.96\% because miniprot starts to report pseudogenes.
+default may output multiple suboptimal alignments per protein if their
+alignment scores are no less than 99\% of the best alignment. If we count all
+human-zebrafish alignments outputted by minimap2, we could improve the base
+sensitivity to 60.76\% with a minor cost on base specificity to 95.25\%.
 
 \section{Discussions}
 

@@ -1,3 +1,17 @@
+Release 0.6-r185 (12 December 2022)
+-----------------------------------
+
+Notable changes:
+
+ * Improvement: for each protein, only output alignments close to the best
+   alignment. Also added option --outs to tune the threshold.
+
+ * New feature: output GTF with option --gtf.
+
+(0.6: 22 December 2022, r185)
+
+
+
 Release 0.5-r179 (17 October 2022)
 ----------------------------------
 
