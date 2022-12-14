@@ -73,7 +73,7 @@ set and to transfer known functional annotations to the new genome.
 For very closely related genomes, we can reconstruct gene structures from
 whole-genome alignment~\citep{Fiddes:2018wn} or from the alignment of gene
 regions~\citep{Shumate:2020ty}. These methods would not work well for genomes
-at longer evolutionary distances because intron sequences are less conserved
+at longer evolutionary distances because intron sequences are less conserved and
 this will affect the quality of the alignment. Aligning the more conserved
 coding regions~\citep{Li:2007aa,Gotoh:2008aa} may alleviate the issue. However,
 for distantly related species, even coding nucleotide sequences are not
@@ -478,17 +478,17 @@ Protein species    &zebrafish&zebrafish&zebrafish&zebrafish&zebrafish&zebrafish&
 Aligner            & miniprot& miniprot& Spaln2  & Spaln2  &  GeMoMa & MetaEuk & miniprot& Spaln2  & miniprot& Spaln2 \\
 Splice model       & human   & general & human   & default &     N/A &     N/A & human   & human   & human   &fruit fly \\
 \midrule
-Elapsed time (sec) &     460 &     471 &  12,716 &  13,024 &   5,787 &   2,518 &     314 &   3,736 &      29 &   2,528 \\
-Peak RAM (GB)      &    18.0 &    18.6 &     9.2 &     9.6 &   137.3 &    22.0 &    15.3 &     5.6 &     3.2 &     2.7 \\
+Elapsed time (sec) &     460 &     471 &  12,716 &  13,024 &   9,019 &   2,518 &     314 &   3,736 &      29 &   2,528 \\
+Peak RAM (GB)      &    18.0 &    18.6 &     9.2 &     9.6 &   124.9 &    22.0 &    15.3 &     5.6 &     3.2 &     2.7 \\
 \# proteins        &  30,313 &  30,313 &  30,313 &  30,313 &  30,313 &  30,313 &  21,844 &  21,844 &  13,094 &  13,094 \\
 \# mapped          &  19,998 &  19,998 &  17,860 &  17,780 &  25,096 &  12,665 &  19,303 &  18,840 &   7,211 &   6,125 \\
-\# single-exon     &   1,836 &   1,703 &     990 &     606 &   1,969 &   2,230 &   2,810 &   1,975 &   1,308 &     495 \\
-\# predicted junc. & 178,096 & 181,169 & 183,519 & 252,893 & 199,252 &  79,656 & 165,458 & 171,241 &  21,178 &  27,582 \\
-\# non-ovlp. junc. &     462 &     750 &   1,426 &  18,738 &   5,603 &     216 &     316 &     852 &     459 &     877 \\
-\# confirmed junc. & 165,084 & 164,102 & 165,826 & 156,980 & 142,521 &   5,761 & 161,113 & 162,551 &  18,630 &  22,606 \\
-\% confirmed junc. & 92.69\% & 90.58\% & 90.36\% & 62.07\% & 71.53\% &  7.23\% & 97.37\% & 94.93\% & 87.97\% & 81.96\% \\
-\% base SN         & 59.92\% & 59.97\% & 57.69\% & 56.28\% & 61.78\% & 48.32\% & 89.48\% & 88.62\% & 52.71\% & 50.13\% \\
-\% base SP         & 95.76\% & 95.28\% & 92.54\% & 84.30\% & 86.79\% & 91.58\% & 97.44\% & 95.27\% & 96.78\% & 97.38\% \\
+\# single-exon     &   1,836 &   1,703 &     990 &     606 &   1,861 &   2,230 &   2,810 &   1,975 &   1,308 &     495 \\
+\# predicted junc. & 178,096 & 181,169 & 183,519 & 252,893 & 205,166 &  79,656 & 165,458 & 171,241 &  21,178 &  27,582 \\
+\# non-ovlp. junc. &     462 &     750 &   1,426 &  18,738 &   5,724 &     216 &     316 &     852 &     459 &     877 \\
+\# confirmed junc. & 165,084 & 164,102 & 165,826 & 156,980 & 154,059 &   5,761 & 161,113 & 162,551 &  18,630 &  22,606 \\
+\% confirmed junc. & 92.69\% & 90.58\% & 90.36\% & 62.07\% & 75.09\% &  7.23\% & 97.37\% & 94.93\% & 87.97\% & 81.96\% \\
+\% base SN         & 59.92\% & 59.97\% & 57.69\% & 56.28\% & 67.12\% & 48.32\% & 89.48\% & 88.62\% & 52.71\% & 50.13\% \\
+\% base SP         & 95.76\% & 95.28\% & 92.54\% & 84.30\% & 88.69\% & 91.58\% & 97.44\% & 95.27\% & 96.78\% & 97.38\% \\
 \botrule
 \end{tabular*}
 }{Protein-to-genome alignments are compared to the annotated genes in ``Genome
@@ -542,11 +542,22 @@ default may output multiple suboptimal alignments per protein if their
 alignment scores are no less than 99\% of the best alignment. If we count all
 human-zebrafish alignments outputted by minimap2, we could improve the base
 sensitivity to 60.76\% with a minor cost on base specificity to 95.25\%.
+Reducing the threshold from 99\% to 95\% further increases base sensitivity to
+62.33\% but decreases base specificity to 94.04\% as miniprot starts to pick up
+pseudogenes.
 
 \section{Discussions}
 
 Miniprot is a fast protein-to-genome aligner comparable to existing tools in
-accuracy. It can assist gene annotation but does not replace full-pledge gene
+accuracy. Its primary use case is to assist gene annotation. At present, the
+Ensembl pipeline~\citep{Aken:2016wr} still relies on
+GeneWise~\citep{Birney:2004uy} and Exonerate~\citep{Slater:2005aa}.
+MAKER2~\citep{Cantarel:2008ue,Holt:2011tt} calls Exonerate.
+BRAKER2~\citep{Bruna:2021ug} integrates Spaln2~\citep{Iwata:2012aa} and
+depends on ProtHint~\citep{Bruna:2020vy} which also optionally invokes Spaln2.
+
+
+It can assist gene annotation but does not replace full-pledge gene
 annotation pipelines such as BRAKER2~\citep{Bruna:2021ug}.  Miniprot aligns
 each protein independently. When multiple proteins are mapped to the same
 locus, miniprot is unable to merge identical gene models or resolve conflicts

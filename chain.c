@@ -111,19 +111,20 @@ static uint64_t *compact_a(void *km, int32_t n_u, uint64_t *u, int32_t n_v, int3
 
 static inline int32_t comput_sc(uint64_t ai, uint64_t aj, int32_t max_dist_x, int32_t max_dist_y, int32_t bw, float chn_ceof_log, int32_t is_spliced, int32_t bbit, int32_t kmer)
 {
-	int32_t dq = (int32_t)ai - (int32_t)aj, dq3 = dq * 3, dr3, dd, sc;
+	int32_t dq = (int32_t)ai - (int32_t)aj, dq3 = dq * 3, dr3, dd, sc, dd_signed = 0;
 	if (dq <= 0 || dq3 > max_dist_x) return INT32_MIN;
 	if (dq > max_dist_y) return INT32_MIN;
 	if (bbit > 0) { // calculate the minimum gap size
 		int32_t bs = 1<<bbit;
 		dr3 = ((ai>>32) - (aj>>32)) << bbit;
-		if (dq3 >= dr3 - bs && dq3 <= dr3 + bs) dd = 0;
-		else if (dq3 < dr3 - bs) dd = dr3 - bs - dq3;
-		else dd = dq3 - (dr3 + bs);
+		if (dq3 >= dr3 - bs && dq3 <= dr3 + bs) dd = dd_signed = 0;
+		else if (dq3 < dr3 - bs) dd = dr3 - bs - dq3, dd_signed = -dd;
+		else dd = dq3 - (dr3 + bs), dd_signed = dd;
 	} else {
 		dr3 = (ai>>32) - (aj>>32);
 		if (dr3 == 0) return INT32_MIN;
 		dd = dr3 > dq3? dr3 - dq3 : dq3 - dr3;
+		dd_signed = dq3 - dr3;
 	}
 	if (dd > bw) return INT32_MIN;
 	if (bbit > 0) {
@@ -141,10 +142,11 @@ static inline int32_t comput_sc(uint64_t ai, uint64_t aj, int32_t max_dist_x, in
 		lin_pen = (float)dd * .33334f;
 		log_pen = dd >= 2? chn_ceof_log * (mp_log2(dd + 1) - 1.0f) + 1.0f : (float)dd; // mp_log2(x) only works for x>=2
 		if (is_spliced) {
-			if (dr3 > dq3) sc -= (int)(lin_pen < log_pen? lin_pen : log_pen);
+			if (dd_signed < 0) sc -= (int)(lin_pen < log_pen? lin_pen : log_pen);
 			else sc -= (int)(lin_pen + log_pen);
 		} else sc -= (int)(lin_pen + log_pen);
 	}
+	if (bbit > 0 && ai>>32 == aj>>32 && dd == 0) sc += MP_BLOCK_BONUS;
 	return sc;
 }
 

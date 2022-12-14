@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.6-r185"
+#define MP_VERSION "0.6-r186-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
@@ -14,6 +14,8 @@
 
 #define MP_FEAT_CDS       0
 #define MP_FEAT_STOP      1
+
+#define MP_BLOCK_BONUS    2
 
 #define MP_CODON_STD 0
 #define MP_IDX_MAGIC "MPI\1"

@@ -17,6 +17,8 @@ static ko_longopt_t long_options[] = {
 	{ "dbg-qname",       ko_no_argument,       502 },
 	{ "dbg-no-refine",   ko_no_argument,       503 },
 	{ "dbg-aflt",        ko_no_argument,       504 },
+	{ "dbg-anchor",      ko_no_argument,       505 },
+	{ "dbg-chain",       ko_no_argument,       506 },
 	{ 0, 0, 0 }
 };
 
@@ -89,7 +91,7 @@ int main(int argc, char *argv[])
 	mp_start();
 	mp_mapopt_init(&mo);
 	mp_idxopt_init(&io);
-	while ((c = ketopt(&o, argc, argv, 1, "k:s:l:b:t:d:c:n:m:K:p:N:SAO:E:J:C:F:G:e:uB:P:w:j:", long_options)) >= 0) {
+	while ((c = ketopt(&o, argc, argv, 1, "k:s:l:b:t:d:c:n:m:K:p:N:SAO:E:J:C:F:G:e:uB:P:w:j:g:", long_options)) >= 0) {
 		if (c == 'k') io.kmer = atoi(o.arg);
 		else if (c == 's') io.smer = atoi(o.arg);
 		else if (c == 'b') io.bbit = atoi(o.arg);
@@ -116,6 +118,7 @@ int main(int argc, char *argv[])
 		else if (c == 'u') mo.flag |= MP_F_SHOW_UNMAP;
 		else if (c == 'w') mo.chn_coef_log = atof(o.arg);
 		else if (c == 'j') mo.sp_model = atoi(o.arg);
+		else if (c == 'g') mo.max_gap = mp_parse_num(o.arg);
 		else if (c == 301) mo.flag |= MP_F_GFF; // --gff
 		else if (c == 302) mo.xdrop = atoi(o.arg); // --xdrop
 		else if (c == 303) mo.out_n = mp_parse_num(o.arg); // --outn
@@ -128,6 +131,8 @@ int main(int argc, char *argv[])
 		else if (c == 502) mp_dbg_flag |= MP_DBG_QNAME; // --dbg-qname
 		else if (c == 503) mp_dbg_flag |= MP_DBG_NO_REFINE; // --dbg-no-refine
 		else if (c == 504) mp_dbg_flag |= MP_DBG_MORE_DP; // --dbg-aflt
+		else if (c == 505) mp_dbg_flag |= MP_DBG_ANCHOR; // --dbg-anchor
+		else if (c == 506) mp_dbg_flag |= MP_DBG_CHAIN; // --dbg-chain
 		else if (c == 401) {
 			printf("%s\n", MP_VERSION);
 			return 0;

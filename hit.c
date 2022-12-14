@@ -10,6 +10,7 @@ static int32_t mp_cal_chn_sc_rank_approx(const mp_reg1_t *r, const uint64_t *a, 
 		const uint64_t a0 = a[r->off + i - 1], a1 = a[r->off + i];
 		int32_t dq = (int32_t)a1 - (int32_t)a0;
 		x += dq < kmer? dq : kmer;
+		if (a1>>32 == a0>>32) x += MP_BLOCK_BONUS;
 	}
 	return x;
 }
@@ -68,6 +69,7 @@ mp_reg1_t *mp_reg_gen_from_block(void *km, const mp_idx_t *mi, int32_t n_u, cons
 		r->qe = (uint32_t)a[ie] + 0;
 		r->chn_sc = ts == te? u[i]>>32 : (uint32_t)((double)(u[i]>>32) * (ie - is + 1) / n + .499);
 		r->chn_sc_rank = mp_cal_chn_sc_rank_approx(r, a, mi->opt.kmer);
+		r->chn_sc_rank = r->chn_sc;
 		k += n;
 	}
 	*n_reg = nr;

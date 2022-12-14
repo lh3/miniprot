@@ -107,9 +107,8 @@ static void mp_refine_reg(void *km, const mp_idx_t *mi, const mp_mapopt_t *opt, 
 	r->ve = as + (a[n_a-1]>>32) + 1;
 	for (i = 0; i < n_a; ++i)
 		a[i] = ((a[i]>>32) + as - r->vs) << 32 | a[i]<<32>>32;
-	r->chn_sc_rank = mp_cal_chn_sc_rank(r->cnt, r->a, kmer);
+//	r->chn_sc_rank = mp_cal_chn_sc_rank(r->cnt, r->a, kmer);
 	kfree(km, u);
-	// for (i = 0; i < n_a; ++i) printf("X\t%d\t%d\n", (int32_t)(a[i]>>32), (int32_t)a[i]);
 }
 
 mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_tbuf_t *b, const mp_mapopt_t *opt, const char *qname)
@@ -139,6 +138,13 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	kfree(km, sd.a);
 	radix_sort_mp64(a, a + n_a);
 
+	if (mp_dbg_flag & MP_DBG_ANCHOR) {
+		for (k = 0; k < n_a; ++k) {
+			i = mp_idx_block2pos(mi, a[k]>>32);
+			fprintf(stderr, "X\t%ld\t%s\t%c\t%ld\t%d\n", (long)(a[k]>>32), mi->nt->ctg[i>>1].name, "+-"[i&1], (long)((a[k]>>32) - mi->bo[i]) << mi->opt.bbit, (uint32_t)a[k]);
+		}
+	}
+
 	a = mp_chain(opt->max_intron, opt->max_gap, opt->bw, opt->max_chn_max_skip, opt->max_chn_iter, opt->min_chn_cnt, opt->min_chn_sc, opt->chn_coef_log,
 				 is_splice, mi->opt.kmer, mi->opt.bbit, n_a, a, &n_u, &u, km);
 	reg = mp_reg_gen_from_block(0, mi, n_u, u, a, n_reg);
@@ -146,6 +152,18 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	mp_sort_reg(km, n_reg, reg);
 	mp_set_parent(km, opt->mask_level, opt->mask_len, *n_reg, reg, mi->opt.kmer, 0);
 	mp_select_sub(km, opt->pri_ratio * opt->pri_ratio, mi->opt.kmer * 2, opt->best_n, n_reg, reg);
+
+	if (mp_dbg_flag & MP_DBG_CHAIN) {
+		for (i = 0; i < *n_reg; ++i) {
+			mp_reg1_t *r = &reg[i];
+			for (k = 0; k < r->cnt; ++k) {
+				uint64_t ak = a[r->off + k], t;
+				t = mp_idx_block2pos(mi, ak>>32);
+				fprintf(stderr, "Y\t%d\t%ld\t%s\t%c\t%ld\t%d\n", i, (long)(ak>>32), mi->nt->ctg[t>>1].name, "+-"[t&1], (long)((ak>>32) - mi->bo[t]) << mi->opt.bbit, (uint32_t)ak);
+			}
+		}
+	}
+
 	if (!(mp_dbg_flag & MP_DBG_NO_REFINE)) {
 		int32_t nr = 0;
 		uint64_t *ext;
