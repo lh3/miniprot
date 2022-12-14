@@ -115,7 +115,7 @@ typedef struct {
 	int32_t n_sub, subsc;
 	int32_t n_feat, m_feat, n_exon;
 	int32_t chn_sc;
-	int32_t chn_sc_rank; // used for ranking
+	int32_t chn_sc_ungap;
 	uint32_t hash;
 	uint32_t vid;
 	int32_t qs, qe;

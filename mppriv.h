@@ -66,7 +66,7 @@ void mp_sketch_prot(void *km, const char *seq, int32_t len, int32_t kmer, int32_
 int32_t mp_idx_block2pos(const mp_idx_t *mi, uint32_t b);
 
 // from hit.c
-int32_t mp_cal_chn_sc_rank(int32_t n_a, const uint64_t *a, int32_t kmer);
+int32_t mp_cal_chn_sc_ungap(int32_t n_a, const uint64_t *a, int32_t kmer);
 void mp_sort_reg(void *km, int *n_regs, mp_reg1_t *r);
 void mp_set_parent(void *km, float mask_level, int mask_len, int n, mp_reg1_t *r, int sub_diff, int hard_mask_level);
 void mp_select_sub(void *km, float pri_ratio, int min_diff, int best_n, int *n_, mp_reg1_t *r);
