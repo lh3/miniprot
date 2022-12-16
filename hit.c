@@ -212,7 +212,9 @@ void mp_sync_regs(void *km, int n_regs, mp_reg1_t *regs) // keep mp_reg1_t::{id,
 void mp_select_sub(void *km, float pri_ratio, int min_diff, int best_n, int *n_, mp_reg1_t *r)
 {
 	if (pri_ratio > 0.0f && *n_ > 0) {
-		int i, k, n = *n_, n_2nd = 0;
+		int i, k, n = *n_, n_2nd = 0, chn_sc_ungap = -1;
+		for (i = 0; i < n; ++i) // find the largest chn_sc_ungap
+			chn_sc_ungap = chn_sc_ungap > r[i].chn_sc_ungap? chn_sc_ungap : r[i].chn_sc_ungap;
 		for (i = k = 0; i < n; ++i) {
 			int p = r[i].parent;
 			int sci = r[i].p? r[i].p->dp_max : r[i].chn_sc;
@@ -223,6 +225,9 @@ void mp_select_sub(void *km, float pri_ratio, int min_diff, int best_n, int *n_,
 				if (!(r[i].qs == r[p].qs && r[i].qe == r[p].qe && r[i].vid == r[p].vid && r[i].vs == r[p].vs && r[i].ve == r[p].ve)) // not identical hits
 					r[k++] = r[i], ++n_2nd;
 				else if (r[i].p) free(r[i].p);
+			} else if (r[i].p == 0 && r[p].p == 0 && chn_sc_ungap > 0 && r[i].chn_sc_ungap >= chn_sc_ungap * pri_ratio && n_2nd < best_n) {
+				if (!(r[i].qs == r[p].qs && r[i].qe == r[p].qe && r[i].vid == r[p].vid && r[i].vs == r[p].vs && r[i].ve == r[p].ve)) // not identical hits
+					r[k++] = r[i], ++n_2nd;
 			} else if (r[i].p) free(r[i].p);
 		}
 		if (k != n) mp_sync_regs(km, k, r); // removing hits requires sync()
