@@ -15,7 +15,7 @@
 #define MP_FEAT_CDS       0
 #define MP_FEAT_STOP      1
 
-#define MP_BLOCK_BONUS    2
+#define MP_BLOCK_BONUS    0
 
 #define MP_CODON_STD 0
 #define MP_IDX_MAGIC "MPI\1"

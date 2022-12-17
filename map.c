@@ -111,6 +111,19 @@ static void mp_refine_reg(void *km, const mp_idx_t *mi, const mp_mapopt_t *opt, 
 	kfree(km, u);
 }
 
+static void mp_dbg_chain(const mp_idx_t *mi, int32_t n_reg, const mp_reg1_t *reg, const uint64_t *a, int32_t bbit, const char *label)
+{
+	int32_t i, k;
+	for (i = 0; i < n_reg; ++i) {
+		const mp_reg1_t *r = &reg[i];
+		for (k = 0; k < r->cnt; ++k) {
+			uint64_t ak = a[r->off + k];
+			uint64_t off = bbit > 0? (long)((ak>>32) - mi->bo[r->vid]) << bbit : r->vs + (ak>>32);
+			fprintf(stderr, "%s\t%d\t%ld\t%s\t%c\t%ld\t%d\n", label, i, (long)(ak>>32), mi->nt->ctg[r->vid>>1].name, "+-"[r->vid&1], (long)off, (uint32_t)ak);
+		}
+	}
+}
+
 mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_tbuf_t *b, const mp_mapopt_t *opt, const char *qname)
 {
 	void *km = b->km;
@@ -153,16 +166,8 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	mp_set_parent(km, opt->mask_level, opt->mask_len, *n_reg, reg, mi->opt.kmer, 0);
 	mp_select_sub(km, opt->pri_ratio * opt->pri_ratio, mi->opt.kmer * 2, opt->best_n, n_reg, reg);
 
-	if (mp_dbg_flag & MP_DBG_CHAIN) {
-		for (i = 0; i < *n_reg; ++i) {
-			mp_reg1_t *r = &reg[i];
-			for (k = 0; k < r->cnt; ++k) {
-				uint64_t ak = a[r->off + k], t;
-				t = mp_idx_block2pos(mi, ak>>32);
-				fprintf(stderr, "Y\t%d\t%ld\t%s\t%c\t%ld\t%d\n", i, (long)(ak>>32), mi->nt->ctg[t>>1].name, "+-"[t&1], (long)((ak>>32) - mi->bo[t]) << mi->opt.bbit, (uint32_t)ak);
-			}
-		}
-	}
+	if (mp_dbg_flag & MP_DBG_CHAIN)
+		mp_dbg_chain(mi, *n_reg, reg, a, mi->opt.bbit, "Y1");
 
 	if (!(mp_dbg_flag & MP_DBG_NO_REFINE)) {
 		int32_t nr = 0;
@@ -178,6 +183,7 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 		kfree(km, a);
 		a = mp_collate_a(km, *n_reg, reg);
 		mp_sort_reg(km, n_reg, reg);
+		//mp_dbg_chain(mi, *n_reg, reg, a, 0, "Y2");
 		mp_set_parent(km, opt->mask_level, opt->mask_len, *n_reg, reg, mi->opt.kmer, 0);
 		mp_select_sub(km, opt->pri_ratio * opt->pri_ratio, mi->opt.kmer * 2, opt->best_n, n_reg, reg);
 	}
