@@ -160,8 +160,8 @@ static inline int32_t comput_sc(uint64_t ai, uint64_t aj, int32_t max_dist_x, in
 uint64_t *mp_chain(int32_t max_dist_x, int32_t max_dist_y, int32_t bw, int32_t max_skip, int32_t max_iter, int32_t min_cnt, int32_t min_sc, float chn_ceof_log,
 				   int32_t is_spliced, int32_t kmer, int32_t bbit, int64_t n, uint64_t *a, int32_t *n_u_, uint64_t **_u, void *km)
 { // TODO: make sure this works when n has more than 32 bits
-	int32_t *f, *t, *v, n_u, n_v, mmax_f = 0, max_drop = bw;
-	int64_t *p, i, j, st = 0, n_iter = 0;
+	int32_t *f, *t, *v, n_u, n_v, mmax_f = 0, max_drop = bw, hf = 0;
+	int64_t *p, i, j, st = 0, n_iter = 0, hi = -1;
 	uint64_t *u;
 
 	if (_u) *_u = 0, *n_u_ = 0;
@@ -182,6 +182,11 @@ uint64_t *mp_chain(int32_t max_dist_x, int32_t max_dist_y, int32_t bw, int32_t m
 		int64_t max_j = -1;
 		int32_t max_f = kmer, n_skip = 0;
 		while (st < i && ((a[i]>>32) - (a[st]>>32)) << bbit > max_dist_x) ++st;
+		if (hi >= 0 && hi >= st) { // a heuristic to rescue some missing optimal chains due to max_skip
+			int32_t sc;
+			sc = hf + comput_sc(a[i], a[hi], max_dist_x, max_dist_y, bw, chn_ceof_log, is_spliced, bbit, kmer);
+			if (sc > max_f) max_f = sc, max_j = hi;
+		} else hf = 0, hi = -1;
 		if (i - st > max_iter) st = i - max_iter;
 		for (j = i - 1; j >= st; --j) {
 			int32_t sc;
@@ -201,6 +206,7 @@ uint64_t *mp_chain(int32_t max_dist_x, int32_t max_dist_y, int32_t bw, int32_t m
 		f[i] = max_f, p[i] = max_j;
 		v[i] = max_j >= 0 && v[max_j] > max_f? v[max_j] : max_f; // v[] keeps the peak score up to i; f[] is the score ending at i, not always the peak
 		if (mmax_f < max_f) mmax_f = max_f;
+		if (hf < max_f) hf = max_f, hi = i;
 	}
 
 	u = mp_chain_backtrack(km, n, f, p, v, t, min_cnt, min_sc, max_drop, &n_u, &n_v);
