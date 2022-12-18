@@ -232,21 +232,23 @@ static int32_t mp_extra_start(const mp_reg1_t *r, const uint8_t *nt, int64_t as,
 
 void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len, const char *aa, mp_reg1_t *r)
 {
-	int32_t i, i0, ne0 = 0, ae0 = 0, score = 0, extl, extr;
+	int32_t i, i0 = 0, ne0 = 0, ae0 = 0, score = 0, extl, extr;
 	int64_t as, ae, ctg_len, vs0, l_nt;
 	uint8_t *nt;
 	ns_opt_t ns_opt0;
 	mp_cigar_t cigar = {0,0,0};
 
 	assert(r->cnt > 0);
-	mp_filter_seed(r->cnt, r->a, 3, 3, opt->kmer2, opt->kmer2 + 1);
-	for (i = 0; i < r->cnt; ++i)
-		if (r->a[i]>>31&1) break;
-	if (i == r->cnt) { // all filtered; FIXME: we need to filter it later; not implemented yet
-		r->cnt = 0;
-		return;
+	if (!(mp_dbg_flag & MP_DBG_MORE_DP)) {
+		mp_filter_seed(r->cnt, r->a, 3, 3, opt->kmer2, opt->kmer2 + 1);
+		for (i = 0; i < r->cnt; ++i)
+			if (r->a[i]>>31&1) break;
+		if (i == r->cnt) { // all filtered; FIXME: we need to filter it later; not implemented yet
+			r->cnt = 0;
+			return;
+		}
+		i0 = i;
 	}
-	i0 = i;
 
 	extl = extr = opt->max_ext;
 	if (r->qs >= 10) extl = opt->max_intron/2;

@@ -12,6 +12,7 @@ static ko_longopt_t long_options[] = {
 	{ "J2",              ko_required_argument, 306 },
 	{ "gtf",             ko_no_argument,       307 },
 	{ "outs",            ko_required_argument, 308 },
+	{ "max-skip",        ko_required_argument, 309 },
 	{ "version",         ko_no_argument,       401 },
 	{ "no-kalloc",       ko_no_argument,       501 },
 	{ "dbg-qname",       ko_no_argument,       502 },
@@ -127,6 +128,7 @@ int main(int argc, char *argv[])
 		else if (c == 305) mo.gff_delim = o.arg[0]; // --gff-delim
 		else if (c == 306) mo.io_end = atoi(o.arg); // --J2
 		else if (c == 307) mo.flag |= MP_F_GTF; // --gtf
+		else if (c == 309) mo.max_chn_max_skip = mp_parse_num(o.arg); // --max-skip
 		else if (c == 501) mp_dbg_flag |= MP_DBG_NO_KALLOC; // --no-kalloc
 		else if (c == 502) mp_dbg_flag |= MP_DBG_QNAME; // --dbg-qname
 		else if (c == 503) mp_dbg_flag |= MP_DBG_NO_REFINE; // --dbg-no-refine
