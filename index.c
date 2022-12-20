@@ -8,6 +8,11 @@
 #include "kvec-km.h"
 #include "kthread.h"
 
+static uint32_t mp_n_bucket(const mp_idxopt_t *io)
+{
+	return 1U << (io->kmer*4 - io->mod_bit);
+}
+
 uint32_t *mp_idx_boff(const mp_ntdb_t *db, int32_t bbit, uint32_t *n_boff)
 {
 	int32_t i;
@@ -60,7 +65,7 @@ static void build_worker(void *data, long j, int tid)
 	mp64_v a = {0,0,0};
 	seq = Kmalloc(km_tmp, uint8_t, nt->ctg[j>>1].len);
 	len = mp_ntseq_get(nt, j>>1, 0, -1, j&1, seq);
-	mp_sketch_nt4(km_tmp, seq, len, io->min_aa_len, io->kmer, io->smer, io->bbit, aux->mi->bo[j], &a);
+	mp_sketch_nt4(km_tmp, seq, len, io->min_aa_len, io->kmer, io->mod_bit, io->bbit, aux->mi->bo[j], &a);
 	aux->a[j].m = aux->a[j].n = a.n;
 	aux->a[j].a = Kmalloc(km, uint64_t, a.n);
 	memcpy(aux->a[j].a, a.a, a.n * sizeof(uint64_t));
@@ -72,7 +77,8 @@ static void build_bidx(const mp_idxopt_t *io, mp_idx_t *mi, const mp64_v *a)
 {
 	int32_t i, j, n_a = mi->nt->n_ctg * 2;
 	int64_t tmp;
-	uint32_t n_kmer = 1U << io->kmer*4;
+	uint32_t n_kmer;
+	n_kmer = mp_n_bucket(io);
 	mi->ki = Kcalloc(0, int64_t, n_kmer);
 	for (i = 0; i < n_a; ++i) { // count
 		const mp64_v *b = &a[i];
@@ -137,7 +143,8 @@ mp_idx_t *mp_idx_build(const char *fn, const mp_idxopt_t *io, int32_t n_threads)
 void mp_idx_print_stat(const mp_idx_t *mi, int32_t max_occ)
 {
 	int64_t tot = 0, sum_large = 0;
-	uint32_t i, n = 1U<<mi->opt.kmer*4, n_occupied = 0, n_large = 0;
+	uint32_t i, n, n_occupied = 0, n_large = 0;
+	n = mp_n_bucket(&mi->opt);
 	for (i = 0; i < n - 1; ++i) {
 		int64_t c = mi->ki[i+1] - mi->ki[i];
 		if (c > 0) ++n_occupied;
@@ -193,7 +200,7 @@ int mp_idx_dump(const char *fn, const mp_idx_t *mi)
 	fwrite(&mi->opt, sizeof(mi->opt), 1, fp);
 	fwrite(&mi->n_kb, 8, 1, fp);
 	mp_ntseq_dump(fp, mi->nt);
-	fwrite(mi->ki, 8, 1U<<mi->opt.kmer*4, fp);
+	fwrite(mi->ki, 8, mp_n_bucket(&mi->opt), fp);
 	fwrite(mi->kb, 4, mi->n_kb, fp);
 	if (fp != stdout) fclose(fp);
 	return 0;
@@ -214,9 +221,9 @@ mp_idx_t *mp_idx_restore(const char *fn)
 	fread(&mi->opt, sizeof(mi->opt), 1, fp);
 	fread(&mi->n_kb, 8, 1, fp);
 	mi->nt = mp_ntseq_restore(fp);
-	mi->ki = Kmalloc(0, int64_t, 1U<<mi->opt.kmer*4);
+	mi->ki = Kmalloc(0, int64_t, mp_n_bucket(&mi->opt));
 	mi->kb = Kmalloc(0, uint32_t, mi->n_kb);
-	fread(mi->ki, 8, 1U<<mi->opt.kmer*4, fp);
+	fread(mi->ki, 8, mp_n_bucket(&mi->opt), fp);
 	fread(mi->kb, 4, mi->n_kb, fp);
 	if (fp != stdin) fclose(fp);
 	mi->bo = mp_idx_boff(mi->nt, mi->opt.bbit, &mi->n_block);

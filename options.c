@@ -10,7 +10,7 @@ void mp_idxopt_init(mp_idxopt_t *io)
 	io->bbit = 8;
 	io->min_aa_len = 15;
 	io->kmer = 6;
-	io->smer = 4;
+	io->mod_bit = 2;
 }
 
 void mp_mapopt_set_fs(mp_mapopt_t *mo, int32_t fs)

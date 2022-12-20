@@ -59,8 +59,8 @@ int64_t mp_ntseq_get(const mp_ntdb_t *db, int32_t cid, int64_t st, int64_t en, i
 int64_t mp_ntseq_get_by_v(const mp_ntdb_t *nt, int32_t vid, int64_t st, int64_t en, uint8_t *seq);
 
 // from sketch.c
-void mp_sketch_nt4(void *km, const uint8_t *seq, int64_t len, int32_t min_aa_len, int32_t kmer, int32_t smer, int32_t bbit, int64_t boff, mp64_v *a);
-void mp_sketch_prot(void *km, const char *seq, int32_t len, int32_t kmer, int32_t smer, mp64_v *a);
+void mp_sketch_nt4(void *km, const uint8_t *seq, int64_t len, int32_t min_aa_len, int32_t kmer, int32_t mod_bit, int32_t bbit, int64_t boff, mp64_v *a);
+void mp_sketch_prot(void *km, const char *seq, int32_t len, int32_t kmer, int32_t mod_bit, mp64_v *a);
 
 // from index.c
 int32_t mp_idx_block2pos(const mp_idx_t *mi, uint32_t b);

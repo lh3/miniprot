@@ -46,7 +46,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "Options:\n");
 	fprintf(fp, "  Indexing:\n");
 	fprintf(fp, "    -k INT       k-mer size [%d]\n", io->kmer);
-	fprintf(fp, "    -s INT       submer size (density: 1/(2*(k-s)+1)) [%d]\n", io->smer);
+	fprintf(fp, "    -M INT       modimisers bit (sample rate = 1/2**M) [%d]\n", io->mod_bit);
 	fprintf(fp, "    -b INT       bits per block [%d]\n", io->bbit);
 	fprintf(fp, "    -d FILE      save index to FILE []\n");
 	fprintf(fp, "  Mapping:\n");
@@ -94,7 +94,7 @@ int main(int argc, char *argv[])
 	mp_idxopt_init(&io);
 	while ((c = ketopt(&o, argc, argv, 1, "k:s:l:b:t:d:c:n:m:K:p:N:SAO:E:J:C:F:G:e:uB:P:w:j:g:", long_options)) >= 0) {
 		if (c == 'k') io.kmer = atoi(o.arg);
-		else if (c == 's') io.smer = atoi(o.arg);
+		else if (c == 'M') io.mod_bit = atoi(o.arg);
 		else if (c == 'b') io.bbit = atoi(o.arg);
 		else if (c == 't') n_threads = atoi(o.arg);
 		else if (c == 'd') fn_idx = o.arg;
