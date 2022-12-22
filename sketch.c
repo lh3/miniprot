@@ -18,12 +18,12 @@ static inline uint32_t mp_hash32_mask(uint32_t key, uint32_t mask)
 void mp_sketch_prot(void *km, const char *seq, int32_t len, int32_t kmer, int32_t mod_bit, mp64_v *a)
 {
 	int32_t i, l = 0;
-	uint32_t x = 0, y, mask_k = (1U<<kmer*4) - 1, mask_mod = (1U<<mod_bit) - 1;
+	uint32_t x = 0, y, mask_k = (1U<<kmer*MP_BITS_PER_AA) - 1, mask_mod = (1U<<mod_bit) - 1;
 	a->n = 0;
 	for (i = 0; i < len; ++i) {
 		int32_t c = ns_tab_aa13[(uint8_t)seq[i]];
 		if (c < 14) {
-			x = (x<<4 | c) & mask_k;
+			x = (x<<MP_BITS_PER_AA | c) & mask_k;
 			if (++l >= kmer) {
 				y = mp_hash32_mask(x, mask_k);
 				if ((y&mask_mod) == 0)
@@ -37,11 +37,11 @@ void mp_sketch_clean_orf(void *km, const uint8_t *seq, int64_t st, int64_t en, i
 {
 	int64_t i;
 	int32_t l;
-	uint32_t x, y, mask_k = (1U<<kmer*4) - 1, mask_mod = (1U<<mod_bit) - 1;
+	uint32_t x, y, mask_k = (1U<<kmer*MP_BITS_PER_AA) - 1, mask_mod = (1U<<mod_bit) - 1;
 	for (i = st, l = 0, x = 0; i < en; i += 3) {
 		uint8_t codon = seq[i]<<4 | seq[i+1]<<2 | seq[i+2];
 		assert(seq[i] < 4 && seq[i+1] < 4 && seq[i+2] < 4);
-		x = (x<<4 | ns_tab_codon13[codon]) & mask_k;
+		x = (x<<MP_BITS_PER_AA | ns_tab_codon13[codon]) & mask_k;
 		if (++l >= kmer) {
 			y = mp_hash32_mask(x, mask_k);
 			assert(y <= mask_k);
