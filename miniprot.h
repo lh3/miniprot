@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.6-r194-dirty"
+#define MP_VERSION "0.6-r195-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
@@ -11,6 +11,7 @@
 #define MP_F_GFF          0x8
 #define MP_F_NO_PAF       0x10
 #define MP_F_GTF          0x20
+#define MP_F_NO_PRE_CHAIN 0x40
 
 #define MP_FEAT_CDS       0
 #define MP_FEAT_STOP      1
