@@ -123,30 +123,53 @@ static void mp_dbg_chain(const mp_idx_t *mi, int32_t n_reg, const mp_reg1_t *reg
 	}
 }
 
+static int32_t mp_cal_max_occ(void *km, const mp_idx_t *mi, int32_t n, const uint64_t *a)
+{
+	int32_t i, n_kmer;
+	uint64_t *cnt, q25, q75;
+	cnt = Kmalloc(km, uint64_t, n);
+	n_kmer = mp_n_bucket(&mi->opt);
+	for (i = 0; i < n; ++i) {
+		int64_t en = (a[i]>>32) + 1 < n_kmer? mi->ki[(a[i]>>32) + 1] : mi->n_kb;
+		cnt[i] = en - mi->ki[a[i]>>32];
+	}
+	radix_sort_mp64(cnt, cnt + n);
+	q25 = cnt[(int64_t)(n * .25 + .499)];
+	q75 = cnt[(int64_t)(n * .75 + .499)];
+	kfree(km, cnt);
+	return (q75 - q25) * 3 + 10;
+}
+
 mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_tbuf_t *b, const mp_mapopt_t *opt, const char *qname)
 {
 	void *km = b->km;
 	const mp_idxopt_t *io = &mi->opt;
 	mp64_v sd = {0,0,0};
 	mp_reg1_t *reg;
-	int32_t i, n_u, is_splice = !(opt->flag&MP_F_NO_SPLICE);
+	int32_t i, n_u, max_occ, is_splice = !(opt->flag&MP_F_NO_SPLICE);
 	int64_t k, n_a = 0, n_kmer;
 	uint64_t *a, *u;
 
 	*n_reg = 0;
-	mp_sketch_prot(km, seq, qlen, io->kmer, io->mod_bit, &sd);
-
 	n_kmer = mp_n_bucket(&mi->opt);
-	for (i = 0; i < sd.n; ++i) { // TODO: sorting might help to reduce cache misses, but probably doesn't matter in practice
+	mp_sketch_prot(km, seq, qlen, io->kmer, io->mod_bit, &sd);
+	radix_sort_mp64(sd.a, sd.a + sd.n);
+
+	if (sd.n >= 8) {
+		max_occ = mp_cal_max_occ(km, mi, sd.n, sd.a);
+		if (max_occ > opt->max_occ) max_occ = opt->max_occ;
+	} else max_occ = opt->max_occ;
+
+	for (i = 0; i < sd.n; ++i) {
 		int64_t en = (sd.a[i]>>32) + 1 < n_kmer? mi->ki[(sd.a[i]>>32) + 1] : mi->n_kb;
 		int64_t n = en - mi->ki[sd.a[i]>>32];
-		if (n <= opt->max_occ) n_a += n;
+		if (n <= max_occ) n_a += n;
 	}
 	a = Kmalloc(km, uint64_t, n_a);
 	for (i = 0, k = 0; i < sd.n; ++i) {
 		int64_t j, st = mi->ki[sd.a[i]>>32];
 		int64_t en = (sd.a[i]>>32) + 1 < n_kmer? mi->ki[(sd.a[i]>>32) + 1] : mi->n_kb;
-		if (en - st <= opt->max_occ)
+		if (en - st <= max_occ)
 			for (j = st; j < en; ++j)
 				a[k++] = (uint64_t)mi->kb[j] << 32 | (uint32_t)sd.a[i];
 	}
