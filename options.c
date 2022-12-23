@@ -9,7 +9,11 @@ void mp_idxopt_init(mp_idxopt_t *io)
 	memset(io, 0, sizeof(*io));
 	io->bbit = 8;
 	io->min_aa_len = 15;
+	#if MP_BITS_PER_AA == 4
 	io->kmer = 6;
+	#else
+	io->kmer = 8;
+	#endif
 	io->mod_bit = 2;
 }
 
@@ -42,7 +46,11 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 	mo->best_n = 30;
 	mo->out_n = 1000;
 	mo->out_sim = 0.99f;
+	#if MP_BITS_PER_AA == 4
 	mo->kmer2 = 5;
+	#else
+	mo->kmer2 = 7;
+	#endif
 
 	mo->go = 11, mo->ge = 1;
 	mo->io = 29;

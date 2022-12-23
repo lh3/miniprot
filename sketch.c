@@ -23,7 +23,11 @@ void mp_sketch_prot(void *km, const char *seq, int32_t len, int32_t kmer, int32_
 	for (i = 0; i < len; ++i) {
 		int32_t c = ns_tab_aa13[(uint8_t)seq[i]];
 		if (c < 14) {
+			#if MP_BITS_PER_AA == 4
 			x = (x<<MP_BITS_PER_AA | c) & mask_k;
+			#else
+			x = (x<<MP_BITS_PER_AA | c>>1) & mask_k;
+			#endif
 			if (++l >= kmer) {
 				y = mp_hash32_mask(x, mask_k);
 				if ((y&mask_mod) == 0)
@@ -41,7 +45,11 @@ void mp_sketch_clean_orf(void *km, const uint8_t *seq, int64_t st, int64_t en, i
 	for (i = st, l = 0, x = 0; i < en; i += 3) {
 		uint8_t codon = seq[i]<<4 | seq[i+1]<<2 | seq[i+2];
 		assert(seq[i] < 4 && seq[i+1] < 4 && seq[i+2] < 4);
+		#if MP_BITS_PER_AA == 4
 		x = (x<<MP_BITS_PER_AA | ns_tab_codon13[codon]) & mask_k;
+		#else
+		x = (x<<MP_BITS_PER_AA | ns_tab_codon13[codon]>>1) & mask_k;
+		#endif
 		if (++l >= kmer) {
 			y = mp_hash32_mask(x, mask_k);
 			assert(y <= mask_k);
