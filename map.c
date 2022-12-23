@@ -131,19 +131,22 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	mp64_v sd = {0,0,0};
 	mp_reg1_t *reg;
 	int32_t i, n_u, is_splice = !(opt->flag&MP_F_NO_SPLICE);
-	int64_t k, n_a = 0;
+	int64_t k, n_a = 0, n_kmer;
 	uint64_t *a, *u;
 
 	*n_reg = 0;
 	mp_sketch_prot(km, seq, qlen, io->kmer, io->mod_bit, &sd);
 
+	n_kmer = mp_n_bucket(&mi->opt);
 	for (i = 0; i < sd.n; ++i) { // TODO: sorting might help to reduce cache misses, but probably doesn't matter in practice
-		int64_t n = mi->ki[(sd.a[i]>>32) + 1] - mi->ki[sd.a[i]>>32];
+		int64_t en = (sd.a[i]>>32) + 1 < n_kmer? mi->ki[(sd.a[i]>>32) + 1] : mi->n_kb;
+		int64_t n = en - mi->ki[sd.a[i]>>32];
 		if (n <= opt->max_occ) n_a += n;
 	}
 	a = Kmalloc(km, uint64_t, n_a);
 	for (i = 0, k = 0; i < sd.n; ++i) {
-		int64_t j, st = mi->ki[sd.a[i]>>32], en = mi->ki[(sd.a[i]>>32) + 1];
+		int64_t j, st = mi->ki[sd.a[i]>>32];
+		int64_t en = (sd.a[i]>>32) + 1 < n_kmer? mi->ki[(sd.a[i]>>32) + 1] : mi->n_kb;
 		if (en - st <= opt->max_occ)
 			for (j = st; j < en; ++j)
 				a[k++] = (uint64_t)mi->kb[j] << 32 | (uint32_t)sd.a[i];

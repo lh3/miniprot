@@ -8,11 +8,6 @@
 #include "kvec-km.h"
 #include "kthread.h"
 
-static uint32_t mp_n_bucket(const mp_idxopt_t *io)
-{
-	return 1U << (io->kmer * MP_BITS_PER_AA - io->mod_bit);
-}
-
 uint32_t *mp_idx_boff(const mp_ntdb_t *db, int32_t bbit, uint32_t *n_boff)
 {
 	int32_t i;

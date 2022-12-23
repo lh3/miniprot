@@ -96,6 +96,11 @@ static inline float mp_log2(float x) // NB: this doesn't work when x<2
 	return log_2;
 }
 
+static inline uint32_t mp_n_bucket(const mp_idxopt_t *io)
+{
+	return 1U << (io->kmer * MP_BITS_PER_AA - io->mod_bit);
+}
+
 #ifdef __cplusplus
 }
 #endif
