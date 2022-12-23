@@ -111,7 +111,7 @@ void mp_sort_reg(void *km, int *n_regs, mp_reg1_t *r)
 			aux[n_aux].x = (uint64_t)score << 32 | r[i].hash;
 			aux[n_aux++].y = i;
 		} else if (r[i].p) {
-			free(r[i].p);
+			free(r[i].p); free(r[i].feat);
 			r[i].p = 0;
 		}
 	}
@@ -224,11 +224,11 @@ void mp_select_sub(void *km, float pri_ratio, int min_diff, int best_n, int *n_,
 			} else if ((sci >= scp * pri_ratio || sci + min_diff >= scp) && n_2nd < best_n) {
 				if (!(r[i].qs == r[p].qs && r[i].qe == r[p].qe && r[i].vid == r[p].vid && r[i].vs == r[p].vs && r[i].ve == r[p].ve)) // not identical hits
 					r[k++] = r[i], ++n_2nd;
-				else if (r[i].p) free(r[i].p);
+				else if (r[i].p) { free(r[i].p); free(r[i].feat); }
 			} else if (r[i].p == 0 && r[p].p == 0 && chn_sc_ungap > 0 && r[i].chn_sc_ungap >= chn_sc_ungap * pri_ratio && n_2nd < best_n) {
 				if (!(r[i].qs == r[p].qs && r[i].qe == r[p].qe && r[i].vid == r[p].vid && r[i].vs == r[p].vs && r[i].ve == r[p].ve)) // not identical hits
 					r[k++] = r[i], ++n_2nd;
-			} else if (r[i].p) free(r[i].p);
+			} else if (r[i].p) { free(r[i].p); free(r[i].feat); }
 		}
 		if (k != n) mp_sync_regs(km, k, r); // removing hits requires sync()
 		*n_ = k;
