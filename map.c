@@ -137,7 +137,7 @@ static int32_t mp_cal_max_occ(void *km, const mp_idx_t *mi, int32_t n, const uin
 	q25 = cnt[(int64_t)(n * .25 + .499)];
 	q75 = cnt[(int64_t)(n * .75 + .499)];
 	kfree(km, cnt);
-	return (q75 - q25) * 3 + 10;
+	return (int32_t)(q75 + (q75 - q25) * 1.5 + 10.); // threshold the outliers, the boxplot way (except for +10)
 }
 
 mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_tbuf_t *b, const mp_mapopt_t *opt, const char *qname)
