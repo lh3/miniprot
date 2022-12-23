@@ -14,7 +14,7 @@ void mp_idxopt_init(mp_idxopt_t *io)
 	#else
 	io->kmer = 8;
 	#endif
-	io->mod_bit = 2;
+	io->mod_bit = 1;
 }
 
 void mp_mapopt_set_fs(mp_mapopt_t *mo, int32_t fs)
@@ -29,7 +29,7 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 	memset(mo, 0, sizeof(*mo));
 	mo->flag = 0;
 	mo->mini_batch_size = 2000000;
-	mo->max_occ = 50000;
+	mo->max_occ = 20000;
 	mo->max_gap = 1000;
 	mo->max_intron = 200000;
 	mo->bw = mo->max_intron;
