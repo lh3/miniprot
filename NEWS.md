@@ -1,3 +1,30 @@
+Release 0.7-r207 (25 December 2022)
+-----------------------------------
+
+Notable changes:
+
+ * Improvement: replaced open syncmers with modimers. This simplifies the code
+   and slightly reduces the memory.
+
+ * Improvement: fine tune parameters for higher sensitivity at a minor cost of
+   junction accuracy: a) only index ORFs >= 30bp; b) reduced max k-mer
+   occurrences from 50k to 20k; c) sample k-mers at a rate of 50%; d) reduced
+   min number of k-mers from 5 to 3; e) add a bonus chaining score for anchors
+   on the same reference block.
+
+ * Improvement: adjust the max k-mer occurrence dynamically per protein.
+
+ * Improvement: implemented 2-level chaining like minimap2 and minigraph. This
+   reduces chaining time.
+
+ * Bugfix: fixed a rare off-by-1 memory violation
+
+ * Bugfix: fixed a memory leak
+
+(0.7: 25 December 2022, r207)
+
+
+
 Release 0.6-r185 (12 December 2022)
 -----------------------------------
 

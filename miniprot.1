@@ -1,4 +1,4 @@
-.TH miniprot 1 "12 December 2022" "miniprot-0.6 (r185)" "Bioinformatics tools"
+.TH miniprot 1 "25 December 2022" "miniprot-0.7 (r207)" "Bioinformatics tools"
 .SH NAME
 .PP
 miniprot - protein-to-genome alignment with splicing and frameshifts
@@ -39,8 +39,13 @@ Miniprot aligns protein sequences to a genome allowing potential frameshifts and
 .BI -k \ INT
 K-mer size for genome-wide indexing [6]
 .TP
-.BI -s \ INT
-Syncmer submer size [4]. In average, miniprot selects a k-mer every 2*(k-s)+1 residues.
+.BI -M \ INT
+Sample k-mers at a rate
+.RI 1/2** INT
+[1]. Increasing this option reduces peak memory but decreases sensitivity.
+.TP
+.BI -L \ INT
+Minimum ORF length to index [30]
 .TP
 .BI -b \ INT
 Number of bits per bin [8]. Miniprot splits the genome into non-overlapping bins of 2^8 bp in size.
@@ -140,6 +145,9 @@ Change the ID field in GFF3 to
 .RI QueryName CHAR HitIndex
 []. If not specified, the default ID looks like `MP000012'.
 .TP
+.B --gtf
+Output in the GTF format
+.TP
 .B -u
 Print unmapped query proteins
 .TP
@@ -148,6 +156,11 @@ Output up to
 .RI min{ NUM ,
 .BR -N }
 alignments per query [1000].
+.TP
+.BI --outs \ FLOAT
+Output an alignment only if its score is at least
+.IR FLOAT *bestScore,
+where bestScore is the best alignment score of the protein [0.99]
 .TP
 .BI -K \ NUM
 Query batch size [2M]
