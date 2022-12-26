@@ -37,7 +37,7 @@ with the rapid production of new genomes and quickly growing protein databases.
 
 \section{Results:} Here we describe miniprot, a new aligner for mapping
 protein sequences to a complete genome. Miniprot integrates recent techniques
-such as syncmer sketch and SIMD-based dynamic programming. It is tens of times
+such as k-mer sketch and SIMD-based dynamic programming. It is tens of times
 faster than existing tools while achieving comparable accuracy on real data.
 
 \section{Availability and implementation:}
@@ -88,13 +88,20 @@ There are several protein-to-genome aligners that pinpoint exact splice sites:
 GeneWise~\citep{Birney:1997vr,Birney:2004uy}, Exonerate~\citep{Slater:2005aa},
 GeneSeqer~\citep{Usuka:2000vi},
 GenomeThreader~\citep{DBLP:journals/infsof/GremmeBSK05},
-genBlastG~\citep{She:2011aa}, ProSplign~\citep{Kapustin:2008tq},
-Spaln2~\citep{Gotoh:2008aa,Iwata:2012aa} and GeMoMa~\citep{Keilwagen:2019wz}.
-Among these, Spaln2, GeMoMa and
-GenomeThreader are the only tools practical for whole-genome alignment. They
+genBlastG~\citep{She:2011aa}, ProSplign~\citep{Kapustin:2008tq} and
+Spaln2~\citep{Gotoh:2008aa,Iwata:2012aa}. They all take a protein and a
+nucleotide sequence as input and output spliced alignment between them.
+GeMoMa~\citep{Keilwagen:2019wz} additionally requires gene structures in the
+source genome as input. It aligns exons without splicing and then connects
+exon alignments. As gene structures are conserved across species, this strategy
+simplifies alignment and potentially reduces spurious hits but it would not
+easily work for proteins from a variety of species.
+
+Among the tools above, only Spaln2, GenomeThreader and GeMoMa are practical for
+whole-genome alignment. They
 can align several hundred proteins per CPU hour and may take a couple of days
 to align a few hundred thousand proteins often needed to annotate a genome
-without closely homology. The alignment step time consuming.
+without closely homology. Protein-to-genome alignment is time consuming.
 
 It is challenging to develop a fast and accurate protein-to-genome alignment
 algorithm. The core of such alignment is a dynamic programming (DP) that
@@ -115,10 +122,10 @@ real data along with the few existing algorithms.
 \section{Methods}
 
 Miniprot broadly follows the seed-chain-extend strategy used by
-minimap2~\citep{Li:2018ab}. It indexes the genome with open
-syncmers~\citep{Edgar:2021vk} in all six open reading frames (ORFs) on both
-strands. During alignment, miniprot extracts syncmers on a query protein,
-finds seed matches (aka anchors), and then performs chaining. It closes
+minimap2~\citep{Li:2018ab}. It indexes the genome k-mers
+in all six open reading frames (ORFs) on both
+strands. During alignment, miniprot extracts k-mers on a query protein,
+finds seed anchors and then performs chaining. It closes
 unaligned regions between anchors and extends from terminal anchors with
 dynamic programming (DP).
 
@@ -129,9 +136,6 @@ the $i$-th symbol in $T$. $T[i,j]$, $1\le i\le j\le|T|$, is the substring
 starting at $i$ and ending at $j$ inclusively. In this article, $T$ denotes the
 genome sequence over the nucleotide alphabet and $P$ denotes the protein
 sequence over the amino acid alphabet.
-
-An integer can be represented by a bit string. The notations above are also
-applicable to bit strings.
 
 \subsection{Reduced alphabet}
 
@@ -149,31 +153,22 @@ lowest bit of an integer to generate more seeds and thus to increase the
 seeding sensitivity. We did not use this strategy as miniprot seems reasonably
 sensitive on real data.
 
-\subsection{Random open syncmers}
-
-Suppose $\phi(a)$ maps an amino acid $a$ to an integer. The integer encoding
-of a $k$-long protein sequence $P$ can be recursively defined as 
-$\phi(P)=\phi(P[1,k-1])\times16+\phi(P[k])$. $\phi(P)$ has $4k$ bits. Let
-$B=\psi(\phi(P))$ where $\psi(\cdot)$ is an invertible integer hash
-function~\citep{Li:2016aa} over $[0,2^{4k})$. Then $B$ can be considered as a
-bit string with $4k$ bits, too. For $s\le k$, we can generate
-$\lfloor4(k-s)/d\rfloor+1$ shorter integers of $4s$ bits each: $B[1,4s],
-B[1+d,4s+d], \ldots,
-B[1+\lfloor4(k-s)/d\rfloor\cdot d,4s+\lfloor4(k-s)/d\rfloor\cdot d]$. $P$ is considered
-to be a $(k,s,d)$-syncmer if $B[1,4s]$ is the smallest among these integers.
-The sample rate is $1/(\lfloor4(k-s)/d\rfloor+1)$.
-
-Different from the original definition of open syncmer~\citep{Edgar:2021vk},
-the miniprot definition operates in the bit space instead of the residue space
-and it applies an invertible hash function for randomization. This makes our
-strategy robust to uneven amino acid frequencies.
-
 \subsection{Indexing the genome}
 
+Miniprot only indexes a subset of k-mers in the genome. Suppose $\phi(a)$ maps
+an amino acid $a$ to a 4-bit integer with the scheme described above. The
+integer encoding of a $k$-long protein sequence $P$ can be recursively defined as
+$\phi(P)=\phi(P[1,k-1])\times16+\phi(P[k])$. $\phi(P)$ has $4k$ bits. Let
+$B=\psi(\phi(P))$ where $\psi(\cdot)$ is an invertible integer hash
+function~\citep{Li:2016aa} over $[0,2^{4k})$. Then $B$ is also an integer with
+$4k$ bits. By default, miniprot only indexes $B$ if the lowest bit of $B$ is 0.
+We thus sample 50\% of k-mers in average with a high-quality hash function
+$\psi(\cdot)$.
+
 Internally, miniprot treats each genome sequence and its reverse complement as
-two independent sequences. It enumerates all ORFs of 15 amino acids or longer
-and extracts (6,4,2)-syncmers from translated ORFs. This samples 6-mers at a
-rate of 20\% in average. For each syncmer $R$ at position $x$, miniprot stores
+two independent sequences. It enumerates all ORFs of 30 amino acids or longer
+and samples 6-mers from translated ORFs with the strategy above. For
+each selected k-mer $R$ at position $x$, miniprot stores
 $(\psi(\phi(R)), \lfloor x/256\rfloor)$ in a hash table with the key being
 $\psi(\phi(R))$ and the value being an array of positions. We do not retain the
 base resolution at the indexing step such that we can use 32-bit integers to
@@ -183,14 +178,14 @@ positions in a human genome, which would double the index size.
 
 \subsection{Chaining}
 
-The miniprot chaining algorithm is very similar to the minimap2 algorithm.
+The miniprot chaining algorithm is similar to the minimap2 algorithm.
 However, because the miniprot index does not keep the exact genome positions,
 the gap size calculation needs to be modified. For completeness, we will
 describe the full chaining equation here.
 
-Let 2-tuple $(x,y)$ denote a seed match (aka anchor) between binned position
+Let 2-tuple $(x,y)$ denote a seed match, also known as an anchor, between binned position
 $x$ on the genome and residue position $y$ on the protein. Suppose $(x_i,y_i)$
-and $(x_j,y_j)$ are two seed matches with $x_i\le x_j$ and $y_i<y_j$. The
+and $(x_j,y_j)$ are two anchors with $x_i\le x_j$ and $y_i<y_j$. The
 minimum possible gap size between the two anchors, in the unit of base pair,
 can be calculated by
 \begin{equation}\label{eq:gap}
@@ -210,7 +205,7 @@ calculated with
 \begin{equation}
 f(j)=\max\big\{\max_{1\le i<j}\{f(i)+\alpha(i,j)-\gamma(g(i,j))\},k\big\}
 \end{equation}
-where $k$ is the length of open syncmers (6 amino acids by default), $g(i,j)$
+where $k$ is the k-mer length (6 amino acids by default), $g(i,j)$
 is calculated by Eq.~(\ref{eq:gap}) and $\alpha(i,j)=\min\{y_j-y_i,k\}$ is the
 number of matching residues between the anchors. The gap penalty function
 $\gamma(\cdot)$ is
@@ -226,12 +221,13 @@ Here $G$ is the maximum intron size (200 kb by default) and $\beta$ is the
 weight of the logarithm gap penalty (0.75 by default).  The logarithm term
 allows miniprot to join exons over introns.
 
-After the initial round of chaining, miniprot selects top 30 chains and
-performs another round of chaining in local regions around these top chains. In
-the second round, miniprot chooses all 5-mers on both the genome and the
-protein without binning. This finds better chains and retains the base
-resolution of each anchor. Miniprot uses $g'(i,j)=3\Delta y-\Delta x$ as the
-gap cost function.
+After the initial round of chaining for each protein, miniprot selects the top
+30 chains and performs another round of chaining in local regions around these
+top chains. In the second round, miniprot indexes all 5-mers on both the
+protein and the genome subsequences without binning. This finds better chains
+and retains the base resolution of each anchor. Miniprot uses $g'(i,j)=3\Delta
+y-\Delta x$ to compute gap lengths and applies the same gap penalty
+Eq.~(\ref{eq:gap-pen}) during chaining.
 
 \subsection{Residue alignment with dynamic programming}
 
@@ -247,9 +243,10 @@ Tran: E..A..---R..S..P.       .T..$$R..Y..+A..Y..
 Prot: E  A  F  R  -  P         T  E R  Y   A  Y
 \end{verbatim}
 In this example, symbol ``{\tt \$}'' denotes frameshift substitutions and
-``{\tt +}'' denotes frameshift insertions. In this section, we will first
-review the AE86 DP formulation for affine gap cost~\citep{Altschul:1986aa}, and
-then derive the DP equation for protein-to-genome alignment.
+``{\tt +}'' denotes frameshift insertions. We will explain their differences
+later. In this section, we will first review the AE86 DP formulation for affine
+gap cost~\citep{Altschul:1986aa}, and then derive the DP equation for
+protein-to-genome alignment.
 
 \subsubsection{DP with affine gap cost}
 
@@ -338,7 +335,7 @@ This still allows non-${\tt GT}$-${\tt AG}$ splicing but penalizes such introns
 by cost $p$. We will describe a more sophisticated model in the next section.
 
 It is worth noting that when the DP transitions from state $H$ to $B$ at
-position $i$, the phase-1 intron $B$ represents starts at $i+1$; when the DP
+position $i$, the phase-1 intron $B$ starts at $i+1$; when the DP
 transitions from $B$ to $H$ at $j$, the intron ends at $j-2$. The DP ignores
 the split codon bridging the two exons around the phase-1 intron. Phase-2
 intron state $C$ is treated similarly. Not scoring split codons is a weakness
@@ -354,8 +351,7 @@ We implemented Eq.(\ref{eq:full}) with striped DP~\citep{Farrar:2007hs}.
 We used 16-bit integers to keep scores and achieved 8-way parallelization
 for x86\_64 CPUs with SSE2 or ARM64 CPUs with the NEON instruction set.
 Our implementation is over 50 times times faster than GeneWise and Exonerate in
-their exact mode. Actually for large genomes, residue alignment is not the
-performance bottleneck. Miniprot spends more time on initial chaining.
+their exact mode.
 
 \subsection{Splice models}
 
@@ -454,11 +450,14 @@ local alignment and yields sligtly better alignment overall. Option ``-yB -yZ
 improves the junction accuracy of the fly-mosquito alignment. We let Spaln2
 choose the maximum intron and gene size automatically. Miniprot finds introns
 up to 200 kbp in length by default. We changed this value to 50 kbp for
-fly-mosquito alignment. We tuned the maximum intron size to 200 kb for the
-MetaEuk and GeMoMa human-zebrafish alignment, in consistent with the miniprot
-setting. We ran GeMoMa with MMseqs2~\citep{Steinegger:2017aa} as the underlying
+fly-mosquito alignment.
+
+We ran GeMoMa with MMseqs2~\citep{Steinegger:2017aa} as the underlying
 engine. We evaluated the best unfiltered alignment of each protein as GeMoMa
-discarded most alignments in the final output.
+discarded most alignments in the final output. We tried to specify the maximum
+intron length to 200 kb but GeMoMa took more than 320 GB memory and was killed
+on our cluster. We thus used 50 kb for all alignment. GeMoMa crashed for the
+human-mouse dataset at the splice alignment step.
 
 In principle, we could localize a protein with a whole-genome mapper above and
 then run GeneWise, GeneSeqer and Exonerate in local regions. However, this
@@ -471,42 +470,45 @@ evaluation.
 \begin{table*}[!tb]
 \processtable{Evaluation on the human-mouse dataset}
 {\label{tab:eval}
-\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrrrrrrrrr}
+\begin{tabular*}{\textwidth}{@{\extracolsep{\fill}}lrrrrrrrrrrrr}
 \toprule
-Genome species     & human   & human   & human   & human   & human   & human   & human   & human   &fruit fly&fruit fly \\
-Protein species    &zebrafish&zebrafish&zebrafish&zebrafish&zebrafish&zebrafish& mouse   & mouse   & mosquito& mosquito \\
-Aligner            & miniprot& miniprot& Spaln2  & Spaln2  &  GeMoMa & MetaEuk & miniprot& Spaln2  & miniprot& Spaln2 \\
-Splice model       & human   & general & human   & default &     N/A &     N/A & human   & human   & human   &fruit fly \\
+Genome species     & human   & human   & human   & human   & human   & human   & human   & human   &fruit fly&fruit fly&fruit fly \\
+Protein species    &zebrafish&zebrafish&zebrafish&zebrafish&zebrafish&zebrafish& mouse   & mouse   & mosquito& mosquito& mosquito \\
+Aligner            & miniprot& miniprot& Spaln2  & Spaln2  &  GeMoMa & MetaEuk & miniprot& Spaln2  & miniprot& Spaln2  &   GeMoMa \\
+Splice model       & human   & general & human   & default &     N/A &     N/A & human   & human   & human   &fruit fly&      N/A \\
 \midrule
-Elapsed time (sec) &     365 &     366 &  10,708 &  11,097 &   8,718 &   2,518 &     314 &   3,736 &      29 &   2,528 \\
-Peak RAM (GB)      &    19.1 &    19.2 &     9.3 &     8.9 &   146.9 &    22.0 &    15.3 &     5.6 &     3.2 &     2.7 \\
-\# proteins        &  25,007 &  25,007 &  25,007 &  25,007 &  25,007 &  25,007 &  21,844 &  21,844 &  13,094 &  13,094 \\
-\# mapped          &  17,041 &  17,042 &  14,523 &  14,460 &  24,891 &  12,321 &  19,303 &  18,840 &   7,211 &   6,125 \\
-\# single-exon     &   1,934 &   1,817 &     880 &     606 &   1,782 &   2,101 &   2,810 &   1,975 &   1,308 &     495 \\
-\# predicted junc. & 149,380 & 152,134 & 151,388 & 209,312 & 204,764 &  78,639 & 165,458 & 171,241 &  21,178 &  27,582 \\
-\# non-ovlp. junc. &     433 &     709 &   1,206 &  15,658 &   5,712 &     183 &     316 &     852 &     459 &     877 \\
-\# confirmed junc. & 138,321 & 137,483 & 136,916 & 129,645 & 153,781 &   5,710 & 161,113 & 162,551 &  18,630 &  22,606 \\
-\% confirmed junc. & 92.60\% & 90.37\% & 90.44\% & 61.94\% & 75.10\% &  7.26\% & 97.37\% & 94.93\% & 87.97\% & 81.96\% \\
-\% base SN         & 60.35\% & 60.36\% & 57.16\% & 55.74\% & 67.02\% & 48.32\% & 89.48\% & 88.62\% & 52.71\% & 50.13\% \\
-\% base SP         & 95.84\% & 95.37\% & 95.11\% & 86.75\% & 88.70\% & 91.58\% & 97.44\% & 95.27\% & 96.78\% & 97.38\% \\
+Elapsed time (sec) &     267 &     257 &  10,708 &  11,097 &   8,718 &   2,518 &     164 &   3,736 &      34 &   2,528 &    3,378 \\
+Peak RAM (GB)      &    21.8 &    22.5 &     9.3 &     8.9 &   146.9 &    22.0 &    15.3 &     5.6 &     3.9 &     2.7 &     53.5 \\
+\# proteins        &  25,007 &  25,007 &  25,007 &  25,007 &  25,007 &  25,007 &  21,844 &  21,844 &  13,094 &  13,094 &   13,094 \\
+%\# mapped         &  20,381 &  20,392 &  14,523 &  14,460 &  24,891 &  12,321 &  20,469 &  18,840 &   8,827 &   6,125 &   13,078 \\
+%\# single-exon    &   3,515 &   3,288 &     880 &     606 &   1,782 &   2,101 &   3,404 &   1,975 &   2,152 &     495 &    1,658 \\
+\# multi-exon      &  16,866 &  17,104 &  13,643 &  13,854 &  23,109 &  10,220 &  17,065 &  16,865 &   6,675 &   5,630 &   11,420 \\
+\# predicted junc. & 157,918 & 161,295 & 151,388 & 209,312 & 204,764 &  78,639 & 167,446 & 171,241 &  22,614 &  27,582 &   43,203 \\
+\# non-ovlp. junc. &     482 &     802 &   1,206 &  15,658 &   5,712 &     183 &     330 &     852 &     488 &     877 &    5,997 \\
+\# confirmed junc. & 145,545 & 144,734 & 136,916 & 129,645 & 153,781 &   5,710 & 162,675 & 162,551 &  19,774 &  22,606 &   25,513 \\
+\% confirmed junc. & 92.16\% & 89.73\% & 90.44\% & 61.94\% & 75.10\% &  7.26\% & 97.15\% & 94.93\% & 87.44\% & 81.96\% &  59.05\% \\
+\% base SN         & 63.11\% & 63.16\% & 57.16\% & 55.74\% & 67.02\% & 47.71\% & 90.10\% & 88.62\% & 56.10\% & 50.21\% &  65.08\% \\
+\% base SP         & 95.43\% & 94.91\% & 95.11\% & 86.75\% & 88.70\% & 91.84\% & 97.26\% & 95.27\% & 96.69\% & 97.35\% &  96.10\% \\
 \botrule
 \end{tabular*}
 }{Protein-to-genome alignments are compared to the annotated genes in ``Genome
-species''. A splice junction (junc.) is confirmed if it is annotated in
-``Genome species'' with exact boundaries; is non-overlapping (non-ovlp.) if the
-intron in the junction is not overlapping with annotated introns. Base
+species''. ``\# multi-exon'' gives the number of proteins mapped with multiple exons.
+A splice junction (junc.) is confirmed if it is annotated in ``Genome species''
+with exact boundaries; is non-overlapping (non-ovlp.) if the intron in the
+junction is not overlapping with annotated introns. ``\% confirmed junc.'' is
+the percentage of predicted junctions that are confirmed. Base
 sensitivity (base SN) is the fraction of annotated coding regions on the
 longest transcripts that are covered by alignments. Base specificity (base SP)
 is the fraction of genomic bases in alignments that are covered by annotated
 coding regions.}
 \end{table*}
 
-We aligned zebrafish proteins to GRCh38 with miniprot, Spaln2, GeMoMa and MetaEuk
-(Table~\ref{tab:eval}). When we apply human-specific splice models to both
-miniprot and Spaln2, miniprot is doing slightly better than Spaln2 at the base
-level and on the junction specificity. Spaln2 finds 0.5\% more confirmed junctions,
-implying higher sensitivity. We looked at proteins Spaln2 aligned better. It
-seems that Spaln2 is more sensitive to small introns and small exons, while
+We aligned zebrafish proteins to GRCh38 using all tools (Table~\ref{tab:eval}).
+With human-specific splice models, miniprot is slightly more accurate than
+Spaln2 on most metrics. Nonetheless, for proteins mapped by both miniprot and
+Spaln2, Spaln2 could find more correct junctions. Looking at proteins Spaln2
+aligned better, we observed Spaln2 is more sensitive to small introns and small
+exons, while
 miniprot tends to merge them to adjacent alignments. We speculate this may be
 caused by two factors. First, Spaln2 uses a more sophisticated splice model and
 may be putting more weight on splice signals than residue alignment. It may
@@ -514,20 +516,24 @@ create an intron even if the alignment is weak. Second, the Spaln2 developers
 observed that heuristics may be doing better than strict DP around short
 introns or exons. In one case, Spaln2 correctly created an exon with one amino
 acid. Miniprot under the current setting would not produce such an alignment.
+On the other hand, while Spaln2 found more correct junctions for proteins
+mapped by both miniprot and Spaln2, it also produced more false junctions
+related to small exons and introns. It is not clear to us what is the best
+balance point.
 
-For both miniprot and Spaln2, species-specific models improved alignment though
-the default Spaln2 model performed worse. GeMoMa did better than the default
-Spaln2 but were not as accurate as Spaln2 with a proper splice model. MetaEuk
-did not pinpoint exact splice junctions, as is expected. It also aligned fewer
-proteins and had lower base-level sensitivity. We therefore only evaluated
-miniprot and Spaln2 on other datasets.
+GeMoMa is more sensitive than both miniprot and Spaln2, finding more junctions
+and more annotated coding regions. It however has lower junction accuracy. We
+could tune miniprot for increased sensitivity but we decided to keep the
+current behavior as the additional alignments are less accurate. MetaEuk was
+not designed to find exact splice junctions, as is expected.
 
-For the human-mouse alignment, Spaln2 again has higher junction sensitivity and
-miniprot is better on other metrics. On the more challenging fly-mosquito
-dataset, the trend continues. Overall miniprot and Spaln2 have comparable
-accuracy.
+For the human-mouse alignment, miniprot is again slightly better than Spaln2.
+GeMoMa crashed. On the more challenging fly-mosquito dataset, Spaln2 has
+higher junction sensitivity and higher base specificity than miniprot. GeMoMa
+continues to have the highest sensitivity but lower junction accuracy and base
+specificitiy.
 
-Miniprot is over an order of magnitude faster than Spaln2. The performance gap
+Miniprot is over 30 times faster than Spaln2 and GeMoMa. The performance gap between miniprot and Spaln2
 increases with divergence. This is potentially because Spaln2 has to invoke DP
 through introns more often when it does not see overlapping high-scoring
 segment pairs (HSPs) and cannot initiate ``sandwich DP''~\citep{Wu:2005vn} to
@@ -536,15 +542,6 @@ align through all introns regardless of sequence divergence. It thus has more
 stable performance. Always aligning through introns might be a contributing
 factor to the higher specificity of miniprot even though Spaln2 has a more
 careful algorithm.
-
-Table~\ref{tab:eval} only considers the best hit of each protein. Miniprot by
-default may output multiple suboptimal alignments per protein if their
-alignment scores are no less than 99\% of the best alignment. If we count all
-human-zebrafish alignments outputted by minimap2, we could improve the base
-sensitivity to 60.76\% with a minor cost on base specificity to 95.25\%.
-Reducing the threshold from 99\% to 95\% further increases base sensitivity to
-62.33\% but decreases base specificity to 94.04\% as miniprot starts to pick up
-pseudogenes.
 
 \section{Discussions}
 
@@ -555,9 +552,15 @@ GeneWise~\citep{Birney:2004uy} and Exonerate~\citep{Slater:2005aa}.
 MAKER2~\citep{Cantarel:2008ue,Holt:2011tt} calls Exonerate.
 BRAKER2~\citep{Bruna:2021ug} integrates Spaln2~\citep{Iwata:2012aa} and
 depends on ProtHint~\citep{Bruna:2020vy} which also optionally invokes Spaln2.
+As older protein-to-genome aligners are relatively inefficient, researchers
+often use faster approximate methods to localize proteins and then apply these
+aligners. Now with miniprot, we can perform approximate mapping and exact
+splice alignment in one go and thus simplify existing pipelines. In addition,
+when there are closely related species, miniprot could find 90\% coding regions
+in minutes (see ``base SN'' on the human-mouse dataset in Table~\ref{tab:eval}).
+It could also be useful for evaluating de novo assemblies~\citep{Manni:2021ww}.
 
-
-It can assist gene annotation but does not replace full-pledge gene
+Miniprot would not replace full-pledge gene
 annotation pipelines such as BRAKER2~\citep{Bruna:2021ug}.  Miniprot aligns
 each protein independently. When multiple proteins are mapped to the same
 locus, miniprot is unable to merge identical gene models or resolve conflicts
@@ -570,7 +573,7 @@ separate tool to reconcile overlapping gene models in simple cases. This may
 provide a convenient annotation pipeline when closely related species are
 available.
 
-We are also evaluating the possibility to support HMMER
+We are evaluating the possibility to support HMMER
 profiles~\citep{Eddy:2011tg} as queries. As a HMMER profile summarizes a gene
 family from multiple species, it may reduce the number of queries and improve
 the sensitivity of miniprot for distant homologs. There are two algorithmic
