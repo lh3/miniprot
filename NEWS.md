@@ -4,7 +4,8 @@ Release 0.7-r207 (25 December 2022)
 Notable changes:
 
  * Improvement: replaced open syncmers with modimers. This simplifies the code
-   and slightly reduces the memory.
+   and slightly reduces the memory at comparable k-mer sampling rate. This
+   changes the index format.
 
  * Improvement: fine tune parameters for higher sensitivity at a minor cost of
    junction accuracy: a) only index ORFs >= 30bp; b) reduced max k-mer
@@ -20,6 +21,12 @@ Notable changes:
  * Bugfix: fixed a rare off-by-1 memory violation
 
  * Bugfix: fixed a memory leak
+
+Overall, miniprot becomes faster at slightly higher peak memory usage. It is
+more sensitive to distant homologs, though the junction accuracy of additional
+alignment is usually lower. Also importantly, the index format of miniprot has
+been changed. Miniprot will throw an error if you use miniprot with pre-built
+indices generated with older versions.
 
 (0.7: 25 December 2022, r207)
 
