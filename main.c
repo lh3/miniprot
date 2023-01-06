@@ -14,6 +14,7 @@ static ko_longopt_t long_options[] = {
 	{ "outs",            ko_required_argument, 308 },
 	{ "max-skip",        ko_required_argument, 309 },
 	{ "no-pre-chain",    ko_no_argument,       310 },
+	{ "aln",             ko_no_argument,       311 },
 	{ "version",         ko_no_argument,       401 },
 	{ "no-kalloc",       ko_no_argument,       501 },
 	{ "dbg-qname",       ko_no_argument,       502 },
@@ -75,6 +76,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -t INT       number of threads [%d]\n", n_threads);
 	fprintf(fp, "    --gff        output in the GFF3 format\n");
 	fprintf(fp, "    --gtf        basic GTF output\n");
+	fprintf(fp, "    --aln        output residue alignment\n");
 	fprintf(fp, "    -P STR       prefix for IDs in GFF3 [%s]\n", mo->gff_prefix);
 	fprintf(fp, "    -u           print unmapped query proteins in PAF\n");
 	fprintf(fp, "    --outn=NUM   output up to min{NUM,-N} alignments per query [%d]\n", mo->out_n);
@@ -133,6 +135,7 @@ int main(int argc, char *argv[])
 		else if (c == 307) mo.flag |= MP_F_GTF; // --gtf
 		else if (c == 309) mo.max_chn_max_skip = mp_parse_num(o.arg); // --max-skip
 		else if (c == 310) mo.flag |= MP_F_NO_PRE_CHAIN; // --no-pre-chain
+		else if (c == 311) mo.flag |= MP_F_SHOW_RESIDUE; // --aln
 		else if (c == 501) mp_dbg_flag |= MP_DBG_NO_KALLOC; // --no-kalloc
 		else if (c == 502) mp_dbg_flag |= MP_DBG_QNAME; // --dbg-qname
 		else if (c == 503) mp_dbg_flag |= MP_DBG_NO_REFINE; // --dbg-no-refine

@@ -1,4 +1,4 @@
-.TH miniprot 1 "25 December 2022" "miniprot-0.7 (r207)" "Bioinformatics tools"
+.TH miniprot 1 "6 January 2023" "miniprot-0.7-dirty (r213)" "Bioinformatics tools"
 .SH NAME
 .PP
 miniprot - protein-to-genome alignment with splicing and frameshifts
@@ -134,6 +134,13 @@ alignments.
 .TP
 .B --gff-only
 Output in the GFF3 format without `##PAF' lines.
+.TP
+.B --aln
+Output the residue alignment in three lines, where line `##ATN' for the target
+nucleotide sequence, `##ATA' for translated amino acid sequence and `##AQA' for
+the query protein sequence. On a `##ATA' line, `!' denotes a frameshift
+insertion corresponding to the `F' CIGAR operator and `$' denotes a frameshift
+substitution corresponding to the `G' operator.
 .TP
 .BI -P \ STR
 Prefix for IDs in GFF3 [MP].
