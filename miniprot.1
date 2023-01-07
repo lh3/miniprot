@@ -142,6 +142,19 @@ the query protein sequence. On a `##ATA' line, `!' denotes a frameshift
 insertion corresponding to the `F' CIGAR operator and `$' denotes a frameshift
 substitution corresponding to the `G' operator.
 .TP
+.BI --max-intron-out \ NUM
+In the
+.B --aln
+format, if an intron is longer than
+.IR NUM ,
+only output
+.RI ceil( NUM /2)
+basepairs at the donor or the acceptor sites and write the full intron length
+.I LEN
+as
+.RI ~ LEN ~
+in the middle [500].
+.TP
 .BI -P \ STR
 Prefix for IDs in GFF3 [MP].
 .B --gff-delim
