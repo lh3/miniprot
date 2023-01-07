@@ -155,19 +155,18 @@ static void mp_write_cs(kstring_t *str, const mp_idx_t *mi, const char *aa, cons
 static void mp_write_residue(kstring_t *out, const mp_idx_t *mi, int32_t max_flank, const char *aa, const mp_reg1_t *r)
 {
 	const mp_extra_t *e = r->p;
-	int32_t k, w, al = 0, nl = 0, l_tmp = 8; // enough to keep "##ATN \n\0"
+	int32_t k, w, al = r->qs, nl = 0, l_tmp = 8; // enough to keep "##ATN \0"
 	int64_t l_nt;
 	uint8_t *nt;
 	char *str[4];
 	if (e == 0) return;
 	for (k = 0; k < e->n_cigar; ++k) { // estimate the string length
 		int32_t op = e->cigar[k]&0xf, len = e->cigar[k]>>4, len3 = len * 3;
-		if (op == NS_CIGAR_I || op == NS_CIGAR_D || op == NS_CIGAR_M) l_tmp += len3;
-		else if (op == NS_CIGAR_F) l_tmp += len;
-		else if (op == NS_CIGAR_G) l_tmp += len3;
+		if (op == NS_CIGAR_M || op == NS_CIGAR_I || op == NS_CIGAR_D) l_tmp += len3;
+		else if (op == NS_CIGAR_F || op == NS_CIGAR_G) l_tmp += len;
 		else if (op == NS_CIGAR_N || op == NS_CIGAR_U || op == NS_CIGAR_V) {
 			int32_t intron_len = op == NS_CIGAR_N? len : len - 3;
-			l_tmp += intron_len <= max_flank * 2? intron_len : max_flank * 2 + 16;
+			l_tmp += intron_len <= max_flank * 2? len : max_flank * 2 + 20;
 		}
 	}
 	str[0] = Kmalloc(0, char, 4 * l_tmp);
@@ -180,46 +179,40 @@ static void mp_write_residue(kstring_t *out, const mp_idx_t *mi, int32_t max_fla
 	l_nt = mp_ntseq_get_by_v(mi->nt, r->vid, r->vs, r->ve, nt);
 	assert(l_nt == r->ve - r->vs);
 	for (k = 0, w = 6; k < e->n_cigar; ++k) {
-		int32_t i, j, t, l, op = e->cigar[k]&0xf, len = e->cigar[k]>>4, len3 = len * 3;
+		int32_t i, j, l, op = e->cigar[k]&0xf, len = e->cigar[k]>>4, len3 = len * 3;
 		if (op == NS_CIGAR_M) {
-			for (i = nl, j = al, l = 0, t = 0; l < len; ++l, ++j, i += 3) {
+			for (i = nl, j = al, l = 0; l < len; ++l, ++j, i += 3, w += 3) {
 				uint8_t nt_aa, codon = nt[i]<<4 | nt[i+1]<<2 | nt[i+2];
 				nt_aa = nt[i] > 3 || nt[i+1] > 3 || nt[i+2] > 3? ns_tab_aa20['X'] : ns_tab_codon[codon];
 				str[0][w] = "ACGTN"[nt[i]], str[0][w+1] = "ACGTN"[nt[i+1]], str[0][w+2] = "ACGTN"[nt[i+2]];
 				str[1][w] = ns_tab_aa_i2c[nt_aa], str[1][w+1] = str[1][w+2] = '.';
 				str[2][w] = toupper(aa[j]), str[2][w+1] = str[2][w+2] = ' ';
-				w += 3;
 			}
 			nl += len3, al += len;
 		} else if (op == NS_CIGAR_I) {
-			for (j = t = 0; j < len; ++j) {
+			for (j = 0; j < len; ++j, w += 3) {
 				str[0][w] = str[0][w+1] = str[0][w+2] = '-';
 				str[1][w] = '-', str[1][w+1] = str[1][w+2] = '.';
 				str[2][w] = toupper(aa[al + j]), str[2][w+1] = str[2][w+2] = ' ';
-				w += 3;
 			}
 			al += len;
 		} else if (op == NS_CIGAR_D) {
-			for (l = 0, i = nl; l < len; ++l, i += 3) {
+			for (l = 0, i = nl; l < len; ++l, i += 3, w += 3) {
 				uint8_t nt_aa, codon = nt[i]<<4 | nt[i+1]<<2 | nt[i+2];
 				nt_aa = nt[i] > 3 || nt[i+1] > 3 || nt[i+2] > 3? ns_tab_aa20['X'] : ns_tab_codon[codon];
 				str[0][w] = "ACGTN"[nt[i]], str[0][w+1] = "ACGTN"[nt[i+1]], str[0][w+2] = "ACGTN"[nt[i+2]];
-				str[1][w] = ns_tab_aa_i2c[nt_aa], str[1][w+1] = str[2][w+2] = '.';
+				str[1][w] = ns_tab_aa_i2c[nt_aa], str[1][w+1] = str[1][w+2] = '.';
 				str[2][w] = '-', str[2][w+1] = str[2][w+2] = ' ';
-				w += 3;
 			}
 			nl += len3;
 		} else if (op == NS_CIGAR_F) {
-			for (l = 0, i = nl; l < len; ++l, ++i) {
+			for (l = 0, i = nl; l < len; ++l, ++i, ++w)
 				str[0][w] = "ACGTN"[nt[i]], str[1][w] = '!', str[2][w] = ' ';
-				++w;
-			}
 			nl += len;
 		} else if (op == NS_CIGAR_G) {
-			for (l = 0, i = nl; l < len; ++l, ++i) {
+			for (l = 0, i = nl; l < len; ++l, ++i, ++w) {
 				str[0][w] = "ACGTN"[nt[i]], str[1][w] = '$';
 				str[2][w] = l == 0? toupper(aa[al]) : ' ';
-				++w;
 			}
 			nl += len, ++al;
 		} else if (op == NS_CIGAR_N || op == NS_CIGAR_U || op == NS_CIGAR_V) {
@@ -231,13 +224,12 @@ static void mp_write_residue(kstring_t *out, const mp_idx_t *mi, int32_t max_fla
 				codon = n1<<4 | n2<<2 | n3;
 				nt_aa = n1 > 3 || n2 > 3 || n3 > 3? ns_tab_aa20['X'] : ns_tab_codon[codon];
 				str[0][w] = "ACGTN"[nt[nl]], str[1][w] = ns_tab_aa_i2c[nt_aa], str[2][w] = toupper(aa[al]);
-				++w;
+				++w, ++nl;
 				if (op == NS_CIGAR_V) {
-					str[0][w] = "ACGTN"[nt[nl+1]], str[1][w] = '.', str[2][w] = ' ';
-					++w;
+					str[0][w] = "ACGTN"[nt[nl]], str[1][w] = '.', str[2][w] = ' ';
+					++w, ++nl;
 				}
 				++al;
-				nl += op == NS_CIGAR_U? 1 : 2;
 			}
 			if (intron_len <= max_flank * 2) {
 				for (l = 0, i = nl; l < intron_len; ++l, ++i, ++w)
@@ -256,16 +248,16 @@ static void mp_write_residue(kstring_t *out, const mp_idx_t *mi, int32_t max_fla
 			}
 			nl += intron_len;
 			if (op == NS_CIGAR_U || op == NS_CIGAR_V) { // phase-1 or phase-2 intron; print the second half of split codon
+				str[0][w] = "ACGTN"[nt[nl]], str[1][w] = '.', str[2][w] = ' ';
+				++w, ++nl;
 				if (op == NS_CIGAR_U) {
-					str[0][w] = "ACGTN"[nt[nl + len - 2]], str[1][w] = '.', str[2][w] = ' ';
-					++w;
+					str[0][w] = "ACGTN"[nt[nl]], str[1][w] = '.', str[2][w] = ' ';
+					++w, ++nl;
 				}
-				str[0][w] = "ACGTN"[nt[nl + len - 1]], str[1][w] = '.', str[2][w] = ' ';
-				++w;
-				nl += op == NS_CIGAR_U? 2 : 1;
 			}
 		}
 	}
+	if (w >= l_tmp) fprintf(stderr, "%d, %d\n", w, l_tmp);
 	assert(w < l_tmp);
 	str[0][w] = str[1][w] = str[2][w] = 0;
 	kfree(0, nt);
