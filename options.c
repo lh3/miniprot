@@ -66,7 +66,7 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 
 	mo->gff_delim = -1;
 	mo->gff_prefix = "MP";
-	mo->max_intron_flank = 500;
+	mo->max_intron_flank = 200;
 }
 
 int32_t mp_mapopt_check(const mp_mapopt_t *mo)
