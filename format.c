@@ -179,7 +179,7 @@ static void mp_write_residue(kstring_t *out, const mp_idx_t *mi, const mp_mapopt
 	strcpy(str[1], "##ATA\t");
 	strcpy(str[2], "##AAS\t");
 	strcpy(str[3], "##AQA\t");
-	nt = Kmalloc(0, uint8_t, r->ve - r->vs);
+	nt = Kmalloc(0, uint8_t, r->ve - r->vs + 3);
 	l_nt = mp_ntseq_get_by_v(mi->nt, r->vid, r->vs, r->ve + 3, nt);
 	assert(l_nt >= r->ve - r->vs);
 	for (k = 0, w = 6; k < e->n_cigar; ++k) {
