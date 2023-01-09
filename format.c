@@ -370,11 +370,13 @@ static void mp_write_gtf(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bs
 {
 	const mp_ctg_t *ctg;
 	const mp_feat_t *f, *feat = r->feat;
-	int64_t vs, ve, ve_mRNA = r->ve;
-	int32_t j;
+	int64_t vs, ve, ve_mRNA;
+	int32_t j, has_stop = 0;
 	char *id_g_str = 0, *id_t_str = 0;
 
 	if (r == 0 || r->p == 0) return;
+	has_stop = (r->qe == seq->l_seq && r->p->dist_stop == 0);
+	ve_mRNA = has_stop? r->ve + 3 : r->ve;
 
 	id_g_str = Kmalloc(km, char, strlen(gff_prefix) + 16);
 	id_t_str = Kmalloc(km, char, strlen(gff_prefix) + 16);
@@ -387,12 +389,17 @@ static void mp_write_gtf(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bs
 	mp_sprintf_lite(s, "%s\tminiprot\ttranscript\t%d\t%d\t%d\t%c\t.\ttranscript_id \"%s\"; gene_id \"%s\";\n", ctg->name, (int)vs + 1, (int)ve, r->p->dp_max, "+-"[r->vid&1], id_t_str, id_g_str);
 
 	for (j = 0; j < r->n_feat; ++j) {
+		int64_t vs2, ve2;
 		f = &feat[j];
 		if (f->type != MP_FEAT_CDS) continue;
-		vs = r->vid&1? ctg->len - f->ve : f->vs;
-		ve = r->vid&1? ctg->len - f->vs : f->ve;
-		mp_sprintf_lite(s, "%s\tminiprot\texon\t%d\t%d\t%d\t%c\t.\ttranscript_id \"%s\"; gene_id \"%s\";\n", ctg->name, (int)vs + 1, (int)ve, f->score, "+-"[r->vid&1], id_t_str, id_g_str);
-		mp_sprintf_lite(s, "%s\tminiprot\tCDS\t%d\t%d\t%d\t%c\t%d\ttranscript_id \"%s\"; gene_id \"%s\";\n", ctg->name, (int)vs + 1, (int)ve, f->score, "+-"[r->vid&1], f->phase, id_t_str, id_g_str);
+		vs2 = vs = r->vid&1? ctg->len - f->ve : f->vs;
+		ve2 = ve = r->vid&1? ctg->len - f->vs : f->ve;
+		if (f->ve == r->ve) { // last exon; then adjust for stop codon
+			if (r->vid&1) vs2 = ctg->len - ve_mRNA;
+			else ve2 = ve_mRNA;
+		}
+		mp_sprintf_lite(s, "%s\tminiprot\texon\t%d\t%d\t%d\t%c\t.\ttranscript_id \"%s\"; gene_id \"%s\";\n", ctg->name, (int)vs2 + 1, (int)ve2, f->score, "+-"[r->vid&1], id_t_str, id_g_str);
+		mp_sprintf_lite(s, "%s\tminiprot\tCDS\t%d\t%d\t%d\t%c\t%d\ttranscript_id \"%s\"; gene_id \"%s\";\n", ctg->name, (int)vs + 1,  (int)ve,  f->score, "+-"[r->vid&1], f->phase, id_t_str, id_g_str);
 	}
 	kfree(km, id_g_str);
 	kfree(km, id_t_str);
@@ -405,6 +412,10 @@ void mp_write_output(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_
 		if (opt->flag&MP_F_SHOW_UNMAP)
 			mp_write_paf(s, mi, seq, 0, opt->flag&MP_F_GFF);
 	} else if (opt->flag&MP_F_GTF) {
+		if (opt->flag&MP_F_SHOW_RESIDUE) {
+			mp_write_paf(s, mi, seq, r, opt->flag&MP_F_GFF);
+			mp_write_residue(s, mi, opt, seq->seq, r);
+		}
 		mp_write_gtf(s, km, mi, seq, r, opt->gff_prefix, id, seq->name);
 	} else {
 		if (!(opt->flag&MP_F_NO_PAF))
