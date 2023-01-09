@@ -76,7 +76,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "  Input/output:\n");
 	fprintf(fp, "    -t INT       number of threads [%d]\n", n_threads);
 	fprintf(fp, "    --gff        output in the GFF3 format\n");
-	fprintf(fp, "    --gtf        basic GTF output\n");
+	fprintf(fp, "    --gtf        basic GTF output without detailed alignment\n");
 	fprintf(fp, "    --aln        output residue alignment\n");
 	fprintf(fp, "    -P STR       prefix for IDs in GFF3 [%s]\n", mo->gff_prefix);
 	fprintf(fp, "    -u           print unmapped query proteins in PAF\n");

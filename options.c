@@ -72,7 +72,7 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 int32_t mp_mapopt_check(const mp_mapopt_t *mo)
 {
 	if (mo->sp_model < 0 || mo->sp_model > 2) {
-		fprintf(stderr, "[ERROR]\033[1;31m --model should be between 0 and 2\033[0m\n");
+		fprintf(stderr, "[ERROR]\033[1;31m option -j should be between 0 and 2\033[0m\n");
 		return -1;
 	}
 	return 0;
