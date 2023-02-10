@@ -240,7 +240,7 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 
 	assert(r->cnt > 0);
 	if (!(mp_dbg_flag & MP_DBG_MORE_DP)) {
-		mp_filter_seed(r->cnt, r->a, 3, 3, opt->kmer2, opt->kmer2 + 1);
+		mp_filter_seed(r->cnt, r->a, 6, 3, opt->kmer2, opt->kmer2 + 1);
 		for (i = 0; i < r->cnt; ++i)
 			if (r->a[i]>>31&1) break;
 		if (i == r->cnt) { // all filtered; FIXME: we need to filter it later; not implemented yet
