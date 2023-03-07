@@ -191,6 +191,11 @@ Output an alignment only if its score is at least
 .IR FLOAT *bestScore,
 where bestScore is the best alignment score of the protein [0.99]
 .TP
+.BI --outc \ FLOAT
+Output an alignment only if
+.I FLOAT
+fraction of the query protein is aligned [0.1]
+.TP
 .BI -K \ NUM
 Query batch size [2M]
 .SH OUTPUT FORMAT

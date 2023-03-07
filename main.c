@@ -16,6 +16,7 @@ static ko_longopt_t long_options[] = {
 	{ "no-pre-chain",    ko_no_argument,       310 },
 	{ "aln",             ko_no_argument,       311 },
 	{ "max-intron-out",  ko_required_argument, 312 },
+	{ "outc",            ko_required_argument, 313 },
 	{ "version",         ko_no_argument,       401 },
 	{ "no-kalloc",       ko_no_argument,       501 },
 	{ "dbg-qname",       ko_no_argument,       502 },
@@ -83,6 +84,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -u           print unmapped query proteins in PAF\n");
 	fprintf(fp, "    --outn=NUM   output up to min{NUM,-N} alignments per query [%d]\n", mo->out_n);
 	fprintf(fp, "    --outs=FLOAT output if score at least FLOAT*bestScore [%g]\n", mo->out_sim);
+	fprintf(fp, "    --outc=FLOAT output if at least FLOAT fraction of query is aligned [%g]\n", mo->out_cov);
 	fprintf(fp, "    -K NUM       query batch size [2M]\n");
 }
 
@@ -140,6 +142,7 @@ int main(int argc, char *argv[])
 		else if (c == 310) mo.flag |= MP_F_NO_PRE_CHAIN; // --no-pre-chain
 		else if (c == 311) mo.flag |= MP_F_SHOW_RESIDUE; // --aln
 		else if (c == 312) mo.max_intron_flank = (mp_parse_num(o.arg) + 1) / 2; // --max-intron-out
+		else if (c == 313) mo.out_cov = atof(o.arg); // --outc
 		else if (c == 501) mp_dbg_flag |= MP_DBG_NO_KALLOC; // --no-kalloc
 		else if (c == 502) mp_dbg_flag |= MP_DBG_QNAME; // --dbg-qname
 		else if (c == 503) mp_dbg_flag |= MP_DBG_NO_REFINE; // --dbg-no-refine

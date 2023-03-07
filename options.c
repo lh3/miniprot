@@ -61,6 +61,7 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 	mo->best_n = 30;
 	mo->out_n = 1000;
 	mo->out_sim = 0.99f;
+	mo->out_cov = 0.1f;
 	#if MP_BITS_PER_AA == 4
 	mo->kmer2 = 5;
 	#else
