@@ -1,3 +1,24 @@
+Release 0.8-r220 (6 March 2023)
+-------------------------------
+
+Notable changes:
+
+ * Improvement: slightly improved the sensitivity to distant homolog at a minor
+   cost of specificity. On the human-zebrafish dataset, we gained 1.2% junction
+   sensivity at the cost of 0.2% of specificity.
+
+ * New feature: added option --aln to output residue alignment.
+
+ * New feature: added option -I to automatically set the maximum intron size to
+   sqrt(GenomeSize) * 3.6, where GenomeSize is the total length of the
+   nucleotide sequences. For smaller genomes, a smaller threshold leads to
+   higher accuracy. This option is not the default because the reference is not
+   always a genome.
+
+(0.8: 6 March 2023, r220)
+
+
+
 Release 0.7-r207 (25 December 2022)
 -----------------------------------
 
