@@ -69,15 +69,15 @@ Ignore k-mers occurring
 times or more [50k]
 .TP
 .BI -G \ NUM
-Max intron size [200k]
+Max intron size [200k]. This option overrides
+.BR -I .
 .TP
 .BI -I
 Set max intron size to
 .RI min(max(3.6*sqrt( refLen ),10000),300000)
 where
 .I refLen
-is the total length of the input genome. This option overrides
-.BR -G .
+is the total length of the input genome.
 .TP
 .BI -n \ NUM
 Min number of syncmers in a chain [10]

@@ -56,8 +56,8 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "  Mapping:\n");
 	fprintf(fp, "    -S           no splicing (applying -G1k -J1k -e1k)\n");
 	fprintf(fp, "    -c NUM       max k-mer occurrence [%d]\n", mo->max_occ);
-	fprintf(fp, "    -G NUM       max intron size [200k]\n");
-	fprintf(fp, "    -I           set max intron size to 3.6*sqrt(refLen); override -G\n");
+	fprintf(fp, "    -G NUM       max intron size; override -I [200k]\n");
+	fprintf(fp, "    -I           set max intron size to 3.6*sqrt(refLen)\n");
 	fprintf(fp, "    -w FLOAT     weight of log gap penalty [%g]\n", mo->chn_coef_log);
 	fprintf(fp, "    -n NUM       minimum number of syncmers in a chain [%d]\n", mo->min_chn_cnt);
 	fprintf(fp, "    -m NUM       min chaining score [%d]\n", mo->min_chn_sc);
@@ -88,7 +88,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 
 int main(int argc, char *argv[])
 {
-	int32_t c, i, set_I = 0, n_threads = 4;
+	int32_t c, i, set_I = 0, set_G = 0, n_threads = 4;
 	ketopt_t o = KETOPT_INIT;
 	mp_mapopt_t mo;
 	mp_idxopt_t io;
@@ -107,14 +107,14 @@ int main(int argc, char *argv[])
 		else if (c == 't') n_threads = atoi(o.arg);
 		else if (c == 'l') mo.kmer2 = atoi(o.arg);
 		else if (c == 'c') mo.max_occ = mp_parse_num(o.arg);
-		else if (c == 'G') mo.bw = mo.max_intron = mp_parse_num(o.arg);
+		else if (c == 'G') mo.bw = mo.max_intron = mp_parse_num(o.arg), set_G = 1;
 		else if (c == 'I') set_I = 1;
 		else if (c == 'n') mo.min_chn_cnt = mp_parse_num(o.arg);
 		else if (c == 'm') mo.min_chn_sc = mp_parse_num(o.arg);
 		else if (c == 'K') mo.mini_batch_size = mp_parse_num(o.arg);
 		else if (c == 'p') mo.pri_ratio = atof(o.arg);
 		else if (c == 'N') mo.best_n = mp_parse_num(o.arg);
-		else if (c == 'S') mo.flag |= MP_F_NO_SPLICE, mo.bw = mo.max_intron = mo.max_ext = 1000, mo.io = mo.io_end = 10000;
+		else if (c == 'S') mo.flag |= MP_F_NO_SPLICE, mo.bw = mo.max_intron = mo.max_ext = 1000, mo.io = mo.io_end = 10000, set_G = 1;
 		else if (c == 'A') mo.flag |= MP_F_NO_ALIGN;
 		else if (c == 'O') mo.go = atoi(o.arg);
 		else if (c == 'E') mo.ge = atoi(o.arg);
@@ -167,7 +167,7 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "[ERROR]\033[1;31m failed to open/build the index\033[0m\n");
 		return 1;
 	}
-	if (set_I) mp_mapopt_set_max_intron(&mo, mi->nt->l_seq);
+	if (set_I && !set_G) mp_mapopt_set_max_intron(&mo, mi->nt->l_seq);
 	if (mp_verbose >= 3) mp_idx_print_stat(mi, mo.max_occ);
 	if (fn_idx != 0) mp_idx_dump(fn_idx, mi);
 	for (i = o.ind + 1; i < argc; ++i)

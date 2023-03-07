@@ -11,12 +11,12 @@ cd miniprot && make
 ./miniprot test/DPP3-hs.gen.fa.gz test/DPP3-mm.pep.fa.gz > aln.paf        # PAF output
 ./miniprot --gff test/DPP3-hs.gen.fa.gz test/DPP3-mm.pep.fa.gz > aln.gff  # GFF3+PAF output
 
-# general command line: index and align in one go
-./miniprot -ut16 --gff genome.fna protein.faa > aln.gff
+# general command line: index and align in one go (-I sets max intron size based on genome size)
+./miniprot -Iut16 --gff genome.fna protein.faa > aln.gff
 
 # general command line: index first and then align (recommended)
 ./miniprot -t16 -d genome.mpi genome.fna
-./miniprot -ut16 --gff genome.mpi protein.faa > aln.gff
+./miniprot -Iut16 --gff genome.mpi protein.faa > aln.gff
 
 # output format
 man ./miniprot.1
@@ -29,7 +29,6 @@ man ./miniprot.1
 - [Users' Guide](#uguide)
   - [Installation](#install)
   - [Usage](#usage)
-  - [Evaluation](#eval)
   - [Algorithm overview](#algo)
   - [Citing miniprot](#cite)
 - [Limitations](#limit)
@@ -84,47 +83,12 @@ For convenience, miniprot can also output GFF3 with option `--gff`:
 ```sh
 miniprot -t8 --gff -d ref.mpi ref.fna > out.gff
 ```
-The detailed alignment is embedded in `##PAF` lines in the GFF3 output.
+The detailed alignment is embedded in `##PAF` lines in the GFF3 output. You can
+also get detailed residue alignment with `--aln`.
 
-### <a name="eval"></a>Evaluation
-
-We collected Ensembl canonical mouse proteins from Gencode vM30 and longest
-proteins per gene for chicken and zebrafish (fish). We then aligned these proteins to
-the human reference genome GRCh38. We say a junction is confirmed if it can be
-found in the human Gencode annotation v41; a junction is non-overlapping if the
-intron in the junction does not overlap with any introns in the Gencode
-annotation.
-
-We only evaluated miniprot-r173 and [spaln][spaln]-2.4.13a as these are the
-only tools practical for whole genomes. Running other tools would require to
-find approximate protein mapping first and then realign in each local region.
-This procedure is complex and does not evaluate the mapping step. In addition,
-[Iwata and Gotoh (2012)][spaln2] suggest that spaln2 consistently outperforms
-exonerate, GeneWise, ProSplign and genBlastG.
-
-In the evaluation, both miniprot (mp) and spaln (sp) were set to use 16 CPU
-threads. We used option `-Q7 -O0 -Thomosapi -LS -yS` with spaln (local
-alignment with the human-specific splicing model). It gives the best accuracy
-on these dataset. Note spaln-2.4.13a crashed for a few zebrafish proteins. We
-used 98% of zebrafish proteins in the evaluation. Miniprot uses a splice model
-for mammals by default. 'mp-j1' applies a more general model and has lower
-accuracy for aligning against the human genome.
-
-|Metric          |mouse/mp |mouse/sp |chicken/mp| fish/mp|fish/mp-j1|  fish/sp|
-|:---------------|--------:|--------:|--------:|--------:|---------:|--------:|
-|Elapsed time (s)|     314 |   3,767 |     260 |     470 |      475 |   12703 |
-|Peak RAM (Gb)   |    15.3 |     5.6 |    14.6 |    18.7 |     18.9 |     5.5 |
-|# proteins      |  21,844 |  21,844 |  17,007 |  29,706 |   29,706 |  29,706 |
-|# mapped        |  19,303 |  18,840 |  13,421 |  19,594 |   19,594 |  17,491 |
-|# single-exon   |   2,810 |         |   1,227 |   1,798 |    1,667 |         |
-|# predicted junc| 165,458 | 171,241 | 132,473 | 174,975 |  177,995 | 180,117 |
-|# non-ovlp junc |     316 |     852 |     258 |     457 |      737 |   1,391 |
-|# confirmed junc| 161,113 | 162,551 | 123,523 | 162,195 |  161,225 | 162,757 |
-|% confirmed     |   97.37 |   94.93 |   94.29 |   92.70 |    90.58 |   90.36 |
-
-Generally, miniprot finds fewer novel splice junctions, implying higher
-specificity, but spaln finds more confirmed junctions, implying higher
-sensitivity.
+If you are aligning proteins to a whole genome, it is recommended to add option
+`-I` to let miniprot automatically set the maximum intron size. You can also
+use `-G` to explicitly specify the max intron size.
 
 ### <a name="algo"></a>Algorithm overview
 
@@ -151,9 +115,14 @@ sensitivity.
 
 ### <a name="cite"></a>Citing miniprot
 
-The miniprot algorithm is described in the following preprint:
+If you use miniprot, please cite:
 
-> Li, H. (2022). Protein-to-genome alignment with miniprot. [arXiv:2210.08052](https://arxiv.org/abs/2210.08052).
+> Li, H. (2023) Protein-to-genome alignment with miniprot. *Bioinformatics*, **39**, btad014 [[PMID: 36648328]][mp-pmid].
+
+The preprint is available at
+[arXiv:2210.08052](https://arxiv.org/abs/2210.08052), which
+additionally shows metrics on MetaEuk. Please note that the published paper
+evaluated miniprot-0.7. The latest version may report different numbers.
 
 ## <a name="limit"></a>Limitations
 
@@ -167,6 +136,7 @@ The miniprot algorithm is described in the following preprint:
 
 [exonerate]: https://pubmed.ncbi.nlm.nih.gov/15713233/
 [genewise]: https://pubmed.ncbi.nlm.nih.gov/15123596/
+[mp-pmid]: https://pubmed.ncbi.nlm.nih.gov/36648328/
 [zlib]: https://zlib.net
 [paftools]: https://github.com/lh3/minimap2/blob/master/misc/paftools.js
 [minimap2]: https://github.com/lh3/minimap2
