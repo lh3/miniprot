@@ -1,8 +1,11 @@
 #include <string.h>
 #include <stdio.h>
 #include <assert.h>
+#include <math.h>
 #include "miniprot.h"
 #include "nasw.h"
+
+#define MP_MAX_INTRON_COEF 3.6 // max_intron = sqrt(genome_size) * coef
 
 void mp_idxopt_init(mp_idxopt_t *io)
 {
@@ -24,6 +27,17 @@ void mp_mapopt_set_fs(mp_mapopt_t *mo, int32_t fs)
 	ns_set_stop_sc(mo->asize, mo->mat, mo->fs);
 }
 
+void mp_mapopt_set_max_intron(mp_mapopt_t *mo, int64_t gsize)
+{
+	int64_t x;
+	x = (int64_t)(sqrt((double)gsize) * MP_MAX_INTRON_COEF + 1.);
+	if (x < mo->min_max_intron) x = mo->min_max_intron;
+	if (x > mo->max_max_intron) x = mo->max_max_intron;
+	mo->bw = mo->max_intron = x;
+	if (mp_verbose >= 3)
+		fprintf(stderr, "[M::%s] set max intron size to %d\n", __func__, mo->max_intron);
+}
+
 void mp_mapopt_init(mp_mapopt_t *mo)
 {
 	memset(mo, 0, sizeof(*mo));
@@ -32,6 +46,7 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 	mo->max_occ = 20000;
 	mo->max_gap = 1000;
 	mo->max_intron = 200000;
+	mo->min_max_intron = 10000, mo->max_max_intron = 300000;
 	mo->bw = mo->max_intron;
 	mo->min_chn_cnt = 3;
 	mo->max_chn_max_skip = 25;

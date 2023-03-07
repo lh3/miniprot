@@ -7,11 +7,11 @@ INCLUDES=
 OBJS=		kalloc.o kthread.o nasw-sse.o nasw-tab.o sys.o misc.o options.o ntseq.o sketch.o \
 			index.o bseq.o chain.o hit.o format.o map.o align.o
 PROG=		miniprot
-LIBS=		-lpthread -lz
+LIBS=		-lpthread -lz -lm
 
 ifneq ($(asan),)
 	CFLAGS+=-fsanitize=address
-	LIBS+=-fsanitize=address -ldl -lm
+	LIBS+=-fsanitize=address -ldl
 endif
 
 .SUFFIXES:.c .cpp .o

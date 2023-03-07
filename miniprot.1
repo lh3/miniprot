@@ -1,4 +1,4 @@
-.TH miniprot 1 "7 January 2023" "miniprot-0.7-dirty (r215)" "Bioinformatics tools"
+.TH miniprot 1 "7 January 2023" "miniprot-0.7-dirty (r217)" "Bioinformatics tools"
 .SH NAME
 .PP
 miniprot - protein-to-genome alignment with splicing and frameshifts
@@ -70,6 +70,14 @@ times or more [50k]
 .TP
 .BI -G \ NUM
 Max intron size [200k]
+.TP
+.BI -I
+Set max intron size to
+.RI min(max(3.6*sqrt( refLen ),10000),300000)
+where
+.I refLen
+is the total length of the input genome. This option overrides
+.BR -G .
 .TP
 .BI -n \ NUM
 Min number of syncmers in a chain [10]

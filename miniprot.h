@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.7-r216-dirty"
+#define MP_VERSION "0.7-r217-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
@@ -43,6 +43,7 @@ typedef struct {
 	int32_t max_occ;
 	int32_t max_gap; // max gap on the query protein, in aa
 	int32_t max_intron;
+	int32_t min_max_intron, max_max_intron;
 	int32_t bw; // bandwidth, in aa
 	int32_t max_ext;
 	int32_t max_ava;
@@ -142,6 +143,7 @@ void mp_start(void);
 void mp_idxopt_init(mp_idxopt_t *io);
 void mp_mapopt_init(mp_mapopt_t *mo);
 void mp_mapopt_set_fs(mp_mapopt_t *mo, int32_t fs);
+void mp_mapopt_set_max_intron(mp_mapopt_t *mo, int64_t gsize);
 int32_t mp_mapopt_check(const mp_mapopt_t *mo);
 
 mp_idx_t *mp_idx_load(const char *fn, const mp_idxopt_t *io, int32_t n_threads);
