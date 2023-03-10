@@ -1,3 +1,14 @@
+Release 0.9-r223 (9 March 2023)
+-------------------------------
+
+Notable change:
+
+ * Bugfix: not query proteins were outputted with option `-u`.
+
+(0.9: 9 March 2023, r223)
+
+
+
 Release 0.8-r220 (6 March 2023)
 -------------------------------
 

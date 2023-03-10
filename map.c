@@ -289,23 +289,23 @@ static void *worker_pipeline(void *shared, int step, void *in)
 		return in;
     } else if (step == 2) { // step 2: output
         step_t *s = (step_t*)in;
-		int32_t j;
 		for (i = 0; i < p->n_threads; ++i) mp_tbuf_destroy(s->buf[i]);
 		free(s->buf);
 		for (i = 0; i < s->n_seq; ++i) {
-			int32_t best_sc = -1;
-			if (s->n_reg[i] == 0) {
-				mp_write_output(&p->str, 0, p->mi, &s->seq[i], 0, p->opt, 0, 0);
-				fwrite(p->str.s, 1, p->str.l, stdout);
-			} else {
+			int32_t best_sc = -1, j, n_out;
+			if (s->n_reg[i] > 0)
 				best_sc = s->reg[i][0].p? s->reg[i][0].p->dp_max : s->reg[i][0].chn_sc;
-			}
-			for (j = 0; j < s->n_reg[i] && j < p->opt->out_n; ++j) {
+			for (j = 0, n_out = 0; j < s->n_reg[i] && j < p->opt->out_n; ++j) {
 				const mp_reg1_t *r = &s->reg[i][j];
 				int32_t sc = r->p? r->p->dp_max : r->chn_sc;
 				if (sc <= 0 || sc < (double)best_sc * p->opt->out_sim) continue;
 				if (r->qe - r->qs < (double)s->seq[i].l_seq * p->opt->out_cov) continue;
 				mp_write_output(&p->str, 0, p->mi, &s->seq[i], r, p->opt, ++p->id, j + 1);
+				fwrite(p->str.s, 1, p->str.l, stdout);
+				++n_out;
+			}
+			if (n_out == 0) {
+				mp_write_output(&p->str, 0, p->mi, &s->seq[i], 0, p->opt, 0, 0);
 				fwrite(p->str.s, 1, p->str.l, stdout);
 			}
 			for (j = 0; j < s->n_reg[i]; ++j) {
