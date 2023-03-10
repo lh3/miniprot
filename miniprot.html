@@ -61,7 +61,7 @@ p {
     text-align: justify;
 }
 </style>
-<TITLE>miniprot.1</TITLE>
+<TITLE>Manual Page - miniprot(1)</TITLE>
 </HEAD>
 <BODY bgcolor=#F0F0F0 text=#000000 link=#0000ff vlink=#C000C0 alink=#ff0000><div id="wrap"><A NAME=top></A>
 <CENTER>
@@ -136,8 +136,13 @@ Miniprot aligns protein sequences to a genome allowing potential frameshifts and
 K-mer size for genome-wide indexing [6]
 </TD></TR>
 <TR valign=top><TD width=10% nowrap>
-<B>-s</B><I> INT</I> </TD><TD valign=bottom>
-Syncmer submer size [4]. In average, miniprot selects a k-mer every 2*(k-s)+1 residues.
+<B>-M</B><I> INT</I> </TD><TD valign=bottom>
+Sample k-mers at a rate
+1/2**<I>INT</I> [1]. Increasing this option reduces peak memory but decreases sensitivity.
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-L</B><I> INT</I> </TD><TD valign=bottom>
+Minimum ORF length to index [30]
 </TD></TR>
 <TR valign=top><TD width=10% nowrap>
 <B>-b</B><I> INT</I> </TD><TD valign=bottom>
@@ -167,7 +172,13 @@ Ignore k-mers occurring
 </TD></TR>
 <TR valign=top><TD width=10% nowrap>
 <B>-G</B><I> NUM</I> </TD><TD valign=bottom>
-Max intron size [200k]
+Max intron size [200k]. This option overrides
+<B>-I</B>. </TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-I</B> </TD><TD valign=bottom>
+Set max intron size to
+min(max(3.6*sqrt(<I>refLen</I>),10000),300000) where
+<I>refLen</I> is the total length of the input genome.
 </TD></TR>
 <TR valign=top><TD width=10% nowrap>
 <B>-n</B><I> NUM</I> </TD><TD valign=bottom>
@@ -217,7 +228,7 @@ Intron open penalty [29]
 </TD></TR>
 <TR valign=top><TD width=10% nowrap>
 <B>-F</B><I> INT</I> </TD><TD valign=bottom>
-Penalty for frameshifts or in-frame stop codons [17]
+Penalty for frameshifts or in-frame stop codons [23]
 </TD></TR>
 <TR valign=top><TD width=10% nowrap>
 <B>-C</B><I> FLOAT</I> </TD><TD valign=bottom>
@@ -226,6 +237,16 @@ Weight of splicing penalty [1]. Set to 0 to ignore splicing signals.
 <TR valign=top><TD width=10% nowrap>
 <B>-B</B><I> IN</I> </TD><TD valign=bottom>
 Bonus score for alignment reaching ends of proteins [5]
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>-j</B><I> INT</I> </TD><TD valign=bottom>
+Splice model for the target genome: 2=mammal, 1=general, 0=none [1]. The mammal
+model considers &#145;G|GTR...YYYNYAG|&#146; as the optimal splicing sequence and
+penalizes other sequences based on profiles in Sibley et al (2016). According
+to Irimia and Roy (2008) and Sheth et al (2006), the first &#145;G&#146; in the donor
+exon and the poly-Y close to the acceptor may not be conserved in some species.
+The general model takes &#145;|GTR...YAG|&#146; as the optimal sequence. Both models also
+consider less frequent splice sites including &#145;G|GC...YAG|&#146; and &#145;|AT...AC|&#146;.
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
 <A name=7></A>
@@ -248,14 +269,36 @@ alignments.
 Output in the GFF3 format without &#145;##PAF&#146; lines.
 </TD></TR>
 <TR valign=top><TD width=10% nowrap>
+<B>--aln</B> </TD><TD valign=bottom>
+Output the residue alignment in three lines, where line &#145;##ATN&#146; for the target
+nucleotide sequence, &#145;##ATA&#146; for translated amino acid sequence and &#145;##AQA&#146; for
+the query protein sequence. On a &#145;##ATA&#146; line, &#145;!&#146; denotes a frameshift
+insertion corresponding to the &#145;F&#146; CIGAR operator and &#145;$&#146; denotes a frameshift
+substitution corresponding to the &#145;G&#146; operator.
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>--max-intron-out</B><I> NUM</I> </TD></TR><TR valign=top><TD width=10%>&nbsp;</TD><TD>
+In the
+<B>--aln</B> format, if an intron is longer than
+<I>NUM</I>, only output
+ceil(<I>NUM</I>/2) basepairs at the donor or the acceptor sites and write the full intron length
+<I>LEN</I> as
+~<I>LEN</I>~ in the middle [200].
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
 <B>-P</B><I> STR</I> </TD><TD valign=bottom>
-Prefix for IDs in GFF3 [MP].
+Prefix for IDs in GFF3 or GTF [MP].
 <B>--gff-delim</B> overrides this option.
 </TD></TR>
 <TR valign=top><TD colspan=2>
 <B>--gff-delim</B><I> CHAR</I> </TD></TR><TR valign=top><TD width=10%>&nbsp;</TD><TD>
 Change the ID field in GFF3 to
-QueryName<I>CHAR</I>HitIndex []. If not specified, the default ID looks like &#145;MP000012&#146;.
+QueryName<I>CHAR</I>HitIndex []. If not specified, the default ID looks like &#145;MP000012&#146;. This option is only
+applicable to the GFF3 output format.
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>--gtf</B> </TD><TD valign=bottom>
+Output in the GTF format
 </TD></TR>
 <TR valign=top><TD width=10% nowrap>
 <B>-u</B> </TD><TD valign=bottom>
@@ -265,6 +308,16 @@ Print unmapped query proteins
 <B>--outn</B><I> NUM</I> </TD><TD valign=bottom>
 Output up to
 min{<I>NUM</I>, <B>-N</B>} alignments per query [1000].
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>--outs</B><I> FLOAT</I> </TD></TR><TR valign=top><TD width=10%>&nbsp;</TD><TD>
+Output an alignment only if its score is at least
+<I>FLOAT</I>*bestScore, where bestScore is the best alignment score of the protein [0.99]
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>--outc</B><I> FLOAT</I> </TD></TR><TR valign=top><TD width=10%>&nbsp;</TD><TD>
+Output an alignment only if
+<I>FLOAT</I> fraction of the query protein is aligned [0.1]
 </TD></TR>
 <TR valign=top><TD width=10% nowrap>
 <B>-K</B><I> NUM</I> </TD><TD valign=bottom>
@@ -288,7 +341,7 @@ default (see the next subsection). It can also output GFF3 with option
 <B>--gff</B>. Miniprot may output three features: &#145;mRNA&#146;, &#145;CDS&#146; or &#145;stop_codon&#146;. Here, a
 stop_codon is only reported if the alignment reaches the C-terminus of the
 protein and the next codon is a stop codon. Per GenCode rule, stop_codon is not
-part of CDS but it is part of mRNA.
+part of CDS but it is part of mRNA or exon.
 <P>
 Miniprot may output the following attributes in GFF3:
 <P><BLOCKQUOTE><div id='tbl'><TABLE border=1 cellspacing=0 cellpadding=3>
@@ -373,9 +426,9 @@ format. Miniprot may output the following tags:
 <TR valign=top>
 <TD align=right>do</TD><TD align=center>i</TD><TD>Distance to the nearest stop codon</TD></TR>
 <TR valign=top>
-<TD align=right>cg</TD><TD align=center>i</TD><TD>Protein CIGAR</TD></TR>
+<TD align=right>cg</TD><TD align=center>Z</TD><TD>Protein CIGAR</TD></TR>
 <TR valign=top>
-<TD align=right>cs</TD><TD align=center>i</TD><TD>Difference string</TD></TR>
+<TD align=right>cs</TD><TD align=center>Z</TD><TD>Difference string</TD></TR>
 </TABLE></div></BLOCKQUOTE>
 <P>
 <P>
@@ -441,4 +494,4 @@ Need to introduce more heuristics for improved accuracy.
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>miniprot-0.4 (r165)</I></TD> <TD width=33% align=center>miniprot (1)</TD> <TD align=right width=33%><I>5 October 2022</I></TD> </TR></TABLE></div></BODY></HTML>
+<TABLE width=100%><TR> <TD width=33%><I>miniprot-0.9 (r223)</I></TD> <TD width=33% align=center>miniprot (1)</TD> <TD align=right width=33%><I>9 March 2023</I></TD> </TR></TABLE></div></BODY></HTML>
