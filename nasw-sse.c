@@ -65,11 +65,11 @@ static void ns_backtrack(void *km, int32_t vs, const __m128i *tb, int32_t nl, in
 		}
 		last = state >= 1 && state <= 5 && ext? state : 0;
 	}
-	if (j > 0) ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_I, j);
+	if (j > 0) cigar = ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_I, j);
 	if (i >= 0) {
 		int32_t l = (i+1) / 3 * 3, t = (i+1) % 3;
-		if (l > 0) ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_D, l);
-		if (t != 0) ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_F, t);
+		if (l > 0) cigar = ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_D, l);
+		if (t != 0) cigar = ns_push_cigar(km, n_cigar, m_cigar, cigar, NS_CIGAR_F, t);
 	}
 	for (i = 0; i < (*n_cigar)>>1; ++i) // reverse CIGAR
 		tmp = cigar[i], cigar[i] = cigar[(*n_cigar) - 1 - i], cigar[(*n_cigar) - 1 - i] = tmp;
