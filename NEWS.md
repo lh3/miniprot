@@ -1,3 +1,15 @@
+Release 0.10-r225 (3 April 2023)
+--------------------------------
+
+Notable change:
+
+ * Bugfix: rare segmentation fault (#38 and #39). This bug affected all
+   previous versions of miniprot.
+
+(0.10: 3 April 2023, r225)
+
+
+
 Release 0.9-r223 (9 March 2023)
 -------------------------------
 
