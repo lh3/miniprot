@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.10-r225"
+#define MP_VERSION "0.10-r226-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
@@ -60,6 +60,7 @@ typedef struct {
 	int32_t kmer2;
 	int32_t go, ge, io, fs; // gap open, extension, intron open, and frame-shift/stop-codon
 	int32_t io_end;
+	float ie_coef;
 	int32_t sp_model;
 	float sp_scale;
 	int32_t xdrop;

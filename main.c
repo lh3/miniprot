@@ -17,6 +17,7 @@ static ko_longopt_t long_options[] = {
 	{ "aln",             ko_no_argument,       311 },
 	{ "max-intron-out",  ko_required_argument, 312 },
 	{ "outc",            ko_required_argument, 313 },
+	{ "ie-coef",         ko_required_argument, 314 },
 	{ "version",         ko_no_argument,       401 },
 	{ "no-kalloc",       ko_no_argument,       501 },
 	{ "dbg-qname",       ko_no_argument,       502 },
@@ -143,6 +144,7 @@ int main(int argc, char *argv[])
 		else if (c == 311) mo.flag |= MP_F_SHOW_RESIDUE; // --aln
 		else if (c == 312) mo.max_intron_flank = (mp_parse_num(o.arg) + 1) / 2; // --max-intron-out
 		else if (c == 313) mo.out_cov = atof(o.arg); // --outc
+		else if (c == 314) mo.ie_coef = atof(o.arg); // --ie-coef
 		else if (c == 501) mp_dbg_flag |= MP_DBG_NO_KALLOC; // --no-kalloc
 		else if (c == 502) mp_dbg_flag |= MP_DBG_QNAME; // --dbg-qname
 		else if (c == 503) mp_dbg_flag |= MP_DBG_NO_REFINE; // --dbg-no-refine
@@ -155,7 +157,7 @@ int main(int argc, char *argv[])
 			printf("%s\n", MP_VERSION);
 			return 0;
 		} else {
-			fprintf(stderr, "[WARNING]\033[1;31m unrecognized option\033[0m\n");
+			fprintf(stderr, "[WARNING]\033[1;31m unrecognized option: %s\033[0m\n", argv[o.i-1]);
 		}
 	}
 	if (mp_mapopt_check(&mo) < 0) return 1;

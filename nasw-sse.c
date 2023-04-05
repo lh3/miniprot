@@ -381,7 +381,7 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 			tmp_sc = ns_max_8(max);
 			end_sc = *((ns_int_t*)&H[(al-1)%slen] + (al-1)/slen) + opt->end_bonus;
 			tmp_sc = tmp_sc > end_sc? tmp_sc : end_sc;
-			tmp_sc_log = tmp_sc - (i - pen_len < 2? 0 : (int32_t)(.5f * ns_log2(i - pen_len) + .5f));
+			tmp_sc_log = tmp_sc - (i - pen_len < 2? 0 : (int32_t)(opt->ie_coef * ns_log2(i - pen_len) + .5f));
 			if (tmp_sc_log > max_sc_log) {
 				max_sc = tmp_sc, max_sc_log = tmp_sc_log, max_i = i;
 				memcpy(&Hmax[-1], &H[-1], (slen + 1) * 16);

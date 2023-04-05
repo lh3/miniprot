@@ -94,6 +94,7 @@ void ns_opt_init(ns_opt_t *opt)
 	opt->end_bonus = 5;
 	ns_opt_set_sp(opt, NS_S_MAMMAL);
 	opt->asize = 22;
+	opt->ie_coef = .5f;
 	opt->sc = ns_mat_blosum62;
 	opt->nt4 = ns_tab_nt4;
 	opt->aa20 = ns_tab_aa20;

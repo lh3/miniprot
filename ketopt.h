@@ -81,7 +81,10 @@ static int ketopt(ketopt_t *s, int argc, char *argv[], int permute, const char *
 					if (longopts[k].name[j - 2] == 0) ++n_exact, o_exact = &longopts[k];
 					else ++n_partial, o_partial = &longopts[k];
 				}
-			if (n_exact > 1 || (n_exact == 0 && n_partial > 1)) return '?';
+			if (n_exact > 1 || (n_exact == 0 && n_partial > 1)) {
+				s->i++;
+				return '?';
+			}
 			o = n_exact == 1? o_exact : n_partial == 1? o_partial : 0;
 			if (o) {
 				s->opt = opt = o->val, s->longidx = o - longopts;

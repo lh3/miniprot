@@ -62,6 +62,7 @@ typedef struct {
 	int32_t xdrop, end_bonus; // xdrop for extension, and bonus for reaching end of proteins
 	int32_t asize; // alphabet size; always 22 in the current implementation
 	int32_t sp[6]; // 0:pos3, 1:GC-AC, 2:AT-AC, 3:other, 4:pos0, 5:poly-Y
+	float ie_coef;
 	const int8_t *sc; // 22x22 scoring matrix
 	uint8_t *nt4, *aa20, *codon; // char-to-int convertion table and codon table
 } ns_opt_t;
