@@ -178,7 +178,7 @@ int main(int argc, char *argv[])
 	for (i = o.ind + 1; i < argc; ++i) {
 		int32_t res = mp_map_file(mi, argv[i], &mo, n_threads);
 		if (res != 0) {
-			fprintf(stderr, "[M::%s] ERROR during mapping %s (check files exists and is amino acid fasta)\n", __func__, argv[i]);
+			fprintf(stderr, "[M::%s] ERROR during mapping %s (check files exists and are amino acid fastas)\n", __func__, argv[i]);
 			return 1;
 		}
 	}
