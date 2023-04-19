@@ -1,3 +1,20 @@
+Release 0.11-r234 (18 April 2023)
+---------------------------------
+
+Notable changes:
+
+ * New feature: added option --trans to output translated protein sequences. It
+   is possible to extract these sequences from the --aln output but the --trans
+   output is smaller and more convenient.
+
+ * Bugfix: infinite error messages if a wrong option is in use.
+
+ * Improvement: better error messages given nonexisting query files (#40).
+
+(0.11: 18 April 2023, r234)
+
+
+
 Release 0.10-r225 (3 April 2023)
 --------------------------------
 
@@ -15,7 +32,7 @@ Release 0.9-r223 (9 March 2023)
 
 Notable change:
 
- * Bugfix: not query proteins were outputted with option `-u`.
+ * Bugfix: some query proteins were not outputted with option `-u`.
 
 (0.9: 9 March 2023, r223)
 
