@@ -155,11 +155,11 @@ static void mp_write_cs(kstring_t *str, const mp_idx_t *mi, const char *aa, cons
 static void mp_write_residue(kstring_t *out, const mp_idx_t *mi, const mp_mapopt_t *opt, const char *aa, const mp_reg1_t *r)
 {
 	const mp_extra_t *e = r->p;
-	int32_t k, w, al = r->qs, nl = 0, l_tmp = 8; // enough to keep "##ATN\t\0"
+	int32_t k, w, w4, al = r->qs, nl = 0, l_tmp = 8; // enough to keep "##ATN\t\0"
 	int32_t max_flank = opt->max_intron_flank;
 	int64_t l_nt;
 	uint8_t *nt;
-	char *str[4];
+	char *str[5];
 	if (e == 0) return;
 	for (k = 0; k < e->n_cigar; ++k) { // estimate the string length
 		int32_t op = e->cigar[k]&0xf, len = e->cigar[k]>>4, len3 = len * 3;
@@ -171,18 +171,20 @@ static void mp_write_residue(kstring_t *out, const mp_idx_t *mi, const mp_mapopt
 		}
 	}
 	l_tmp += 3;
-	str[0] = Kmalloc(0, char, 4 * l_tmp);
+	str[0] = Kmalloc(0, char, 5 * l_tmp);
 	str[1] = str[0] + l_tmp;
 	str[2] = str[1] + l_tmp;
 	str[3] = str[2] + l_tmp;
+	str[4] = str[3] + l_tmp;
 	strcpy(str[0], "##ATN\t");
 	strcpy(str[1], "##ATA\t");
 	strcpy(str[2], "##AAS\t");
 	strcpy(str[3], "##AQA\t");
+	strcpy(str[4], "##STA\t");
 	nt = Kmalloc(0, uint8_t, r->ve - r->vs + 3);
 	l_nt = mp_ntseq_get_by_v(mi->nt, r->vid, r->vs, r->ve + 3, nt);
 	assert(l_nt >= r->ve - r->vs);
-	for (k = 0, w = 6; k < e->n_cigar; ++k) {
+	for (k = 0, w = w4 = 6; k < e->n_cigar; ++k) {
 		int32_t i, j, l, op = e->cigar[k]&0xf, len = e->cigar[k]>>4, len3 = len * 3;
 		assert(w < l_tmp);
 		if (op == NS_CIGAR_M) {
@@ -193,7 +195,7 @@ static void mp_write_residue(kstring_t *out, const mp_idx_t *mi, const mp_mapopt
 				aa_aa = ns_tab_aa20[(uint8_t)aa[j]];
 				s = opt->mat[nt_aa * opt->asize + aa_aa];
 				str[0][w] = "ACGTN"[nt[i]], str[0][w+1] = "ACGTN"[nt[i+1]], str[0][w+2] = "ACGTN"[nt[i+2]];
-				str[1][w] = ns_tab_aa_i2c[nt_aa], str[1][w+1] = str[1][w+2] = '.';
+				str[1][w] = str[4][w4++] = ns_tab_aa_i2c[nt_aa], str[1][w+1] = str[1][w+2] = '.';
 				str[2][w] = nt_aa == aa_aa? '|' : s > 0? '+' : ' ', str[2][w+1] = ' ', str[2][w+2] = ' ';
 				str[3][w] = toupper(aa[j]), str[3][w+1] = str[3][w+2] = ' ';
 			}
@@ -211,7 +213,7 @@ static void mp_write_residue(kstring_t *out, const mp_idx_t *mi, const mp_mapopt
 				uint8_t nt_aa, codon = nt[i]<<4 | nt[i+1]<<2 | nt[i+2];
 				nt_aa = nt[i] > 3 || nt[i+1] > 3 || nt[i+2] > 3? ns_tab_aa20['X'] : ns_tab_codon[codon];
 				str[0][w] = "ACGTN"[nt[i]], str[0][w+1] = "ACGTN"[nt[i+1]], str[0][w+2] = "ACGTN"[nt[i+2]];
-				str[1][w] = ns_tab_aa_i2c[nt_aa], str[1][w+1] = str[1][w+2] = '.';
+				str[1][w] = str[4][w4++] = ns_tab_aa_i2c[nt_aa], str[1][w+1] = str[1][w+2] = '.';
 				str[2][w] = str[2][w+1] = str[2][w+2] = ' ';
 				str[3][w] = '-', str[3][w+1] = str[3][w+2] = ' ';
 			}
@@ -238,7 +240,7 @@ static void mp_write_residue(kstring_t *out, const mp_idx_t *mi, const mp_mapopt
 				aa_aa = ns_tab_aa20[(uint8_t)aa[al]];
 				s = opt->mat[nt_aa * opt->asize + aa_aa];
 				str[0][w] = "ACGTN"[nt[nl]];
-				str[1][w] = ns_tab_aa_i2c[nt_aa];
+				str[1][w] = str[4][w4++] = ns_tab_aa_i2c[nt_aa];
 				str[2][w] = nt_aa == aa_aa? '|' : s > 0? '+' : ' ';
 				str[3][w] = toupper(aa[al]);
 				++w, ++nl;
@@ -280,14 +282,17 @@ static void mp_write_residue(kstring_t *out, const mp_idx_t *mi, const mp_mapopt
 		codon = n1<<4 | n2<<2 | n3;
 		nt_aa = n1 > 3 || n2 > 3 || n3 > 3? ns_tab_aa20['X'] : ns_tab_codon[codon];
 		str[0][w] = "ACGTN"[n1], str[0][w+1] = "ACGTN"[n2], str[0][w+2] = "ACGTN"[n3];
-		str[1][w] = ns_tab_aa_i2c[nt_aa], str[1][w+1] = str[1][w+2] = '.';
+		str[1][w] = str[4][w4++] = ns_tab_aa_i2c[nt_aa], str[1][w+1] = str[1][w+2] = '.';
 		str[2][w] = str[2][w+1] = str[2][w+2] = ' ';
 		str[3][w] = str[3][w+1] = str[3][w+2] = ' ';
 		w += 3;
 	}
-	str[0][w] = str[1][w] = str[2][w] = str[3][w] = 0;
+	str[0][w] = str[1][w] = str[2][w] = str[3][w] = 0, str[4][w4] = 0;
 	kfree(0, nt);
-	mp_sprintf_lite(out, "%s\n%s\n%s\n%s\n", str[0], str[1], str[2], str[3]);
+	if (opt->flag & MP_F_SHOW_RESIDUE)
+		mp_sprintf_lite(out, "%s\n%s\n%s\n%s\n", str[0], str[1], str[2], str[3]);
+	if (opt->flag & MP_F_SHOW_TRANS)
+		mp_sprintf_lite(out, "%s\n", str[4]);
 	kfree(0, str[0]);
 }
 
@@ -412,7 +417,7 @@ void mp_write_output(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_
 		if (opt->flag&MP_F_SHOW_UNMAP)
 			mp_write_paf(s, mi, seq, 0, opt->flag&MP_F_GFF);
 	} else if (opt->flag&MP_F_GTF) {
-		if (opt->flag&MP_F_SHOW_RESIDUE) {
+		if (opt->flag & (MP_F_SHOW_RESIDUE|MP_F_SHOW_TRANS)) {
 			mp_write_paf(s, mi, seq, r, opt->flag&MP_F_GFF);
 			mp_write_residue(s, mi, opt, seq->seq, r);
 		}
@@ -420,7 +425,7 @@ void mp_write_output(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_
 	} else {
 		if (!(opt->flag&MP_F_NO_PAF))
 			mp_write_paf(s, mi, seq, r, opt->flag&MP_F_GFF);
-		if (opt->flag&MP_F_SHOW_RESIDUE)
+		if (opt->flag & (MP_F_SHOW_RESIDUE|MP_F_SHOW_TRANS))
 			mp_write_residue(s, mi, opt, seq->seq, r);
 		if (opt->flag&MP_F_GFF)
 			mp_write_gff(s, km, mi, seq, r, opt->gff_prefix, id, seq->name, opt->gff_delim, hit_idx);

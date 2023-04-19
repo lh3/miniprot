@@ -18,6 +18,7 @@ static ko_longopt_t long_options[] = {
 	{ "max-intron-out",  ko_required_argument, 312 },
 	{ "outc",            ko_required_argument, 313 },
 	{ "ie-coef",         ko_required_argument, 314 },
+	{ "trans",           ko_no_argument,       315 },
 	{ "version",         ko_no_argument,       401 },
 	{ "no-kalloc",       ko_no_argument,       501 },
 	{ "dbg-qname",       ko_no_argument,       502 },
@@ -81,6 +82,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    --gff        output in the GFF3 format\n");
 	fprintf(fp, "    --gtf        basic GTF output without detailed alignment\n");
 	fprintf(fp, "    --aln        output residue alignment\n");
+	fprintf(fp, "    --trans      output translated protein sequences (skipping frameshift)\n");
 	fprintf(fp, "    -P STR       prefix for IDs in GFF3 [%s]\n", mo->gff_prefix);
 	fprintf(fp, "    -u           print unmapped query proteins in PAF\n");
 	fprintf(fp, "    --outn=NUM   output up to min{NUM,-N} alignments per query [%d]\n", mo->out_n);
@@ -145,6 +147,7 @@ int main(int argc, char *argv[])
 		else if (c == 312) mo.max_intron_flank = (mp_parse_num(o.arg) + 1) / 2; // --max-intron-out
 		else if (c == 313) mo.out_cov = atof(o.arg); // --outc
 		else if (c == 314) mo.ie_coef = atof(o.arg); // --ie-coef
+		else if (c == 315) mo.flag |= MP_F_SHOW_TRANS; // --trans
 		else if (c == 501) mp_dbg_flag |= MP_DBG_NO_KALLOC; // --no-kalloc
 		else if (c == 502) mp_dbg_flag |= MP_DBG_QNAME; // --dbg-qname
 		else if (c == 503) mp_dbg_flag |= MP_DBG_NO_REFINE; // --dbg-no-refine
