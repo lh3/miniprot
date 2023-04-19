@@ -257,7 +257,7 @@ static inline __m128i ns_select(__m128i cond, __m128i a, __m128i b)
 
 static inline int ns_max_8(__m128i a)
 {
-#if defined(__ARM_NEON__)
+#if defined(__ARM_NEON)
 	return vmaxvq_s16(vreinterpretq_s16_u8(a));
 #elif defined(__SSE2__)
 	a = _mm_max_epi16(a, _mm_srli_si128(a, 8));
