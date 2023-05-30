@@ -418,7 +418,7 @@ void mp_write_output(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_
 			mp_write_paf(s, mi, seq, 0, opt->flag&MP_F_GFF);
 	} else if (opt->flag&MP_F_GTF) {
 		if (opt->flag & (MP_F_SHOW_RESIDUE|MP_F_SHOW_TRANS)) {
-			mp_write_paf(s, mi, seq, r, opt->flag&MP_F_GFF);
+			mp_write_paf(s, mi, seq, r, opt->flag&MP_F_GTF);
 			mp_write_residue(s, mi, opt, seq->seq, r);
 		}
 		mp_write_gtf(s, km, mi, seq, r, opt->gff_prefix, id, seq->name);
