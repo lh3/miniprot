@@ -310,7 +310,8 @@ void mp_write_paf(kstring_t *s, const mp_idx_t *mi, const mp_bseq1_t *seq, const
 	else mp_sprintf_lite(s, "%d\t%d\t", (int)r->vs, (int)r->ve);
 	if (r->p) {
 		int32_t k;
-		mp_sprintf_lite(s, "%d\t%d\t0\tAS:i:%d\tms:i:%d\tnp:i:%d\tda:i:%d\tdo:i:%d\t", r->p->n_iden * 3, r->p->blen, r->p->dp_score, r->p->dp_max, r->p->n_plus, r->p->dist_start, r->p->dist_stop);
+		mp_sprintf_lite(s, "%d\t%d\t0\tAS:i:%d\tms:i:%d\tnp:i:%d\tfs:i:%d\tst:i:%d\tda:i:%d\tdo:i:%d\t",
+			r->p->n_iden * 3, r->p->blen, r->p->dp_score, r->p->dp_max, r->p->n_plus, r->p->n_fs, r->p->n_stop, r->p->dist_start, r->p->dist_stop);
 		mp_sprintf_lite(s, "cg:Z:");
 		for (k = 0; k < r->p->n_cigar; ++k)
 			mp_sprintf_lite(s, "%d%c", r->p->cigar[k]>>4, NS_CIGAR_STR[r->p->cigar[k]&0xf]);
