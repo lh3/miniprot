@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.11-r236-dirty"
+#define MP_VERSION "0.12-r237"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
@@ -14,6 +14,7 @@
 #define MP_F_NO_PRE_CHAIN 0x40
 #define MP_F_SHOW_RESIDUE 0x80
 #define MP_F_SHOW_TRANS   0x100
+#define MP_F_NO_CS        0x200
 
 #define MP_FEAT_CDS       0
 #define MP_FEAT_STOP      1

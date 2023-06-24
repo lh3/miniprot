@@ -19,6 +19,7 @@ static ko_longopt_t long_options[] = {
 	{ "outc",            ko_required_argument, 313 },
 	{ "ie-coef",         ko_required_argument, 314 },
 	{ "trans",           ko_no_argument,       315 },
+	{ "no-cs",           ko_no_argument,       316 },
 	{ "version",         ko_no_argument,       401 },
 	{ "no-kalloc",       ko_no_argument,       501 },
 	{ "dbg-qname",       ko_no_argument,       502 },
@@ -148,6 +149,7 @@ int main(int argc, char *argv[])
 		else if (c == 313) mo.out_cov = atof(o.arg); // --outc
 		else if (c == 314) mo.ie_coef = atof(o.arg); // --ie-coef
 		else if (c == 315) mo.flag |= MP_F_SHOW_TRANS; // --trans
+		else if (c == 316) mo.flag |= MP_F_NO_CS; // --no-cs
 		else if (c == 501) mp_dbg_flag |= MP_DBG_NO_KALLOC; // --no-kalloc
 		else if (c == 502) mp_dbg_flag |= MP_DBG_QNAME; // --dbg-qname
 		else if (c == 503) mp_dbg_flag |= MP_DBG_NO_REFINE; // --dbg-no-refine

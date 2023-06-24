@@ -296,10 +296,10 @@ static void mp_write_residue(kstring_t *out, const mp_idx_t *mi, const mp_mapopt
 	kfree(0, str[0]);
 }
 
-void mp_write_paf(kstring_t *s, const mp_idx_t *mi, const mp_bseq1_t *seq, const mp_reg1_t *r, int32_t gff_out)
+void mp_write_paf(kstring_t *s, const mp_idx_t *mi, const mp_mapopt_t *opt, const mp_bseq1_t *seq, const mp_reg1_t *r)
 {
 	const mp_ctg_t *ctg;
-	if (gff_out) mp_sprintf_lite(s, "##PAF\t");
+	if (opt->flag & (MP_F_GFF|MP_F_GTF)) mp_sprintf_lite(s, "##PAF\t");
 	if (r == 0) {
 		mp_sprintf_lite(s, "%s\t%d\t0\t0\t*\t*\t0\t0\t0\t0\t0\t0\n", seq->name, seq->l_seq);
 		return;
@@ -316,8 +316,10 @@ void mp_write_paf(kstring_t *s, const mp_idx_t *mi, const mp_bseq1_t *seq, const
 		for (k = 0; k < r->p->n_cigar; ++k)
 			mp_sprintf_lite(s, "%d%c", r->p->cigar[k]>>4, NS_CIGAR_STR[r->p->cigar[k]&0xf]);
 	} else mp_sprintf_lite(s, "%d\t%d\t%d", r->chn_sc, r->chn_sc_ungap, r->cnt);
-	mp_sprintf_lite(s, "\t");
-	mp_write_cs(s, mi, &seq->seq[r->qs], r);
+	if (!(opt->flag & MP_F_NO_CS)) {
+		mp_sprintf_lite(s, "\t");
+		mp_write_cs(s, mi, &seq->seq[r->qs], r);
+	}
 	mp_sprintf_lite(s, "\n");
 }
 
@@ -416,16 +418,16 @@ void mp_write_output(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_
 	s->l = 0;
 	if (r == 0) {
 		if (opt->flag&MP_F_SHOW_UNMAP)
-			mp_write_paf(s, mi, seq, 0, opt->flag&MP_F_GFF);
+			mp_write_paf(s, mi, opt, seq, 0);
 	} else if (opt->flag&MP_F_GTF) {
 		if (opt->flag & (MP_F_SHOW_RESIDUE|MP_F_SHOW_TRANS)) {
-			mp_write_paf(s, mi, seq, r, opt->flag&MP_F_GTF);
+			mp_write_paf(s, mi, opt, seq, r);
 			mp_write_residue(s, mi, opt, seq->seq, r);
 		}
 		mp_write_gtf(s, km, mi, seq, r, opt->gff_prefix, id, seq->name);
 	} else {
 		if (!(opt->flag&MP_F_NO_PAF))
-			mp_write_paf(s, mi, seq, r, opt->flag&MP_F_GFF);
+			mp_write_paf(s, mi, opt, seq, r);
 		if (opt->flag & (MP_F_SHOW_RESIDUE|MP_F_SHOW_TRANS))
 			mp_write_residue(s, mi, opt, seq->seq, r);
 		if (opt->flag&MP_F_GFF)

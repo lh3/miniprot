@@ -1,3 +1,22 @@
+Release 0.12-r237 (24 June 2023)
+--------------------------------
+
+Notable changes:
+
+ * New feature: added option --no-cs to disable the cs tag. This tag is not as
+   useful as the cs tag for nucleotide alignment because it does not encode the
+   matching amino acids.
+
+ * New feature: output the number of frameshifts and in-frame stop codons in
+   the PAF output. It is non-trivial to parse in-frame stop codons.
+
+ * Bugfix: fixed malformatted protein sequences when --gtf and --trans are both
+   specified (#45).
+
+(0.12: 24 June 2023, r237)
+
+
+
 Release 0.11-r234 (18 April 2023)
 ---------------------------------
 
