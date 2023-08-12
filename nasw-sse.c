@@ -4,10 +4,10 @@
 #include "nasw.h"
 #include "kalloc.h"
 
-#if defined(__SSE2__)
-#include <xmmintrin.h>
-#elif defined(__SSE4_1__)
+#if defined(__SSE4_1__)
 #include <smmintrin.h>
+#elif defined(__SSE2__)
+#include <xmmintrin.h>
 #elif defined(__ARM_NEON)
 #include "s2n-lite.h"
 #endif
