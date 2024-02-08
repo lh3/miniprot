@@ -11,10 +11,10 @@ char *ns_tab_aa_i2c = "ARNDCQEGHILKMFPSTWYV*X";
 uint8_t ns_tab_a2r[22] = { 0, 2, 4, 4, 6, 5, 5, 8, 3, 10, 11, 2, 11, 12, 7, 1, 1, 13, 12, 10, 14, 15 };
 						// A  R  N  D  C  Q  E  G  H   I   L  K   M   F  P  S  T   W   Y   V   *   X
 
-char *ns_tab_codon_std = "KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV*Y*YSSSS*CWCLFLFX";
-					   // 01234567890123456789012345678901234567890123456789012345678901234
-					   // KKNNRRSSTTTTIMIIEEDDGGGGAAAAVVVVQQHHRRRRPPPPLLLL**YY*WCCSSSSLLFFX <- this is the AGCT order
-
+char *ns_tab_codon_std =  "KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV*Y*YSSSS*CWCLFLFX";
+					   //  01234567890123456789012345678901234567890123456789012345678901234
+					   //  KKNNRRSSTTTTIMIIEEDDGGGGAAAAVVVVQQHHRRRRPPPPLLLL**YY*WCCSSSSLLFFX <- this is the AGCT order
+char *ns_tab_codon_mold = "KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV*Y*YSSSSWCWCLFLFX";
 uint8_t ns_tab_nt4[256], ns_tab_aa20[256], ns_tab_aa13[256], ns_tab_codon[64], ns_tab_codon13[64];
 
 int8_t ns_mat_blosum62[484] = { // 484 = 22*22
@@ -57,7 +57,12 @@ void ns_make_tables(int codon_type)
 	for (p = ns_tab_aa_i2c; *p; ++p)
 		ns_tab_aa13[p - ns_tab_aa_i2c] = ns_tab_aa13[(uint8_t)toupper(*p)] = ns_tab_aa13[(uint8_t)tolower(*p)] = ns_tab_a2r[p - ns_tab_aa_i2c];
 	for (i = 0; i < 64; ++i) {
-		ns_tab_codon[i] = ns_tab_aa20[(uint8_t)ns_tab_codon_std[i]];
+        if (codon_type == 0) {
+            ns_tab_codon[i] = ns_tab_aa20[(uint8_t)ns_tab_codon_std[i]];
+        }
+        else if (codon_type==3) { /* THE MOLD genetic code 4 */
+            ns_tab_codon[i] = ns_tab_aa20[(uint8_t)ns_tab_codon_mold[i]];
+        }
 		ns_tab_codon13[i] = ns_tab_a2r[ns_tab_codon[i]];
 	}
 }

@@ -23,6 +23,7 @@
 #define MP_BLOCK_BONUS    2
 
 #define MP_CODON_STD 0
+#define MP_CODON_MOLD 3
 #define MP_IDX_MAGIC "MPI\2"
 
 #ifdef __cplusplus
@@ -72,6 +73,7 @@ typedef struct {
 	int32_t max_intron_flank;
 	const char *gff_prefix;
 	int8_t mat[484];
+    int32_t gen_code;
 } mp_mapopt_t;
 
 typedef struct {
@@ -141,7 +143,7 @@ extern char *ns_tab_nt_i2c, *ns_tab_aa_i2c;
 extern uint8_t ns_tab_a2r[22], ns_tab_nt4[256], ns_tab_aa20[256], ns_tab_aa13[256];
 extern uint8_t ns_tab_codon[64], ns_tab_codon13[64];
 
-void mp_start(void);
+void mp_start(int codon_type);
 
 void mp_idxopt_init(mp_idxopt_t *io);
 void mp_mapopt_init(mp_mapopt_t *mo);

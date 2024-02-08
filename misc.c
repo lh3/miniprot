@@ -9,9 +9,9 @@ KRADIX_SORT_INIT(mp128x, mp128_t, sort_key_128x, 8)
 
 int32_t mp_verbose = 3, mp_dbg_flag = 0;
 
-void mp_start(void)
+void mp_start(int codon_type)
 {
-	ns_make_tables(MP_CODON_STD);
+	ns_make_tables(codon_type);
 	mp_realtime();
 }
 

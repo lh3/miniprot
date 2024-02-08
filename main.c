@@ -27,6 +27,7 @@ static ko_longopt_t long_options[] = {
 	{ "dbg-aflt",        ko_no_argument,       504 },
 	{ "dbg-anchor",      ko_no_argument,       505 },
 	{ "dbg-chain",       ko_no_argument,       506 },
+    { "gen-code",        ko_required_argument, 601 },
 	{ 0, 0, 0 }
 };
 
@@ -101,7 +102,6 @@ int main(int argc, char *argv[])
 	mp_idx_t *mi;
 	char *fn_idx = 0;
 
-	mp_start();
 	mp_mapopt_init(&mo);
 	mp_idxopt_init(&io);
 	while ((c = ketopt(&o, argc, argv, 1, "k:M:L:s:l:b:t:d:c:n:m:K:p:N:SAO:E:J:C:F:G:e:uB:P:w:j:g:I", long_options)) >= 0) {
@@ -156,6 +156,7 @@ int main(int argc, char *argv[])
 		else if (c == 504) mp_dbg_flag |= MP_DBG_MORE_DP; // --dbg-aflt
 		else if (c == 505) mp_dbg_flag |= MP_DBG_ANCHOR; // --dbg-anchor
 		else if (c == 506) mp_dbg_flag |= MP_DBG_CHAIN; // --dbg-chain
+		else if (c == 601) mo.gen_code = atoi(o.arg); // --gen-code
 		else if (c == 's') {
 			fprintf(stderr, "Option '-s' is deprecated.\n");
 		} else if (c == 401) {
@@ -165,6 +166,11 @@ int main(int argc, char *argv[])
 			fprintf(stderr, "[WARNING]\033[1;31m unrecognized option: %s\033[0m\n", argv[o.i-1]);
 		}
 	}
+    int codon_type = 0;
+    if(mo.gen_code>0) {
+        codon_type = mo.gen_code-1;
+    }
+	mp_start(codon_type);
 	if (mp_mapopt_check(&mo) < 0) return 1;
 	if (argc - o.ind == 0 || (argc - o.ind == 1 && fn_idx == 0)) {
 		print_usage(stderr, &io, &mo, n_threads);
