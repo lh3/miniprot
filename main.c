@@ -27,7 +27,7 @@ static ko_longopt_t long_options[] = {
 	{ "dbg-aflt",        ko_no_argument,       504 },
 	{ "dbg-anchor",      ko_no_argument,       505 },
 	{ "dbg-chain",       ko_no_argument,       506 },
-    { "gen-code",        ko_required_argument, 601 },
+    { "gc",        ko_required_argument, 601 },
 	{ 0, 0, 0 }
 };
 
@@ -79,6 +79,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -C FLOAT     weight of splice penalty; 0 to ignore splice signals [%g]\n", mo->sp_scale);
 	fprintf(fp, "    -B INT       bonus score for alignment reaching query ends [%d]\n", mo->end_bonus);
 	fprintf(fp, "    -j INT       splice model: 2=mammal, 1=general, 0=none (see manual) [%d]\n", mo->sp_model);
+	fprintf(fp, "    --gc=INT     genetic code: 0,1=standard, 4=mold [%d]\n", mo->gen_code);
 	fprintf(fp, "  Input/output:\n");
 	fprintf(fp, "    -t INT       number of threads [%d]\n", n_threads);
 	fprintf(fp, "    --gff        output in the GFF3 format\n");
@@ -156,7 +157,7 @@ int main(int argc, char *argv[])
 		else if (c == 504) mp_dbg_flag |= MP_DBG_MORE_DP; // --dbg-aflt
 		else if (c == 505) mp_dbg_flag |= MP_DBG_ANCHOR; // --dbg-anchor
 		else if (c == 506) mp_dbg_flag |= MP_DBG_CHAIN; // --dbg-chain
-		else if (c == 601) mo.gen_code = atoi(o.arg); // --gen-code
+		else if (c == 601) mo.gen_code = atoi(o.arg); // --gc
 		else if (c == 's') {
 			fprintf(stderr, "Option '-s' is deprecated.\n");
 		} else if (c == 401) {
