@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 	mp_idxopt_t io;
 	mp_idx_t *mi;
 	char *fn_idx = 0;
-
+	mp_start(0);
 	mp_mapopt_init(&mo);
 	mp_idxopt_init(&io);
 	while ((c = ketopt(&o, argc, argv, 1, "k:M:L:s:l:b:t:d:c:n:m:K:p:N:SAO:E:J:C:F:G:e:uB:P:w:j:g:I", long_options)) >= 0) {
@@ -171,13 +171,15 @@ int main(int argc, char *argv[])
     if(mo.gen_code>0) {
         codon_type = mo.gen_code-1;
     }
-	mp_start(codon_type);
+    /*
+        We have to call ns_make_tables again now.
+    */
+    ns_make_tables(codon_type);
 	if (mp_mapopt_check(&mo) < 0) return 1;
 	if (argc - o.ind == 0 || (argc - o.ind == 1 && fn_idx == 0)) {
 		print_usage(stderr, &io, &mo, n_threads);
 		return 1;
 	}
-
 	mi = mp_idx_load(argv[o.ind], &io, n_threads);
 	if (mi == 0) {
 		if (mp_verbose >= 1)
