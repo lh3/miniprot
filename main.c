@@ -55,7 +55,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -k INT       k-mer size [%d]\n", io->kmer);
 	fprintf(fp, "    -M INT       modimisers bit (sample rate = 1/2**M) [%d]\n", io->mod_bit);
 	fprintf(fp, "    -L INT       min ORF length to index [%d]\n", io->min_aa_len);
-	fprintf(fp, "    -T INT       NCBI translation table (from 1 to 5) [%d]\n", io->trans_code);
+	fprintf(fp, "    -T INT       NCBI translation table (1 through 33) [%d]\n", io->trans_code);
 	fprintf(fp, "    -b INT       bits per block [%d]\n", io->bbit);
 	fprintf(fp, "    -d FILE      save index to FILE []\n");
 	fprintf(fp, "  Mapping:\n");
