@@ -161,7 +161,7 @@ uint64_t *mp_chain(int32_t max_dist_x, int32_t max_dist_y, int32_t bw, int32_t m
 				   int32_t is_spliced, int32_t kmer, int32_t bbit, int64_t n, uint64_t *a, int32_t *n_u_, uint64_t **_u, void *km)
 { // TODO: make sure this works when n has more than 32 bits
 	int32_t *f, *t, *v, n_u, n_v, mmax_f = 0, max_drop = bw, hf = 0;
-	int64_t *p, i, j, st = 0, n_iter = 0, hi = -1;
+	int64_t *p, i, j, st = 0, hi = -1;
 	uint64_t *u;
 
 	if (_u) *_u = 0, *n_u_ = 0;
@@ -191,7 +191,6 @@ uint64_t *mp_chain(int32_t max_dist_x, int32_t max_dist_y, int32_t bw, int32_t m
 		for (j = i - 1; j >= st; --j) {
 			int32_t sc;
 			sc = comput_sc(a[i], a[j], max_dist_x, max_dist_y, bw, chn_ceof_log, is_spliced, bbit, kmer);
-			++n_iter;
 			if (sc == INT32_MIN) continue;
 			sc += f[j];
 			if (sc > max_f) {

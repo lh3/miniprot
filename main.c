@@ -55,6 +55,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -k INT       k-mer size [%d]\n", io->kmer);
 	fprintf(fp, "    -M INT       modimisers bit (sample rate = 1/2**M) [%d]\n", io->mod_bit);
 	fprintf(fp, "    -L INT       min ORF length to index [%d]\n", io->min_aa_len);
+	fprintf(fp, "    -T INT       NCBI translation table (from 1 to 5) [%d]\n", io->trans_code);
 	fprintf(fp, "    -b INT       bits per block [%d]\n", io->bbit);
 	fprintf(fp, "    -d FILE      save index to FILE []\n");
 	fprintf(fp, "  Mapping:\n");
@@ -104,11 +105,12 @@ int main(int argc, char *argv[])
 	mp_start();
 	mp_mapopt_init(&mo);
 	mp_idxopt_init(&io);
-	while ((c = ketopt(&o, argc, argv, 1, "k:M:L:s:l:b:t:d:c:n:m:K:p:N:SAO:E:J:C:F:G:e:uB:P:w:j:g:I", long_options)) >= 0) {
+	while ((c = ketopt(&o, argc, argv, 1, "k:M:L:s:l:b:T:t:d:c:n:m:K:p:N:SAO:E:J:C:F:G:e:uB:P:w:j:g:I", long_options)) >= 0) {
 		if (c == 'k') io.kmer = atoi(o.arg);
 		else if (c == 'M') io.mod_bit = atoi(o.arg);
 		else if (c == 'L') io.min_aa_len = atoi(o.arg);
 		else if (c == 'b') io.bbit = atoi(o.arg);
+		else if (c == 'T') io.trans_code = atoi(o.arg);
 		else if (c == 'd') fn_idx = o.arg;
 		else if (c == 't') n_threads = atoi(o.arg);
 		else if (c == 'l') mo.kmer2 = atoi(o.arg);
@@ -171,6 +173,11 @@ int main(int argc, char *argv[])
 		return 1;
 	}
 
+	if (ns_make_tables(io.trans_code) < 0) {
+		if (mp_verbose >= 1)
+			fprintf(stderr, "[ERROR]\033[1;31m failed to find translation table %d\033[0m\n", io.trans_code);
+		return 1;
+	}
 	mi = mp_idx_load(argv[o.ind], &io, n_threads);
 	if (mi == 0) {
 		if (mp_verbose >= 1)

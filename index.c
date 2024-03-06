@@ -214,6 +214,7 @@ mp_idx_t *mp_idx_restore(const char *fn)
 		return 0;
 	mi = Kcalloc(0, mp_idx_t, 1);
 	fread(&mi->opt, sizeof(mi->opt), 1, fp);
+	ns_make_tables(mi->opt.trans_code);
 	fread(&mi->n_kb, 8, 1, fp);
 	mi->nt = mp_ntseq_restore(fp);
 	mi->ki = Kmalloc(0, int64_t, mp_n_bucket(&mi->opt));

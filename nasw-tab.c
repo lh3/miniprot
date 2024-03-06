@@ -1,4 +1,5 @@
 #include <string.h>
+#include <assert.h>
 #include <ctype.h>
 #include "nasw.h"
 
@@ -11,9 +12,19 @@ char *ns_tab_aa_i2c = "ARNDCQEGHILKMFPSTWYV*X";
 uint8_t ns_tab_a2r[22] = { 0, 2, 4, 4, 6, 5, 5, 8, 3, 10, 11, 2, 11, 12, 7, 1, 1, 13, 12, 10, 14, 15 };
 						// A  R  N  D  C  Q  E  G  H   I   L  K   M   F  P  S  T   W   Y   V   *   X
 
-char *ns_tab_codon_std = "KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV*Y*YSSSS*CWCLFLFX";
-					   // 01234567890123456789012345678901234567890123456789012345678901234
-					   // KKNNRRSSTTTTIMIIEEDDGGGGAAAAVVVVQQHHRRRRPPPPLLLL**YY*WCCSSSSLLFFX <- this is the AGCT order
+#define NS_MAX_TRANS_CODE 5
+static const char *ns_tab_codon_all[NS_MAX_TRANS_CODE + 1] = {
+   0,
+ // 0123456789012345678901234567890123456789012345678901234567890123
+ // A               C               G               T
+ // A   C   G   T   A   C   G   T   A   C   G   T   A   C   G   T
+ // ACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGTACGT
+   "KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV*Y*YSSSS*CWCLFLFX", // 1: The Standard Code; in order of AAA, AAC, AAG, AAT, ACA, ...
+   "KNKNTTTT*S*SMIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV*Y*YSSSSWCWCLFLFX", // 2: The Vertebrate Mitochondrial Code
+   "KNKNTTTTRSRSMIMIQHQHPPPPRRRRTTTTEDEDAAAAGGGGVVVV*Y*YSSSSWCWCLFLFX", // 3: The Yeast Mitochondrial Code
+   "KNKNTTTTRSRSIIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV*Y*YSSSSWCWCLFLFX", // 4: The Mold, Protozoan, and Coelenterate Mitochondrial Code and the Mycoplasma/Spiroplasma Code
+   "KNKNTTTTSSSSMIMIQHQHPPPPRRRRLLLLEDEDAAAAGGGGVVVV*Y*YSSSSWCWCLFLFX"  // 5: The Invertebrate Mitochondrial Code
+};
 
 uint8_t ns_tab_nt4[256], ns_tab_aa20[256], ns_tab_aa13[256], ns_tab_codon[64], ns_tab_codon13[64];
 
@@ -43,10 +54,14 @@ int8_t ns_mat_blosum62[484] = { // 484 = 22*22
 	 0,-1,-1,-1,-2,-1,-1,-1,-1,-1,-1,-1,-1,-1,-2, 0, 0,-2,-1,-1,-4,-1
 };
 
-void ns_make_tables(int codon_type)
+int ns_make_tables(int codon_type)
 {
+	const char *trans_tab;
 	char *p;
 	int i;
+	if (codon_type < 0 || codon_type > NS_MAX_TRANS_CODE) return -1; // out of range
+	trans_tab = ns_tab_codon_all[codon_type];
+	if (trans_tab == 0) return -2; // not defined
 	memset(ns_tab_nt4, 4, 256);
 	for (p = ns_tab_nt_i2c; *p; ++p)
 		ns_tab_nt4[p - ns_tab_nt_i2c] = ns_tab_nt4[(uint8_t)toupper(*p)] = ns_tab_nt4[(uint8_t)tolower(*p)] = p - ns_tab_nt_i2c;
@@ -57,9 +72,10 @@ void ns_make_tables(int codon_type)
 	for (p = ns_tab_aa_i2c; *p; ++p)
 		ns_tab_aa13[p - ns_tab_aa_i2c] = ns_tab_aa13[(uint8_t)toupper(*p)] = ns_tab_aa13[(uint8_t)tolower(*p)] = ns_tab_a2r[p - ns_tab_aa_i2c];
 	for (i = 0; i < 64; ++i) {
-		ns_tab_codon[i] = ns_tab_aa20[(uint8_t)ns_tab_codon_std[i]];
+		ns_tab_codon[i] = ns_tab_aa20[(uint8_t)trans_tab[i]];
 		ns_tab_codon13[i] = ns_tab_a2r[ns_tab_codon[i]];
 	}
+	return 0;
 }
 
 /* See Sibley et al (2016)

@@ -84,9 +84,11 @@ extern "C" {
  * This function should be called before invoking other nasw functions. It is
  * not thread safe.
  *
- * @param codon_type    ignored for now
+ * @param codon_type    NCBI genetic code
+ *
+ * @return 0 if tables were initialized; <0 if the translation table is not defined
  */
-void ns_make_tables(int codon_type);
+int ns_make_tables(int codon_type);
 
 /**
  * Initialize alignment parameters

@@ -10,6 +10,7 @@
 void mp_idxopt_init(mp_idxopt_t *io)
 {
 	memset(io, 0, sizeof(*io));
+	io->trans_code = MP_CODON_STD;
 	io->bbit = 8;
 	io->min_aa_len = 30;
 	#if MP_BITS_PER_AA == 4

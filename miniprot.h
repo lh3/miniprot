@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.12-r237"
+#define MP_VERSION "0.12-r239-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
@@ -22,8 +22,8 @@
 #define MP_BITS_PER_AA    4
 #define MP_BLOCK_BONUS    2
 
-#define MP_CODON_STD 0
-#define MP_IDX_MAGIC "MPI\2"
+#define MP_CODON_STD 1
+#define MP_IDX_MAGIC "MPI\3"
 
 #ifdef __cplusplus
 extern "C" {
@@ -37,6 +37,7 @@ typedef struct {
 	int32_t bbit; // block bit
 	int32_t min_aa_len; // ignore ORFs shorter than this
 	int32_t kmer, mod_bit;
+	uint32_t trans_code;
 } mp_idxopt_t;
 
 typedef struct {
