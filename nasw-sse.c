@@ -218,7 +218,8 @@ static uint8_t *ns_prep_seq_left(void *km, const char *ns, int32_t nl, const cha
 
 #define NS_GEN_INIT2(_suf) \
 		int32_t k; \
-		__m128i *tmp, I, *S = ap + nas[i] * slen, dim1, di, dip1, ai, aim1, aim2, last_h; \
+		__m128i *tmp, I, *S = ap + nas[i] * slen, dim1, di, dip1, ai, aim1, aim2, last_h, gei; \
+		gei = nas[i] == 20? fs : ge; \
 		dim1 = sse_gen(set1, _suf)(donor[i-1]), di = sse_gen(set1, _suf)(donor[i]), dip1 = sse_gen(set1, _suf)(donor[i+1]); \
 		ai = sse_gen(set1, _suf)(acceptor[i]), aim1 = sse_gen(set1, _suf)(acceptor[i-1]), aim2 = sse_gen(set1, _suf)(acceptor[i-2]); \
 		I = last_h = sse_gen(set1, _suf)(neg_inf); \
@@ -325,7 +326,7 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 				u = _mm_load_si128(H3 + j);
 				v = _mm_load_si128(D3 + j);
 				t = _mm_max_epi16(_mm_subs_epi16(u, go), v);
-				t = _mm_subs_epi16(t, ge);
+				t = _mm_subs_epi16(t, gei);
 				_mm_store_si128(D + j, t);
 				h = _mm_max_epi16(h, t);
 				// A(i,j) = max{ H(i-1,j)   - r - d(i-1), A(i-1,j) }
@@ -423,7 +424,7 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 				v = _mm_load_si128(D3 + j);
 				z = _mm_or_si128(z, _mm_and_si128(_mm_cmpgt_epi16(v, u), _mm_set1_epi16(1<<5)));
 				t = _mm_max_epi16(u, v);
-				t = _mm_subs_epi16(t, ge);
+				t = _mm_subs_epi16(t, gei);
 				_mm_store_si128(D + j, t);
 				y = ns_select(_mm_cmpgt_epi16(t, h), _mm_set1_epi16(2), y);
 				h = _mm_max_epi16(h, t);
@@ -535,7 +536,7 @@ void ns_global_gs32(void *km, const char *ns, int32_t nl, const char *as, int32_
 				u = _mm_load_si128(H3 + j);
 				v = _mm_load_si128(D3 + j);
 				t = _mm_max_epi32(_mm_sub_epi32(u, go), v);
-				t = _mm_sub_epi32(t, ge);
+				t = _mm_sub_epi32(t, gei);
 				_mm_store_si128(D + j, t);
 				h = _mm_max_epi32(h, t);
 				// A(i,j) = max{ H(i-1,j)   - r - d(i-1), A(i-1,j) }
@@ -613,7 +614,7 @@ void ns_global_gs32(void *km, const char *ns, int32_t nl, const char *as, int32_
 				v = _mm_load_si128(D3 + j);
 				z = _mm_or_si128(z, _mm_and_si128(_mm_cmpgt_epi32(v, u), _mm_set1_epi32(1<<5)));
 				t = _mm_max_epi32(u, v);
-				t = _mm_sub_epi32(t, ge);
+				t = _mm_sub_epi32(t, gei);
 				_mm_store_si128(D + j, t);
 				y = ns_select(_mm_cmpgt_epi32(t, h), _mm_set1_epi32(2), y);
 				h = _mm_max_epi32(h, t);

@@ -179,7 +179,7 @@ static int64_t mp_idx_is_idx(const char *fn)
 		lseek(fd, 0, SEEK_SET);
 #endif // WIN32
 		ret = read(fd, magic, 4);
-		if (ret == 4 && strncmp(magic, MP_IDX_MAGIC, 4) == 0)
+		if (ret == 4 && strncmp(magic, MP_IDX_MAGIC, 3) == 0 && strncmp(magic, MP_IDX_MAGIC, 4) <= 0)
 			is_idx = 1;
 	}
 	close(fd);
