@@ -1,4 +1,4 @@
-.TH miniprot 1 "24 June 2023" "miniprot-0.12 (r237)" "Bioinformatics tools"
+.TH miniprot 1 "5 March 2024" "miniprot-0.12-dirty (r243)" "Bioinformatics tools"
 .SH NAME
 .PP
 miniprot - protein-to-genome alignment with splicing and frameshifts
@@ -46,6 +46,9 @@ Sample k-mers at a rate
 .TP
 .BI -L \ INT
 Minimum ORF length to index [30]
+.TP
+.BI -T \ INT
+NCBI translation table (1 through 5) [1]
 .TP
 .BI -b \ INT
 Number of bits per bin [8]. Miniprot splits the genome into non-overlapping bins of 2^8 bp in size.

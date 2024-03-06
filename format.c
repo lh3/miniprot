@@ -356,8 +356,11 @@ static void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bs
 
 	for (j = 0; j < r->n_feat; ++j) {
 		f = &feat[j];
-		vs = r->vid&1? ctg->len - f->ve : f->vs;
-		ve = r->vid&1? ctg->len - f->vs : f->ve;
+		ve = f->ve;
+		if (has_stop && f->type == MP_FEAT_CDS && j + 1 < r->n_feat && feat[j+1].type == MP_FEAT_STOP) // in GFF3, the last CDS includes stop codon. GTF is different!
+			ve += 3;
+		vs = r->vid&1? ctg->len - ve    : f->vs;
+		ve = r->vid&1? ctg->len - f->vs : ve;
 		mp_sprintf_lite(s, "%s\tminiprot\t%s\t%d\t%d\t%d\t%c\t%d\tParent=%s;Rank=%d", ctg->name, f->type == MP_FEAT_STOP? "stop_codon" : "CDS",
 			(int)vs + 1, (int)ve, f->score, "+-"[r->vid&1], f->phase, id_str, hit_idx);
 		if (f->type == MP_FEAT_CDS) {
@@ -399,7 +402,7 @@ static void mp_write_gtf(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bs
 	for (j = 0; j < r->n_feat; ++j) {
 		int64_t vs2, ve2;
 		f = &feat[j];
-		if (f->type != MP_FEAT_CDS) continue;
+		if (f->type != MP_FEAT_CDS) continue; // GTF is simpler without stop_codon and additional attributes
 		vs2 = vs = r->vid&1? ctg->len - f->ve : f->vs;
 		ve2 = ve = r->vid&1? ctg->len - f->vs : f->ve;
 		if (f->ve == r->ve) { // last exon; then adjust for stop codon
