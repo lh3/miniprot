@@ -1,3 +1,27 @@
+Release 0.13-r247 (6 March 2024)
+--------------------------------
+
+Notable changes:
+
+ * New feature: added option -T to specify a non-standard NCBI translation
+   table (#56 and #57). As this is an indexing option, the binary index format
+   has to be changed accordingly. Miniprot will reject indices built with
+   previous versions.
+
+ * Improvement: properly handle reference deletions involving in-frame stop
+   codons (#58). Older versions would not penalize these stop codons. This
+   change also improves junction accuracy especially for distant homologs.
+
+ * Bug fix: in the GFF3 output, CDS now includes stop codons (#55). Note the in
+   GTF, CDS excludes stop codons.
+
+ * Bug fix: suppress an extra amino acid in the --trans or --aln output (#47).
+   In rare cases, this may lead to memory violation.
+
+(0.13: 6 March 2024, r247)
+
+
+
 Release 0.12-r237 (24 June 2023)
 --------------------------------
 
