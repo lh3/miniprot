@@ -101,6 +101,8 @@ int64_t mp_ntseq_get(const mp_ntdb_t *db, int32_t cid, int64_t st, int64_t en, i
 int64_t mp_ntseq_get_by_v(const mp_ntdb_t *nt, int32_t vid, int64_t st, int64_t en, uint8_t *seq)
 {
 	int64_t ctg_len = nt->ctg[vid>>1].len;
+	if (st < 0 || en < 0 || st >= ctg_len) return -1;
+	en = en <= ctg_len? en : ctg_len;
 	return mp_ntseq_get(nt, vid>>1, vid&1? ctg_len - en : st, vid&1? ctg_len - st : en, vid&1, seq);
 }
 

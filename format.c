@@ -277,7 +277,7 @@ static void mp_write_residue(kstring_t *out, const mp_idx_t *mi, const mp_mapopt
 		}
 	}
 	assert(nl == r->ve - r->vs);
-	if (l_nt == r->ve - r->vs + 3) { // then print one more codon
+	if (l_nt == r->ve - r->vs + 3 && str[4][w4-1] != '*') { // then print one more codon
 		uint8_t n1 = nt[nl], n2 = nt[nl + 1], n3 = nt[nl + 2], nt_aa, codon;
 		codon = n1<<4 | n2<<2 | n3;
 		nt_aa = n1 > 3 || n2 > 3 || n3 > 3? ns_tab_aa20['X'] : ns_tab_codon[codon];
