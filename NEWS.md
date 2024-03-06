@@ -1,4 +1,4 @@
-Release 0.13-r247 (6 March 2024)
+Release 0.13-r248 (6 March 2024)
 --------------------------------
 
 Notable changes:
@@ -18,7 +18,7 @@ Notable changes:
  * Bug fix: suppress an extra amino acid in the --trans or --aln output (#47).
    In rare cases, this may lead to memory violation.
 
-(0.13: 6 March 2024, r247)
+(0.13: 6 March 2024, r248)
 
 
 
