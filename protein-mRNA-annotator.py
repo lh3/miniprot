@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 #Author Gaurav Sablok
 # Universitat Potsdam
-# Date 2024-4-3
+# Date 2024-4-12
 import pandas as pd
 def generatingAlignments(inputgff, fasta = None, file = None):
     """
