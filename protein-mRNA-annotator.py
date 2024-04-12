@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 #Author Gaurav Sablok
 # Universitat Potsdam
-# Date 2024-4-12
+# Date 2024-4-3
 import pandas as pd
 def generatingAlignments(inputgff, fasta = None, file = None):
     """
@@ -39,13 +39,24 @@ def generatingAlignments(inputgff, fasta = None, file = None):
         for i in range(len(readdataframe.iloc[:,4])):
             if readdataframe.iloc[:,2][i] == "mRNA":
                mRNAend_coordinate.append(readdataframe.iloc[:,4][i])
-        extract_pattern = {}
-        for i in range(len(fasta_sequences)):
-            extract_pattern[fasta_names[i]] = fasta_sequences[mRNAstart_coordinate[i]:mRNAend_coordinate[i]]
-        extractkeys = list(extract_pattern.keys())
-        extractvalues = list(extract_pattern.values())
-        finalextractvalues = [str(''.join(extractvalues[i])) for i in range(len(list(extractvalues)))]
-        with open(file, "w") as fastawrite:
-            for i in range(len(extractkeys)):
-                fastawrite.write(f">{extractkeys[i]}\n{finalextractvalues[i]}\n")
-            fastawrite.close()
+    read_transcripts = [i.strip() for i in open(fasta, "r").readlines()]
+    fasta_transcript_dict = {}
+    for i in read_transcripts:
+        if i.startswith(">"):
+            path = i.strip()
+            if i not in fasta_transcript_dict:
+                fasta_transcript_dict[i] = ""
+                continue
+        fasta_transcript_dict[path] += i.strip()
+    fasta_sequences = list(fasta_transcript_dict.values())
+    fasta_names = list(fasta_transcript_dict.keys())
+    extract_pattern = {}
+    for i in range(len(fasta_sequences)):
+        extract_pattern[fasta_names[i]] = fasta_sequences[mRNAstart_coordinate[i]:mRNAend_coordinate[i]]
+    extractkeys = list(extract_pattern.keys())
+    extractvalues = list(extract_pattern.values())
+    finalextractvalues = [str(''.join(extractvalues[i])) for i in range(len(list(extractvalues)))]
+    with open(file, "w") as fastawrite:
+        for i in range(len(extractkeys)):
+            fastawrite.write(f">{extractkeys[i]}\n{finalextractvalues[i]}\n")
+        fastawrite.close()
