@@ -20,6 +20,7 @@ static ko_longopt_t long_options[] = {
 	{ "ie-coef",         ko_required_argument, 314 },
 	{ "trans",           ko_no_argument,       315 },
 	{ "no-cs",           ko_no_argument,       316 },
+	{ "spsc",            ko_required_argument, 317 },
 	{ "version",         ko_no_argument,       401 },
 	{ "no-kalloc",       ko_no_argument,       501 },
 	{ "dbg-qname",       ko_no_argument,       502 },
@@ -79,6 +80,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -C FLOAT     weight of splice penalty; 0 to ignore splice signals [%g]\n", mo->sp_scale);
 	fprintf(fp, "    -B INT       bonus score for alignment reaching query ends [%d]\n", mo->end_bonus);
 	fprintf(fp, "    -j INT       splice model: 2=mammal, 1=general, 0=none (see manual) [%d]\n", mo->sp_model);
+	fprintf(fp, "    --spsc=FILE  splice score []\n");
 	fprintf(fp, "  Input/output:\n");
 	fprintf(fp, "    -t INT       number of threads [%d]\n", n_threads);
 	fprintf(fp, "    --gff        output in the GFF3 format\n");
@@ -100,7 +102,7 @@ int main(int argc, char *argv[])
 	mp_mapopt_t mo;
 	mp_idxopt_t io;
 	mp_idx_t *mi;
-	char *fn_idx = 0;
+	char *fn_idx = 0, *fn_spsc = 0;
 
 	mp_start();
 	mp_mapopt_init(&mo);
@@ -152,6 +154,7 @@ int main(int argc, char *argv[])
 		else if (c == 314) mo.ie_coef = atof(o.arg); // --ie-coef
 		else if (c == 315) mo.flag |= MP_F_SHOW_TRANS; // --trans
 		else if (c == 316) mo.flag |= MP_F_NO_CS; // --no-cs
+		else if (c == 317) fn_spsc = o.arg; // --spsc
 		else if (c == 501) mp_dbg_flag |= MP_DBG_NO_KALLOC; // --no-kalloc
 		else if (c == 502) mp_dbg_flag |= MP_DBG_QNAME; // --dbg-qname
 		else if (c == 503) mp_dbg_flag |= MP_DBG_NO_REFINE; // --dbg-no-refine
@@ -187,6 +190,7 @@ int main(int argc, char *argv[])
 	if (set_I && !set_G) mp_mapopt_set_max_intron(&mo, mi->nt->l_seq);
 	if (mp_verbose >= 3) mp_idx_print_stat(mi, mo.max_occ);
 	if (fn_idx != 0) mp_idx_dump(fn_idx, mi);
+	if (fn_spsc != 0) mp_ntseq_read_spsc(mi->nt, fn_spsc, mo.spsc_base);
 	for (i = o.ind + 1; i < argc; ++i) {
 		int32_t res = mp_map_file(mi, argv[i], &mo, n_threads);
 		if (res != 0) {

@@ -1,10 +1,14 @@
 #include <string.h>
 #include <stdio.h>
 #include <zlib.h>
+#include <math.h>
 #include "mppriv.h"
 #include "kalloc.h"
 #include "kseq.h"
 KSEQ_INIT2(, gzFile, gzread)
+
+#include "khashl-km.h"
+KHASHL_MAP_INIT(KH_LOCAL, mp_strmap_t, mp_strmap, kh_cstr_t, int32_t, kh_hash_str, kh_eq_str)
 
 static void mp_ntseq_merge_name(mp_ntdb_t *nt)
 {
@@ -74,7 +78,10 @@ mp_ntdb_t *mp_ntseq_read(const char *fn)
 
 void mp_ntseq_destroy(mp_ntdb_t *db)
 {
+	mp_strmap_t *h = (mp_strmap_t*)db->h;
 	if (db == 0) return;
+	if (h) mp_strmap_destroy(h);
+	if (db->sc) free(db->sc);
 	free(db->ctg); free(db->seq); free(db->name);
 	free(db);
 }
@@ -148,4 +155,89 @@ mp_ntdb_t *mp_ntseq_restore(FILE *fp)
 		p += strlen(p) + 1;
 	}
 	return nt;
+}
+
+void mp_ntseq_index_name(mp_ntdb_t *nt)
+{
+	mp_strmap_t *h;
+	int32_t i;
+	h = mp_strmap_init2(0);
+	for (i = 0; i < nt->n_ctg; ++i) {
+		int absent;
+		khint_t k;
+		k = mp_strmap_put(h, nt->ctg[i].name, &absent);
+		if (!absent) {
+			fprintf(stderr, "ERROR: duplicated contig name!\n");
+			continue;
+		}
+		kh_val(h, k) = i;
+	}
+	nt->h = (void*)h;
+}
+
+int32_t mp_ntseq_name2id(const mp_ntdb_t *nt, const char *name)
+{
+	const mp_strmap_t *h = (const mp_strmap_t*)nt->h;
+	khint_t k;
+	if (h == 0) return -1;
+	k = mp_strmap_get(h, name);
+	return k == kh_end(h)? -1 : kh_val(h, k);
+}
+
+int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn, int32_t c0)
+{
+	gzFile fp;
+	kstring_t str = {0,0,0};
+	kstream_t *ks;
+	int dret;
+	int64_t n_read = 0;
+
+	if (c0 < 0 || c0 > 100) return -1; // too large
+	fp = fn && strcmp(fn, "-") != 0? gzopen(fn, "rb") : gzdopen(0, "rb");
+	if (fp == 0) return -1;
+	nt->sc = Kcalloc(0, mp_spsc_t, nt->n_ctg * 2);
+	ks = ks_init(fp);
+	while (ks_getuntil(ks, KS_SEP_LINE, &str, &dret) >= 0) {
+		mp_spsc_t *s;
+		char *p, *q, *name = 0;
+		int32_t i, type = -1, strand = 0, cid = -1, score;
+		int64_t pos = -1;
+		double score_ori = -1.0;
+		for (i = 0, p = q = str.s;; ++p) {
+			if (*p == '\t' || *p == 0) {
+				int c = *p;
+				if (i == 0) {
+					name = q;
+				} else if (i == 1) {
+					pos = atol(q);
+				} else if (i == 2) {
+					strand = *q == '+'? 1 : '-'? -1 : 0;
+				} else if (i == 3) {
+					type = *q == 'D'? 0 : *q == 'A'? 1 : -1;
+				} else if (i == 4) {
+					score_ori = atof(q);
+					break;
+				}
+				if (c == 0) break;
+				q = p + 1, ++i;
+			}
+		}
+		if (i < 4) continue; // not enough fields
+		if (score_ori <= 0.0) continue;
+		score = (int32_t)(2. * log2(score_ori) + .499) + c0;
+		if (score < 0) continue;
+		if (score > 127) score = 127;
+		cid = mp_ntseq_name2id(nt, name);
+		if (cid < 0 || type < 0 || strand == 0 || pos < 0) continue; // FIXME: give a warning!
+		s = &nt->sc[cid << 1 | (strand > 0? 0 : 1)];
+		Kgrow(0, uint64_t, s->a, s->n, s->m);
+		s->a[s->n++] = (uint64_t)pos<<9 | type<<8 | score;
+		++n_read;
+	}
+	ks_destroy(ks);
+	gzclose(fp);
+	// TODO: SORT!!!
+	if (mp_verbose >= 3)
+		fprintf(stderr, "[M::%s] read %ld splice scores\n", __func__, (long)n_read);
+	return 0;
 }

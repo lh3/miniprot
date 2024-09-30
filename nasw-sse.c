@@ -97,7 +97,7 @@ static uint8_t *ns_prep_seq(void *km, const char *ns, int32_t nl, const char *as
 	int32_t i, j;
 	uint8_t *nas, *aas;
 	int8_t *donor, *acceptor;
-	nas = Kmalloc(km, uint8_t, nl + al + (nl + 1) * 2);
+	nas = Kmalloc(km, uint8_t, nl + al + (nl + 1) * 2); // nas and aas are allocated together
 	*aas_ = aas = nas + nl;
 	*donor_ = donor = (int8_t*)aas + al, *acceptor_ = acceptor = donor + nl + 1;
 	for (j = 0; j < al; ++j) // generate aas[]
@@ -133,12 +133,12 @@ static uint8_t *ns_prep_seq_left(void *km, const char *ns, int32_t nl, const cha
 	int32_t i, j;
 	uint8_t *nas, *aas, tmp;
 	int8_t *donor, *acceptor;
-	nas = Kmalloc(km, uint8_t, nl + al + (nl + 1) * 2);
+	nas = Kmalloc(km, uint8_t, nl + al + (nl + 1) * 2); // nas and aas are allocated together
 	*aas_ = aas = nas + nl;
 	*donor_ = donor = (int8_t*)aas + al, *acceptor_ = acceptor = donor + nl + 1;
-	for (j = 0; j < al; ++j) // generate aas[]
+	for (j = 0; j < al; ++j) // generate aas[]. NB: this is reversed
 		aas[al - 1 - j] = opt->aa20[(uint8_t)as[j]];
-	for (i = 0; i < nl; ++i) // nt4 encoding of ns[] for computing donor[] and acceptor[]
+	for (i = 0; i < nl; ++i) // nt4 encoding of ns[] for computing donor[] and acceptor[]. NB: this is reversed
 		nas[nl - 1 - i] = opt->nt4[(uint8_t)ns[i]];
 	for (i = 0; i < nl + 1; ++i)
 		donor[i] = acceptor[i] = opt->sp[3];

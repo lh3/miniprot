@@ -66,6 +66,7 @@ typedef struct {
 	float ie_coef;
 	int32_t sp_model;
 	float sp_scale;
+	int32_t spsc_base;
 	int32_t xdrop;
 	int32_t end_bonus;
 	int32_t asize; // size of the alphabet; always 22 in current implementation
@@ -74,6 +75,11 @@ typedef struct {
 	const char *gff_prefix;
 	int8_t mat[484];
 } mp_mapopt_t;
+
+typedef struct {
+	uint32_t n, m;
+	uint64_t *a; // pos:55, acceptor:1, score:8
+} mp_spsc_t;
 
 typedef struct {
 	int64_t off, len;
@@ -87,6 +93,8 @@ typedef struct {
 	uint8_t *seq; // TODO: separate this into multiple blocks; low priority
 	mp_ctg_t *ctg;
 	char *name;
+	void *h; // hash table to map sequence name to cid
+	mp_spsc_t *sc; // of size n_ctg*2
 } mp_ntdb_t;
 
 typedef struct {
@@ -126,7 +134,7 @@ typedef struct {
 	int32_t chn_sc;
 	int32_t chn_sc_ungap;
 	uint32_t hash;
-	uint32_t vid;
+	uint32_t vid; // cid<<1 | rev
 	int32_t qs, qe;
 	int64_t vs, ve;
 	uint64_t *a;
@@ -155,6 +163,7 @@ void mp_idx_destroy(mp_idx_t *mi);
 int mp_idx_dump(const char *fn, const mp_idx_t *mi);
 mp_idx_t *mp_idx_restore(const char *fn);
 void mp_idx_print_stat(const mp_idx_t *mi, int32_t max_occ);
+int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn, int32_t c0);
 
 int32_t mp_map_file(const mp_idx_t *idx, const char *fn, const mp_mapopt_t *opt, int n_threads);
 

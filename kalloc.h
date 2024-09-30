@@ -31,6 +31,14 @@ void km_stat_print(const void *km);
 #define Kcalloc(km, type, cnt)       ((type*)kcalloc((km), (cnt), sizeof(type)))
 #define Krealloc(km, type, ptr, cnt) ((type*)krealloc((km), (ptr), (cnt) * sizeof(type)))
 
+#define Kgrow(km, type, ptr, __i, __m) do { \
+		if ((__i) >= (__m)) { \
+			(__m) = (__i) + 1; \
+			(__m) += ((__m)>>1) + 16; \
+			(ptr) = Krealloc(km, type, ptr, (__m)); \
+		} \
+	} while (0)
+
 #define KMALLOC(km, ptr, len) ((ptr) = (__typeof__(ptr))kmalloc((km), (len) * sizeof(*(ptr))))
 #define KCALLOC(km, ptr, len) ((ptr) = (__typeof__(ptr))kcalloc((km), (len), sizeof(*(ptr))))
 #define KREALLOC(km, ptr, len) ((ptr) = (__typeof__(ptr))krealloc((km), (ptr), (len) * sizeof(*(ptr))))
