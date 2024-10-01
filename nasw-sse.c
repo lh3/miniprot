@@ -92,7 +92,7 @@ static void ns_prep_nas(const char *ns, int32_t nl, const ns_opt_t *opt, uint8_t
 	}
 }
 
-static uint8_t *ns_prep_seq(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, uint8_t **aas_, int8_t **donor_, int8_t **acceptor_)
+static uint8_t *ns_prep_seq(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, const uint8_t *ss, uint8_t **aas_, int8_t **donor_, int8_t **acceptor_)
 {
 	int32_t i, j;
 	uint8_t *nas, *aas;
@@ -124,11 +124,18 @@ static uint8_t *ns_prep_seq(void *km, const char *ns, int32_t nl, const char *as
 		acceptor[i] = t < 0? 0 : opt->sp[t];
 		if (t == -1 || t == 0) acceptor[i] += penY;
 	}
+	if (ss) { // NB: ss[] uses the offset rule to specify a splice site; donor/acceptor[] uses a different rule. The ss[] way is better but too tricky to change now
+		for (i = 1; i < nl; ++i) {
+			if (ss[i]>>1 == 0) continue;
+			if (ss[i]&1) acceptor[i-1] -= (int8_t)(ss[i]>>1);
+			else donor[i-1] -= (int8_t)(ss[i]>>1);
+		}
+	}
 	ns_prep_nas(ns, nl, opt, nas);
 	return nas;
 }
 
-static uint8_t *ns_prep_seq_left(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, uint8_t **aas_, int8_t **donor_, int8_t **acceptor_)
+static uint8_t *ns_prep_seq_left(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, const uint8_t *ss, uint8_t **aas_, int8_t **donor_, int8_t **acceptor_)
 {
 	int32_t i, j;
 	uint8_t *nas, *aas, tmp;
@@ -159,6 +166,13 @@ static uint8_t *ns_prep_seq_left(void *km, const char *ns, int32_t nl, const cha
 		else if (nas[i-1] == 1 && nas[i] == 2 && i+1 < nl && nas[i+1] == 1) t = 1; // .CG
 		else if (nas[i-1] == 3 && nas[i] == 0) t = 2; // .TA
 		acceptor[i] = t < 0? 0 : opt->sp[t];
+	}
+	if (ss) {
+		for (i = 0; i < nl; ++i) {
+			if (ss[i]>>1 == 0) continue;
+			if (ss[i]&1) donor[nl - i - 1] -= (int8_t)(ss[i]>>1);
+			else acceptor[nl - i - 1] -= (int8_t)(ss[i]>>1);
+		}
 	}
 	ns_prep_nas(ns, nl, opt, nas);
 	for (i = 0; i < nl>>1; ++i) // reverse
@@ -193,8 +207,8 @@ static uint8_t *ns_prep_seq_left(void *km, const char *ns, int32_t nl, const cha
 
 #define NS_GEN_PREPARE(_suf) \
 	r->n_cigar = 0, r->nt_len = nl, r->aa_len = al, r->score = INT32_MIN; \
-	if (opt->flag & NS_F_EXT_LEFT) nas = ns_prep_seq_left(km, ns, nl, as, al, opt, &aas, &donor, &acceptor); \
-	else nas = ns_prep_seq(km, ns, nl, as, al, opt, &aas, &donor, &acceptor); \
+	if (opt->flag & NS_F_EXT_LEFT) nas = ns_prep_seq_left(km, ns, nl, as, al, opt, ss, &aas, &donor, &acceptor); \
+	else nas = ns_prep_seq(km, ns, nl, as, al, opt, ss, &aas, &donor, &acceptor); \
 	ns_gen_prof(ns_int_t, km, aas, al, opt, neg_inf, &mem_ap, &ap); \
 	go = sse_gen(set1, _suf)(opt->go); \
 	ge = sse_gen(set1, _suf)(opt->ge); \
@@ -296,7 +310,7 @@ static inline float ns_log2(float x) // NB: this doesn't work when x<2
 	return log_2;
 }
 
-void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, ns_rst_t *r)
+void ns_global_gs16b(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, const uint8_t *ss, ns_rst_t *r)
 {
 	typedef int16_t ns_int_t;
 	const int32_t ssize = sizeof(ns_int_t), vsize = 16 / ssize;
@@ -509,7 +523,12 @@ void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_
 	}
 }
 
-void ns_global_gs32(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, ns_rst_t *r)
+void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, ns_rst_t *r)
+{
+	ns_global_gs16b(km, ns, nl, as, al, opt, 0, r);
+}
+
+void ns_global_gs32b(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, const uint8_t *ss, ns_rst_t *r)
 {
 	typedef int32_t ns_int_t;
 	const int32_t ssize = sizeof(ns_int_t), vsize = 16 / ssize;
@@ -696,4 +715,9 @@ void ns_global_gs32(void *km, const char *ns, int32_t nl, const char *as, int32_
 		ns_backtrack(km, vsize, tb, nl, al, &r->cigar, &r->n_cigar, &r->m_cigar);
 		kfree(km, mem_tb);
 	}
+}
+
+void ns_global_gs32(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, ns_rst_t *r)
+{
+	ns_global_gs32b(km, ns, nl, as, al, opt, 0, r);
 }

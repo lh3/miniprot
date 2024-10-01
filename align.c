@@ -235,7 +235,7 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 {
 	int32_t i, i0 = 0, ne0 = 0, ae0 = 0, score = 0, extl, extr;
 	int64_t as, ae, ctg_len, vs0, l_nt;
-	uint8_t *nt;
+	uint8_t *nt, *ss = 0;
 	ns_opt_t ns_opt0;
 	mp_cigar_t cigar = {0,0,0};
 
@@ -260,6 +260,12 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	nt = Kmalloc(km, uint8_t, ae - as);
 	l_nt = mp_ntseq_get_by_v(mi->nt, r->vid, as, ae, nt);
 	assert(l_nt == ae - as);
+	if (mi->nt->spsc) {
+		int32_t l_ss;
+		ss = Kmalloc(km, uint8_t, ae - as);
+		l_ss = mp_ntseq_spsc_get_by_v(mi->nt, r->vid, as, ae, ss);
+		assert(l_ss = l_nt);
+	}
 	vs0 = r->vs;
 	mp_map2ns_opt(opt, &ns_opt0);
 	//fprintf(stderr, "X\t%s\t%c\t%ld\t%ld\n", mi->nt->ctg[r->vid>>1].name, "+-"[r->vid&1], (long)(r->vid&1? ctg_len - ae : as), (long)(r->vid&1? ctg_len - as : ae));
@@ -324,5 +330,6 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	r->p->dist_stop  = mp_extra_stop(r, nt, as, ae);
 	r->p->dist_start = mp_extra_start(r, nt, as, ae);
 	mp_extra_cal(r, opt, &nt[r->vs - as], l_nt - (r->vs - as), &aa[r->qs], len);
+	if (ss) kfree(km, ss);
 	kfree(km, nt);
 }

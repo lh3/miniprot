@@ -93,7 +93,7 @@ typedef struct {
 	mp_ctg_t *ctg;
 	char *name;
 	void *h; // hash table to map sequence name to cid
-	mp_spsc_t *sc; // of size n_ctg*2
+	mp_spsc_t *spsc; // of size n_ctg*2
 } mp_ntdb_t;
 
 typedef struct {

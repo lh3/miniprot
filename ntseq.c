@@ -2,7 +2,6 @@
 #include <assert.h>
 #include <stdio.h>
 #include <zlib.h>
-#include <math.h>
 #include "mppriv.h"
 #include "kalloc.h"
 #include "kseq.h"
@@ -82,7 +81,7 @@ void mp_ntseq_destroy(mp_ntdb_t *db)
 	mp_strmap_t *h = (mp_strmap_t*)db->h;
 	if (db == 0) return;
 	if (h) mp_strmap_destroy(h);
-	if (db->sc) free(db->sc);
+	if (db->spsc) free(db->spsc);
 	free(db->ctg); free(db->seq); free(db->name);
 	free(db);
 }
@@ -131,12 +130,12 @@ int64_t mp_ntseq_spsc_get(const mp_ntdb_t *db, int32_t cid, int64_t st0, int64_t
 {
 	int64_t st, en;
 	const mp_spsc_t *s;
-	if (cid >= db->n_ctg || cid < 0 || db->sc == 0) return -1;
+	if (cid >= db->n_ctg || cid < 0 || db->spsc == 0) return -1;
 	if (en0 < 0 || en0 > db->ctg[cid].len) en0 = db->ctg[cid].len;
 	if (!rev) st = st0, en = en0;
 	else st = db->ctg[cid].len - en0, en = db->ctg[cid].len - st0;
 	memset(sc, 0, en - st);
-	s = &db->sc[cid << 1 | (!!rev)];
+	s = &db->spsc[cid << 1 | (!!rev)];
 	if (s->n > 0) {
 		int32_t j, l, r;
 		l = mp_ntseq_find_intv(s->n, s->a, st);
@@ -150,6 +149,14 @@ int64_t mp_ntseq_spsc_get(const mp_ntdb_t *db, int32_t cid, int64_t st0, int64_t
 		}
 	}
 	return en - st;
+}
+
+int64_t mp_ntseq_spsc_get_by_v(const mp_ntdb_t *nt, int32_t vid, int64_t st, int64_t en, uint8_t *ss)
+{
+	int64_t ctg_len = nt->ctg[vid>>1].len;
+	if (st < 0 || en < 0 || st >= ctg_len) return -1;
+	en = en <= ctg_len? en : ctg_len;
+	return mp_ntseq_spsc_get(nt, vid>>1, vid&1? ctg_len - en : st, vid&1? ctg_len - st : en, vid&1, ss);
 }
 
 void mp_ntseq_dump(FILE *fp, const mp_ntdb_t *nt)
@@ -236,7 +243,7 @@ int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn)
 	fp = fn && strcmp(fn, "-") != 0? gzopen(fn, "rb") : gzdopen(0, "rb");
 	if (fp == 0) return -1;
 	mp_ntseq_index_name(nt);
-	nt->sc = Kcalloc(0, mp_spsc_t, nt->n_ctg * 2);
+	nt->spsc = Kcalloc(0, mp_spsc_t, nt->n_ctg * 2);
 	ks = ks_init(fp);
 	while (ks_getuntil(ks, KS_SEP_LINE, &str, &dret) >= 0) {
 		mp_spsc_t *s;
@@ -268,7 +275,7 @@ int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn)
 		if (score > MP_MAX_SPSC) score = MP_MAX_SPSC;
 		cid = mp_ntseq_name2id(nt, name);
 		if (cid < 0 || type < 0 || strand == 0 || pos < 0) continue; // FIXME: give a warning!
-		s = &nt->sc[cid << 1 | (strand > 0? 0 : 1)];
+		s = &nt->spsc[cid << 1 | (strand > 0? 0 : 1)];
 		Kgrow(0, uint64_t, s->a, s->n, s->m);
 		if (strand < 0) pos = nt->ctg[cid].len - pos;
 		if (pos > 0 && pos < nt->ctg[cid].len) { // ignore scores at the ends
@@ -279,7 +286,7 @@ int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn)
 	ks_destroy(ks);
 	gzclose(fp);
 	for (j = 0; j < nt->n_ctg * 2; ++j) {
-		mp_spsc_t *s = &nt->sc[j];
+		mp_spsc_t *s = &nt->spsc[j];
 		if (s->n > 0)
 			radix_sort_mp64(s->a, s->a + s->n);
 	}

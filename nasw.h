@@ -125,6 +125,9 @@ void ns_opt_init(ns_opt_t *opt);
 void ns_global_gs16(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, ns_rst_t *r);
 void ns_global_gs32(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, ns_rst_t *r);
 
+void ns_global_gs16b(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, const uint8_t *ss, ns_rst_t *r);
+void ns_global_gs32b(void *km, const char *ns, int32_t nl, const char *as, int32_t al, const ns_opt_t *opt, const uint8_t *ss, ns_rst_t *r);
+
 void ns_opt_set_sp(ns_opt_t *opt, int32_t model);
 
 // Non-SIMD implementation with transposed DP matrix. For debugging only. Not intended for general developers.
