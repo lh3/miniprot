@@ -1,4 +1,5 @@
 #include <string.h>
+#include <assert.h>
 #include <stdio.h>
 #include <zlib.h>
 #include <math.h>
@@ -111,6 +112,44 @@ int64_t mp_ntseq_get_by_v(const mp_ntdb_t *nt, int32_t vid, int64_t st, int64_t 
 	if (st < 0 || en < 0 || st >= ctg_len) return -1;
 	en = en <= ctg_len? en : ctg_len;
 	return mp_ntseq_get(nt, vid>>1, vid&1? ctg_len - en : st, vid&1? ctg_len - st : en, vid&1, seq);
+}
+
+static int32_t mp_ntseq_find_intv(int32_t n, const uint64_t *a, int64_t x)
+{
+	int32_t s = 0, e = n;
+	if (n == 0) return -1;
+	while (s < e) {
+		int32_t mid = s + (e - s) / 2;
+		if (x >= a[mid]>>8 && (mid + 1 >= n || x < a[mid+1]>>8)) return mid;
+		else if (x < a[mid]>>8) e = mid;
+		else s = mid + 1;
+	}
+	assert(0);
+}
+
+int64_t mp_ntseq_spsc_get(const mp_ntdb_t *db, int32_t cid, int64_t st0, int64_t en0, int32_t rev, uint8_t *sc)
+{
+	int64_t st, en;
+	const mp_spsc_t *s;
+	if (cid >= db->n_ctg || cid < 0 || db->sc == 0) return -1;
+	if (en0 < 0 || en0 > db->ctg[cid].len) en0 = db->ctg[cid].len;
+	if (!rev) st = st0, en = en0;
+	else st = db->ctg[cid].len - en0, en = db->ctg[cid].len - st0;
+	memset(sc, 0, en - st);
+	s = &db->sc[cid << 1 | (!!rev)];
+	if (s->n > 0) {
+		int32_t j, l, r;
+		l = mp_ntseq_find_intv(s->n, s->a, st);
+		r = mp_ntseq_find_intv(s->n, s->a, en);
+		for (j = l; j < r; ++j) {
+			int64_t x = (s->a[j]>>8) - st;
+			uint8_t score = s->a[j] & 0xff;
+			assert(x <= en - st);
+			if (x == en - st) continue;
+			sc[x] = sc[x] > score? sc[x] : score;
+		}
+	}
+	return en - st;
 }
 
 void mp_ntseq_dump(FILE *fp, const mp_ntdb_t *nt)
@@ -231,8 +270,11 @@ int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn)
 		if (cid < 0 || type < 0 || strand == 0 || pos < 0) continue; // FIXME: give a warning!
 		s = &nt->sc[cid << 1 | (strand > 0? 0 : 1)];
 		Kgrow(0, uint64_t, s->a, s->n, s->m);
-		s->a[s->n++] = (uint64_t)pos<<9 | type<<8 | score;
-		++n_read;
+		if (strand < 0) pos = nt->ctg[cid].len - pos;
+		if (pos > 0 && pos < nt->ctg[cid].len) { // ignore scores at the ends
+			s->a[s->n++] = (uint64_t)pos<<8 | score<<1 | type;
+			++n_read;
+		}
 	}
 	ks_destroy(ks);
 	gzclose(fp);
@@ -241,7 +283,6 @@ int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn)
 		if (s->n > 0)
 			radix_sort_mp64(s->a, s->a + s->n);
 	}
-	// TODO: SORT!!!
 	if (mp_verbose >= 3)
 		fprintf(stderr, "[M::%s] read %ld splice scores\n", __func__, (long)n_read);
 	return 0;

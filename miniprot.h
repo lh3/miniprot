@@ -77,7 +77,7 @@ typedef struct {
 
 typedef struct {
 	uint32_t n, m;
-	uint64_t *a; // pos:55, acceptor:1, score:8
+	uint64_t *a; // pos<<56 | score<<1 | acceptor
 } mp_spsc_t;
 
 typedef struct {
