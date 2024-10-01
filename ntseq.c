@@ -250,7 +250,7 @@ int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn)
 	while (ks_getuntil(ks, KS_SEP_LINE, &str, &dret) >= 0) {
 		mp_spsc_t *s;
 		char *p, *q, *name = 0;
-		int32_t i, type = -1, strand = 0, cid = -1, score;
+		int32_t i, type = -1, strand = 0, cid = -1, score = -1;
 		int64_t pos = -1;
 		for (i = 0, p = q = str.s;; ++p) {
 			if (*p == '\t' || *p == 0) {
