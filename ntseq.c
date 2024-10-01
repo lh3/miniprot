@@ -117,6 +117,7 @@ static int32_t mp_ntseq_find_intv(int32_t n, const uint64_t *a, int64_t x)
 {
 	int32_t s = 0, e = n;
 	if (n == 0) return -1;
+	if (x < a[0]>>8) return -1;
 	while (s < e) {
 		int32_t mid = s + (e - s) / 2;
 		if (x >= a[mid]>>8 && (mid + 1 >= n || x < a[mid+1]>>8)) return mid;
@@ -140,11 +141,12 @@ int64_t mp_ntseq_spsc_get(const mp_ntdb_t *db, int32_t cid, int64_t st0, int64_t
 		int32_t j, l, r;
 		l = mp_ntseq_find_intv(s->n, s->a, st);
 		r = mp_ntseq_find_intv(s->n, s->a, en);
-		for (j = l; j < r; ++j) {
+		for (j = l + 1; j <= r; ++j) {
 			int64_t x = (s->a[j]>>8) - st;
 			uint8_t score = s->a[j] & 0xff;
 			assert(x <= en - st);
 			if (x == en - st) continue;
+			//fprintf(stderr, "st=%lld, j=%d, pos=%lld\n", st0, j, s->a[j]>>8);
 			sc[x] = sc[x] > score? sc[x] : score;
 		}
 	}
