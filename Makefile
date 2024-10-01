@@ -49,7 +49,7 @@ map.o: mppriv.h miniprot.h nasw.h kalloc.h kseq.h kthread.h kvec-km.h
 misc.o: mppriv.h miniprot.h nasw.h kalloc.h kseq.h ksort.h
 nasw-sse.o: nasw.h kalloc.h
 nasw-tab.o: nasw.h kalloc.h
-ntseq.o: mppriv.h miniprot.h nasw.h kalloc.h kseq.h
+ntseq.o: mppriv.h miniprot.h nasw.h kalloc.h kseq.h khashl-km.h
 options.o: miniprot.h nasw.h kalloc.h
 sketch.o: mppriv.h miniprot.h nasw.h kalloc.h kseq.h kvec-km.h
 sys.o: mppriv.h miniprot.h nasw.h kalloc.h kseq.h
