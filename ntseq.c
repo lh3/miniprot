@@ -191,11 +191,12 @@ int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn)
 	gzFile fp;
 	kstring_t str = {0,0,0};
 	kstream_t *ks;
-	int dret;
+	int32_t dret, j;
 	int64_t n_read = 0;
 
 	fp = fn && strcmp(fn, "-") != 0? gzopen(fn, "rb") : gzdopen(0, "rb");
 	if (fp == 0) return -1;
+	mp_ntseq_index_name(nt);
 	nt->sc = Kcalloc(0, mp_spsc_t, nt->n_ctg * 2);
 	ks = ks_init(fp);
 	while (ks_getuntil(ks, KS_SEP_LINE, &str, &dret) >= 0) {
@@ -206,6 +207,7 @@ int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn)
 		for (i = 0, p = q = str.s;; ++p) {
 			if (*p == '\t' || *p == 0) {
 				int c = *p;
+				*p = 0;
 				if (i == 0) {
 					name = q;
 				} else if (i == 1) {
@@ -234,6 +236,11 @@ int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn)
 	}
 	ks_destroy(ks);
 	gzclose(fp);
+	for (j = 0; j < nt->n_ctg * 2; ++j) {
+		mp_spsc_t *s = &nt->sc[j];
+		if (s->n > 0)
+			radix_sort_mp64(s->a, s->a + s->n);
+	}
 	// TODO: SORT!!!
 	if (mp_verbose >= 3)
 		fprintf(stderr, "[M::%s] read %ld splice scores\n", __func__, (long)n_read);
