@@ -232,9 +232,7 @@ int32_t mp_ntseq_name2id(const mp_ntdb_t *nt, const char *name)
 	return k == kh_end(h)? -1 : kh_val(h, k);
 }
 
-#define MP_MAX_SPSC 30
-
-int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn)
+int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn, int32_t max_sc)
 {
 	gzFile fp;
 	kstring_t str = {0,0,0};
@@ -274,7 +272,7 @@ int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn)
 		}
 		if (i < 4) continue; // not enough fields
 		if (score <= 0) continue;
-		if (score > MP_MAX_SPSC) score = MP_MAX_SPSC;
+		if (score > max_sc) score = max_sc;
 		cid = mp_ntseq_name2id(nt, name);
 		if (cid < 0 || type < 0 || strand == 0 || pos < 0) continue; // FIXME: give a warning!
 		s = &nt->spsc[cid << 1 | (strand > 0? 0 : 1)];

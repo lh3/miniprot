@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.13-r258-dirty"
+#define MP_VERSION "0.13-r259-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
@@ -162,7 +162,7 @@ void mp_idx_destroy(mp_idx_t *mi);
 int mp_idx_dump(const char *fn, const mp_idx_t *mi);
 mp_idx_t *mp_idx_restore(const char *fn);
 void mp_idx_print_stat(const mp_idx_t *mi, int32_t max_occ);
-int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn);
+int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn, int32_t max_sc);
 
 int32_t mp_map_file(const mp_idx_t *idx, const char *fn, const mp_mapopt_t *opt, int n_threads);
 

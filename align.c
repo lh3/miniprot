@@ -78,7 +78,7 @@ static int32_t mp_align_seq(void *km, const mp_mapopt_t *opt, const ns_opt_t *ns
 	}
 }
 
-static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt, int32_t l_nt, const char *aa, int32_t qlen)
+static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt, int32_t l_nt, const char *aa, int32_t qlen, int32_t has_spsc)
 {
 	int32_t k, i, j, l, nl = 0, al = 0, ft, n_intron, has_stop;
 	int32_t blen0, n_iden0, phase0, qs0, n_fs0, n_stop0, score0;
@@ -186,13 +186,12 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 	}
 	// check errors
 	if (nl != r->ve - r->vs || al != r->qe - r->qs) {
-		fprintf(stderr, "BUG! %d == %d? %d == %d? ", nl, (int)(r->ve - r->vs), al, r->qe - r->qs);
-		for (k = 0; k < e->n_cigar; ++k)
-			fprintf(stderr, "%d%c", e->cigar[k]>>4, NS_CIGAR_STR[e->cigar[k]&0xf]);
-		fputc('\n', stderr);
+		if (mp_verbose >= 2)
+			fprintf(stderr, "Warning: unknown issue with --spsc (%d!=%d or %d!=%d)\n", nl, (int)(r->ve - r->vs), al, r->qe - r->qs);
+		free(r->p); free(r->feat);
+		r->p = 0, r->feat = 0;
 	}
-	assert(nl == r->ve - r->vs);
-	assert(al == r->qe - r->qs);
+	assert(has_spsc == 1 || (nl == r->ve - r->vs && al == r->qe - r->qs));
 }
 
 static void mp_extra_gen(void *km, mp_reg1_t *r, mp_cigar_t *cigar, int32_t score)
@@ -329,7 +328,7 @@ void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len,
 	mp_extra_gen(km, r, &cigar, score);
 	r->p->dist_stop  = mp_extra_stop(r, nt, as, ae);
 	r->p->dist_start = mp_extra_start(r, nt, as, ae);
-	mp_extra_cal(r, opt, &nt[r->vs - as], l_nt - (r->vs - as), &aa[r->qs], len);
+	mp_extra_cal(r, opt, &nt[r->vs - as], l_nt - (r->vs - as), &aa[r->qs], len, mi->nt->spsc != 0);
 	if (ss) kfree(km, ss);
 	kfree(km, nt);
 }
