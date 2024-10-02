@@ -190,7 +190,11 @@ int main(int argc, char *argv[])
 	if (set_I && !set_G) mp_mapopt_set_max_intron(&mo, mi->nt->l_seq);
 	if (mp_verbose >= 3) mp_idx_print_stat(mi, mo.max_occ);
 	if (fn_idx != 0) mp_idx_dump(fn_idx, mi);
-	if (fn_spsc != 0) mp_ntseq_read_spsc(mi->nt, fn_spsc, mo.io - mo.go);
+	if (fn_spsc != 0) {
+		int32_t max_sc = (mo.io + 1) / 2 - 1;
+		max_sc = max_sc > mo.io - mo.go? max_sc : mo.io - mo.go;
+		mp_ntseq_read_spsc(mi->nt, fn_spsc, max_sc);
+	}
 	for (i = o.ind + 1; i < argc; ++i) {
 		int32_t res = mp_map_file(mi, argv[i], &mo, n_threads);
 		if (res != 0) {
