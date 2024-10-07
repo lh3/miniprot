@@ -135,7 +135,7 @@ int64_t mp_ntseq_spsc_get(const mp_ntdb_t *db, int32_t cid, int64_t st0, int64_t
 	if (en0 < 0 || en0 > db->ctg[cid].len) en0 = db->ctg[cid].len;
 	if (!rev) st = st0, en = en0;
 	else st = db->ctg[cid].len - en0, en = db->ctg[cid].len - st0;
-	memset(sc, 0, en - st);
+	memset(sc, 0xff, en - st);
 	s = &db->spsc[cid << 1 | (!!rev)];
 	if (s->n > 0) {
 		int32_t j, l, r;
@@ -146,8 +146,7 @@ int64_t mp_ntseq_spsc_get(const mp_ntdb_t *db, int32_t cid, int64_t st0, int64_t
 			uint8_t score = s->a[j] & 0xff;
 			assert(x <= en - st);
 			if (x == en - st) continue;
-			//fprintf(stderr, "st=%lld, j=%d, pos=%lld\n", st0, j, s->a[j]>>8);
-			sc[x] = sc[x] > score? sc[x] : score;
+			if (sc[x] == 0xff || sc[x] < score) sc[x] = score;
 		}
 	}
 	return en - st;

@@ -21,6 +21,7 @@ static ko_longopt_t long_options[] = {
 	{ "trans",           ko_no_argument,       315 },
 	{ "no-cs",           ko_no_argument,       316 },
 	{ "spsc",            ko_required_argument, 317 },
+	{ "spsc0",           ko_required_argument, 318 },
 	{ "version",         ko_no_argument,       401 },
 	{ "no-kalloc",       ko_no_argument,       501 },
 	{ "dbg-qname",       ko_no_argument,       502 },
@@ -81,6 +82,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -B INT       bonus score for alignment reaching query ends [%d]\n", mo->end_bonus);
 	fprintf(fp, "    -j INT       splice model: 2=mammal, 1=general, 0=none (see manual) [%d]\n", mo->sp_model);
 	fprintf(fp, "    --spsc=FILE  splice score []\n");
+	fprintf(fp, "    --spsc0=INT  splice penalty for sites not in --spsc [%d]\n", mo->sp_null_bonus);
 	fprintf(fp, "  Input/output:\n");
 	fprintf(fp, "    -t INT       number of threads [%d]\n", n_threads);
 	fprintf(fp, "    --gff        output in the GFF3 format\n");
@@ -161,7 +163,11 @@ int main(int argc, char *argv[])
 		else if (c == 504) mp_dbg_flag |= MP_DBG_MORE_DP; // --dbg-aflt
 		else if (c == 505) mp_dbg_flag |= MP_DBG_ANCHOR; // --dbg-anchor
 		else if (c == 506) mp_dbg_flag |= MP_DBG_CHAIN; // --dbg-chain
-		else if (c == 's') {
+		else if (c == 318) { // --spsc0
+			int32_t s;
+			s = atoi(o.arg);
+			mo.sp_null_bonus = s < 0? s : -s;
+		} else if (c == 's') {
 			fprintf(stderr, "Option '-s' is deprecated.\n");
 		} else if (c == 401) {
 			printf("%s\n", MP_VERSION);

@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.13-r261-dirty"
+#define MP_VERSION "0.13-r262-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
@@ -65,6 +65,7 @@ typedef struct {
 	int32_t io_end;
 	float ie_coef;
 	int32_t sp_model;
+	int32_t sp_null_bonus;
 	float sp_scale;
 	int32_t xdrop;
 	int32_t end_bonus;

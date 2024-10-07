@@ -137,6 +137,7 @@ void ns_opt_init(ns_opt_t *opt)
 	opt->xdrop = 100;
 	opt->end_bonus = 5;
 	ns_opt_set_sp(opt, NS_S_MAMMAL);
+	opt->sp_null_bonus = -7;
 	opt->asize = 22;
 	opt->ie_coef = .5f;
 	opt->sc = ns_mat_blosum62;
