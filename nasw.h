@@ -51,6 +51,8 @@
 #define NS_S_GENERIC    1
 #define NS_S_MAMMAL     2
 
+#define NS_SPSC_OFFSET 64
+
 extern char *ns_tab_nt_i2c, *ns_tab_aa_i2c;
 extern uint8_t ns_tab_a2r[22], ns_tab_nt4[256], ns_tab_aa20[256], ns_tab_aa13[256];
 extern uint8_t ns_tab_codon[64], ns_tab_codon13[64];

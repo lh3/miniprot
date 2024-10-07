@@ -127,8 +127,8 @@ static uint8_t *ns_prep_seq(void *km, const char *ns, int32_t nl, const char *as
 	if (ss) { // NB: ss[] uses the offset rule to specify a splice site; donor/acceptor[] uses a different rule. The ss[] way is better but too tricky to change now
 		for (i = 1; i < nl; ++i) {
 			if (ss[i]>>1 == 0) continue;
-			if (ss[i]&1) acceptor[i-1] -= (int8_t)(ss[i]>>1);
-			else donor[i-1] -= (int8_t)(ss[i]>>1);
+			if (ss[i]&1) acceptor[i-1] -= (int8_t)(ss[i]>>1) - (int8_t)NS_SPSC_OFFSET;
+			else donor[i-1] -= (int8_t)(ss[i]>>1) - (int8_t)NS_SPSC_OFFSET;
 		}
 	}
 	ns_prep_nas(ns, nl, opt, nas);
@@ -170,8 +170,8 @@ static uint8_t *ns_prep_seq_left(void *km, const char *ns, int32_t nl, const cha
 	if (ss) {
 		for (i = 0; i < nl; ++i) {
 			if (ss[i]>>1 == 0) continue;
-			if (ss[i]&1) donor[nl - i - 1] -= (int8_t)(ss[i]>>1);
-			else acceptor[nl - i - 1] -= (int8_t)(ss[i]>>1);
+			if (ss[i]&1) donor[nl - i - 1] -= (int8_t)(ss[i]>>1) - (int8_t)NS_SPSC_OFFSET;
+			else acceptor[nl - i - 1] -= (int8_t)(ss[i]>>1) - (int8_t)NS_SPSC_OFFSET;
 		}
 	}
 	ns_prep_nas(ns, nl, opt, nas);

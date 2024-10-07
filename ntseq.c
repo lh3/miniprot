@@ -242,6 +242,7 @@ int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn, int32_t max_sc)
 
 	fp = fn && strcmp(fn, "-") != 0? gzopen(fn, "rb") : gzdopen(0, "rb");
 	if (fp == 0) return -1;
+	if (max_sc > 63) max_sc = 63;
 	mp_ntseq_index_name(nt);
 	nt->spsc = Kcalloc(0, mp_spsc_t, nt->n_ctg * 2);
 	ks = ks_init(fp);
@@ -271,15 +272,15 @@ int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn, int32_t max_sc)
 			}
 		}
 		if (i < 4) continue; // not enough fields
-		if (score <= 0) continue;
 		if (score > max_sc) score = max_sc;
+		if (score < -max_sc) score = -max_sc;
 		cid = mp_ntseq_name2id(nt, name);
 		if (cid < 0 || type < 0 || strand == 0 || pos < 0) continue; // FIXME: give a warning!
 		s = &nt->spsc[cid << 1 | (strand > 0? 0 : 1)];
 		Kgrow(0, uint64_t, s->a, s->n, s->m);
 		if (strand < 0) pos = nt->ctg[cid].len - pos;
 		if (pos > 0 && pos < nt->ctg[cid].len) { // ignore scores at the ends
-			s->a[s->n++] = (uint64_t)pos<<8 | score<<1 | type;
+			s->a[s->n++] = (uint64_t)pos << 8 | (score + NS_SPSC_OFFSET) << 1 | type;
 			++n_read;
 		}
 	}
