@@ -150,21 +150,137 @@ extern char *ns_tab_nt_i2c, *ns_tab_aa_i2c;
 extern uint8_t ns_tab_a2r[22], ns_tab_nt4[256], ns_tab_aa20[256], ns_tab_aa13[256];
 extern uint8_t ns_tab_codon[64], ns_tab_codon13[64];
 
+/**
+ * Set the translation table and builtin timer
+ *
+ * Run this before all other miniprot routines.
+ */
 void mp_start(void);
 
+/**
+ * Initialize the default parameters for indexing
+ *
+ * @param io       struct to initialize (out)
+ */
 void mp_idxopt_init(mp_idxopt_t *io);
+
+/**
+ * Initialize the default parameters fr mapping
+ *
+ * @param mo       struct to initialize (out)
+ */
 void mp_mapopt_init(mp_mapopt_t *mo);
+
+/**
+ * Set frameshift and stop codon penalty
+ *
+ * This function changes the mp_mapopt_t::fs field and mp_mapopt_t::mat[]
+ *
+ * @param mo       mapping options (in/out)
+ * @param fs       frameshift and stop codon penalty (positive)
+ */
 void mp_mapopt_set_fs(mp_mapopt_t *mo, int32_t fs);
+
+/**
+ * Set max intron length based on the genome size
+ *
+ * @param mo       mapping options (in/out)
+ * @param gsize    genome size
+ */
 void mp_mapopt_set_max_intron(mp_mapopt_t *mo, int64_t gsize);
+
+/**
+ * Check the integrity of mapping parameters (not complete)
+ *
+ * @param mo       mapping options
+ *
+ * @return 0 on success, or negative on failure
+ */
 int32_t mp_mapopt_check(const mp_mapopt_t *mo);
 
+/**
+ * Load or build an index
+ *
+ * If _fn_ corresponds to a FASTA file, build the index using _io_ and
+ * _n_threads_. If _fn_ corresponds to a prebuilt index file, load the index
+ * and ignore _io_ and _n_threads_.
+ *
+ * @param fn         FASTA or index file name
+ * @param io         indexing options
+ * @param n_threads  number of threads
+ *
+ * @return the index
+ */
 mp_idx_t *mp_idx_load(const char *fn, const mp_idxopt_t *io, int32_t n_threads);
+
+/**
+ * Deallocate the index
+ *
+ * @param mi         the index
+ */
 void mp_idx_destroy(mp_idx_t *mi);
+
+/**
+ * Write an index to disk
+ *
+ * @param fn         index file name
+ * @param mi         the index
+ *
+ * @return 0 on success or negative on failure
+ */
 int mp_idx_dump(const char *fn, const mp_idx_t *mi);
+
+/**
+ * Read an index file
+ *
+ * @param fn         index file name
+ *
+ * @return the index, or NULL on failure
+ */
 mp_idx_t *mp_idx_restore(const char *fn);
-void mp_idx_print_stat(const mp_idx_t *mi, int32_t max_occ);
+
+/**
+ * Load a splice score file
+ *
+ * @param nt        sequences in mp_idx_t::nt (in/out)
+ * @param fn        splice score file name; can be optionally gzip'd
+ * @param max_sc    cap splice scores at this parameter
+ *
+ * @return 0 on success, or negative on failure
+ */
 int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn, int32_t max_sc);
 
+/**
+ * Align a protein sequence against the index
+ *
+ * @param mi        the index
+ * @param qlen      protein length
+ * @param seq       protein sequence
+ * @param n_reg     number of alignments (out)
+ * @param b         thread-local buffer; threads shouldn't share buffers (can be NULL)
+ * @param opt       mapping parameters
+ * @param qname     query name (used for breaking ties)
+ *
+ * @return list of alignments
+ */
+mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_tbuf_t *b, const mp_mapopt_t *opt, const char *qname);
+
+/**
+ * Initialize a thread-local buffer
+ *
+ * @return the buffer
+ */
+mp_tbuf_t *mp_tbuf_init(void);
+
+/**
+ * Deallocate a thread-local buffer
+ *
+ * @param b         the buffer
+ */
+void mp_tbuf_destroy(mp_tbuf_t *b);
+
+// ignore the following for now
+void mp_idx_print_stat(const mp_idx_t *mi, int32_t max_occ);
 int32_t mp_map_file(const mp_idx_t *idx, const char *fn, const mp_mapopt_t *opt, int n_threads);
 
 #ifdef __cplusplus

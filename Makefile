@@ -25,8 +25,14 @@ endif
 
 all:$(PROG)
 
-miniprot:$(OBJS) main.o
-		$(CC) $(CFLAGS) $^ -o $@ $(LIBS)
+libminiprot.a:$(OBJS)
+		$(AR) -csru $@ $(OBJS)
+
+miniprot:$(OBJS) main.o libminiprot.a
+		$(CC) $(CFLAGS) main.o -o $@ -L. -lminiprot $(LIBS)
+
+miniprot-lite:example.o libminiprot.a
+		$(CC) $(CFLAGS) $< -o $@ -L. -lminiprot $(LIBS)
 
 clean:
 		rm -fr *.o a.out $(PROG) *~ *.a *.dSYM
@@ -39,6 +45,7 @@ depend:
 align.o: mppriv.h miniprot.h nasw.h kalloc.h kseq.h
 bseq.o: kvec-km.h kalloc.h mppriv.h miniprot.h nasw.h kseq.h
 chain.o: mppriv.h miniprot.h nasw.h kalloc.h kseq.h
+example.o: miniprot.h nasw.h kalloc.h kseq.h
 format.o: kseq.h mppriv.h miniprot.h nasw.h kalloc.h
 hit.o: mppriv.h miniprot.h nasw.h kalloc.h kseq.h
 index.o: mppriv.h miniprot.h nasw.h kalloc.h kseq.h kvec-km.h kthread.h
