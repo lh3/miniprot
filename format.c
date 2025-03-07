@@ -9,7 +9,7 @@ static inline void str_enlarge(kstring_t *s, int l)
 {
 	if (s->l + l + 1 > s->m) {
 		s->m = s->l + l + 1;
-		kroundup32(s->m);
+		kroundup64(s->m);
 		s->s = (char*)realloc(s->s, s->m);
 	}
 }
@@ -21,15 +21,19 @@ static inline void str_copy(kstring_t *s, const char *st, const char *en)
 	s->l += en - st;
 }
 
-void mp_sprintf_lite(kstring_t *s, const char *fmt, ...) // FIXME: make it work for 64-bit integers
+int64_t mp_sprintf_lite(kstring_t *s, const char *fmt, ...)
 {
-	char buf[16]; // for integer to string conversion
+	char buf[32]; // for integer to string conversion
 	const char *p, *q;
+	int64_t len = 0;
 	va_list ap;
 	va_start(ap, fmt);
 	for (q = p = fmt; *p; ++p) {
 		if (*p == '%') {
-			if (p > q) str_copy(s, q, p);
+			if (p > q) {
+				len += p - q;
+				if (s) str_copy(s, q, p);
+			}
 			++p;
 			if (*p == 'd') {
 				int c, i, l = 0;
@@ -38,21 +42,47 @@ void mp_sprintf_lite(kstring_t *s, const char *fmt, ...) // FIXME: make it work 
 				x = c >= 0? c : -c;
 				do { buf[l++] = x%10 + '0'; x /= 10; } while (x > 0);
 				if (c < 0) buf[l++] = '-';
-				str_enlarge(s, l);
-				for (i = l - 1; i >= 0; --i) s->s[s->l++] = buf[i];
+				len += l;
+				if (s) {
+					str_enlarge(s, l);
+					for (i = l - 1; i >= 0; --i) s->s[s->l++] = buf[i];
+				}
+			} else if (*p == 'l' && *(p+1) == 'd') {
+				int i, l = 0;
+				long c;
+				unsigned long x;
+				c = va_arg(ap, long);
+				x = c >= 0? c : -c;
+				do { buf[l++] = x%10 + '0'; x /= 10; } while (x > 0);
+				if (c < 0) buf[l++] = '-';
+				len += l;
+				if (s) {
+					str_enlarge(s, l);
+					for (i = l - 1; i >= 0; --i) s->s[s->l++] = buf[i];
+				}
+				++p;
 			} else if (*p == 'u') {
 				int i, l = 0;
 				uint32_t x;
 				x = va_arg(ap, uint32_t);
 				do { buf[l++] = x%10 + '0'; x /= 10; } while (x > 0);
-				str_enlarge(s, l);
-				for (i = l - 1; i >= 0; --i) s->s[s->l++] = buf[i];
+				len += l;
+				if (s) {
+					str_enlarge(s, l);
+					for (i = l - 1; i >= 0; --i) s->s[s->l++] = buf[i];
+				}
 			} else if (*p == 's') {
 				char *r = va_arg(ap, char*);
-				str_copy(s, r, r + strlen(r));
+				int l;
+				l = strlen(r);
+				len += l;
+				if (s) str_copy(s, r, r + l);
 			} else if (*p == 'c') {
-				str_enlarge(s, 1);
-				s->s[s->l++] = va_arg(ap, int);
+				++len;
+				if (s) {
+					str_enlarge(s, 1);
+					s->s[s->l++] = va_arg(ap, int);
+				}
 			} else {
 				fprintf(stderr, "ERROR: unrecognized type '%%%c'\n", *p);
 				abort();
@@ -60,9 +90,13 @@ void mp_sprintf_lite(kstring_t *s, const char *fmt, ...) // FIXME: make it work 
 			q = p + 1;
 		}
 	}
-	if (p > q) str_copy(s, q, p);
+	if (p > q) {
+		len += p - q;
+		if (s) str_copy(s, q, p);
+	}
 	va_end(ap);
-	s->s[s->l] = 0;
+	if (s) s->s[s->l] = 0;
+	return len;
 }
 
 static void mp_write_cs(kstring_t *str, const mp_idx_t *mi, const char *aa, const mp_reg1_t *r)
@@ -305,9 +339,9 @@ void mp_write_paf(kstring_t *s, const mp_idx_t *mi, const mp_mapopt_t *opt, cons
 		return;
 	}
 	ctg = &mi->nt->ctg[r->vid>>1];
-	mp_sprintf_lite(s, "%s\t%d\t%d\t%d\t%c\t%s\t%d\t", seq->name, seq->l_seq, r->qs, r->qe, "+-"[r->vid&1], ctg->name, (int)ctg->len);
-	if (r->vid&1) mp_sprintf_lite(s, "%d\t%d\t", (int)(ctg->len - r->ve), (int)(ctg->len - r->vs)); // FIXME: make it work for 64-bit integers
-	else mp_sprintf_lite(s, "%d\t%d\t", (int)r->vs, (int)r->ve);
+	mp_sprintf_lite(s, "%s\t%d\t%d\t%d\t%c\t%s\t%ld\t", seq->name, seq->l_seq, r->qs, r->qe, "+-"[r->vid&1], ctg->name, (long)ctg->len);
+	if (r->vid&1) mp_sprintf_lite(s, "%ld\t%ld\t", (long)(ctg->len - r->ve), (long)(ctg->len - r->vs));
+	else mp_sprintf_lite(s, "%ld\t%ld\t", (long)r->vs, (long)r->ve);
 	if (r->p) {
 		int32_t k;
 		mp_sprintf_lite(s, "%d\t%d\t0\tAS:i:%d\tms:i:%d\tnp:i:%d\tfs:i:%d\tst:i:%d\tda:i:%d\tdo:i:%d\t",
@@ -345,7 +379,7 @@ static void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bs
 	ctg = &mi->nt->ctg[r->vid>>1];
 	vs = r->vid&1? ctg->len - ve_mRNA : r->vs;
 	ve = r->vid&1? ctg->len - r->vs   : ve_mRNA;
-	mp_sprintf_lite(s, "%s\tminiprot\tmRNA\t%d\t%d\t%d\t%c\t.\tID=%s;Rank=%d", ctg->name, (int)vs + 1, (int)ve, r->p->dp_max, "+-"[r->vid&1], id_str, hit_idx);
+	mp_sprintf_lite(s, "%s\tminiprot\tmRNA\t%ld\t%ld\t%d\t%c\t.\tID=%s;Rank=%d", ctg->name, (long)vs + 1, (long)ve, r->p->dp_max, "+-"[r->vid&1], id_str, hit_idx);
 	snprintf(dec, 16, "%.4f", (double)r->p->n_iden * 3 / r->p->blen);
 	mp_sprintf_lite(s, ";Identity=%s", dec);
 	snprintf(dec, 16, "%.4f", (double)r->p->n_plus * 3 / r->p->blen);
@@ -361,8 +395,8 @@ static void mp_write_gff(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bs
 			ve += 3;
 		vs = r->vid&1? ctg->len - ve    : f->vs;
 		ve = r->vid&1? ctg->len - f->vs : ve;
-		mp_sprintf_lite(s, "%s\tminiprot\t%s\t%d\t%d\t%d\t%c\t%d\tParent=%s;Rank=%d", ctg->name, f->type == MP_FEAT_STOP? "stop_codon" : "CDS",
-			(int)vs + 1, (int)ve, f->score, "+-"[r->vid&1], f->phase, id_str, hit_idx);
+		mp_sprintf_lite(s, "%s\tminiprot\t%s\t%ld\t%ld\t%d\t%c\t%d\tParent=%s;Rank=%d", ctg->name, f->type == MP_FEAT_STOP? "stop_codon" : "CDS",
+			(long)vs + 1, (long)ve, f->score, "+-"[r->vid&1], f->phase, id_str, hit_idx);
 		if (f->type == MP_FEAT_CDS) {
 			snprintf(dec, 16, "%.4f", (double)f->n_iden * 3 / f->blen);
 			mp_sprintf_lite(s, ";Identity=%s", dec);
@@ -396,8 +430,8 @@ static void mp_write_gtf(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bs
 	ctg = &mi->nt->ctg[r->vid>>1];
 	vs = r->vid&1? ctg->len - ve_mRNA : r->vs;
 	ve = r->vid&1? ctg->len - r->vs   : ve_mRNA;
-	mp_sprintf_lite(s, "%s\tminiprot\tgene\t%d\t%d\t%d\t%c\t.\tgene_id \"%s\";\n", ctg->name, (int)vs + 1, (int)ve, r->p->dp_max, "+-"[r->vid&1], id_g_str);
-	mp_sprintf_lite(s, "%s\tminiprot\ttranscript\t%d\t%d\t%d\t%c\t.\ttranscript_id \"%s\"; gene_id \"%s\";\n", ctg->name, (int)vs + 1, (int)ve, r->p->dp_max, "+-"[r->vid&1], id_t_str, id_g_str);
+	mp_sprintf_lite(s, "%s\tminiprot\tgene\t%ld\t%ld\t%d\t%c\t.\tgene_id \"%s\";\n", ctg->name, (long)vs + 1, (long)ve, r->p->dp_max, "+-"[r->vid&1], id_g_str);
+	mp_sprintf_lite(s, "%s\tminiprot\ttranscript\t%ld\t%ld\t%d\t%c\t.\ttranscript_id \"%s\"; gene_id \"%s\";\n", ctg->name, (long)vs + 1, (long)ve, r->p->dp_max, "+-"[r->vid&1], id_t_str, id_g_str);
 
 	for (j = 0; j < r->n_feat; ++j) {
 		int64_t vs2, ve2;
@@ -409,8 +443,8 @@ static void mp_write_gtf(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bs
 			if (r->vid&1) vs2 = ctg->len - ve_mRNA;
 			else ve2 = ve_mRNA;
 		}
-		mp_sprintf_lite(s, "%s\tminiprot\texon\t%d\t%d\t%d\t%c\t.\ttranscript_id \"%s\"; gene_id \"%s\";\n", ctg->name, (int)vs2 + 1, (int)ve2, f->score, "+-"[r->vid&1], id_t_str, id_g_str);
-		mp_sprintf_lite(s, "%s\tminiprot\tCDS\t%d\t%d\t%d\t%c\t%d\ttranscript_id \"%s\"; gene_id \"%s\";\n", ctg->name, (int)vs + 1,  (int)ve,  f->score, "+-"[r->vid&1], f->phase, id_t_str, id_g_str);
+		mp_sprintf_lite(s, "%s\tminiprot\texon\t%ld\t%ld\t%d\t%c\t.\ttranscript_id \"%s\"; gene_id \"%s\";\n", ctg->name, (long)vs2 + 1, (long)ve2, f->score, "+-"[r->vid&1], id_t_str, id_g_str);
+		mp_sprintf_lite(s, "%s\tminiprot\tCDS\t%ld\t%ld\t%d\t%c\t%d\ttranscript_id \"%s\"; gene_id \"%s\";\n", ctg->name, (long)vs + 1,  (long)ve,  f->score, "+-"[r->vid&1], f->phase, id_t_str, id_g_str);
 	}
 	kfree(km, id_g_str);
 	kfree(km, id_t_str);

@@ -17,7 +17,7 @@ void mp_start(void)
 
 char *mp_strdup(const char *src)
 {
-	int32_t len;
+	size_t len;
 	char *dst;
 	len = strlen(src);
 	dst = (char*)malloc(len + 1);
