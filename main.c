@@ -81,8 +81,8 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -C FLOAT     weight of splice penalty; 0 to ignore splice signals [%g]\n", mo->sp_scale);
 	fprintf(fp, "    -B INT       bonus score for alignment reaching query ends [%d]\n", mo->end_bonus);
 	fprintf(fp, "    -j INT       splice model: 2=mammal, 1=general, 0=none (see manual) [%d]\n", mo->sp_model);
-	fprintf(fp, "    --spsc=FILE  splice score []\n");
-	fprintf(fp, "    --spsc0=INT  splice penalty for sites not in --spsc [%d]\n", mo->sp_null_bonus);
+	fprintf(fp, "    --spsc=FILE  splice score file in format \"ctg offset +|- D|A score\" []\n");
+	fprintf(fp, "    --spsc0=INT  splice score for sites not in --spsc [%d]\n", mo->sp_null_bonus);
 	fprintf(fp, "  Input/output:\n");
 	fprintf(fp, "    -t INT       number of threads [%d]\n", n_threads);
 	fprintf(fp, "    --gff        output in the GFF3 format\n");

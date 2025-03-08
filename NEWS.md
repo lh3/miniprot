@@ -1,3 +1,24 @@
+Release 0.14-r265 (7 March 2025)
+--------------------------------
+
+Notable changes:
+
+ * Bug fix: support chromosomes longer than 2Gbp (#59)
+
+ * EXPERIMENTAL feature: read splice scores from a file specified by `--spsc`
+   and consider the scores during residue alignment. The feature makes it
+   possible to apply advanced splice models and to improve miniprot alignment.
+
+ * Improvement: documented the C APIs and added an example program on using the
+   APIs (#69).
+
+This version produces alignment identical to v0.13, except for long chromosomes
+or when the new feature is used.
+
+(0.14: 7 March 2025, r265)
+
+
+
 Release 0.13-r248 (6 March 2024)
 --------------------------------
 

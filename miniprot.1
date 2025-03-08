@@ -1,4 +1,4 @@
-.TH miniprot 1 "5 March 2024" "miniprot-0.13 (r248)" "Bioinformatics tools"
+.TH miniprot 1 "7 March 2025" "miniprot-0.14 (r265)" "Bioinformatics tools"
 .SH NAME
 .PP
 miniprot - protein-to-genome alignment with splicing and frameshifts
@@ -134,6 +134,19 @@ to Irimia and Roy (2008) and Sheth et al (2006), the first `G' in the donor
 exon and the poly-Y close to the acceptor may not be conserved in some species.
 The general model takes `|GTR...YAG|' as the optimal sequence. Both models also
 consider less frequent splice sites including `G|GC...YAG|' and `|AT...AC|'.
+.TP
+.BI --spsc \ FILE
+Splice score file []. Each line is TAB-delimited, consisting of contig name,
+offset of the splice junction, strand (`+' or `-'), donor or acceptor (`D' or
+`A') and an integer score. The score is added the donor/acceptor score function.
+It can be positive or negative and needs to be compatible with the scoring system.
+.TP
+.BI --spsc0 \ INT
+Splice score for positions not in the
+.B --spsc
+file [-7]. This option has no effect if
+.B --spsc
+is not specified.
 .TP
 .BI --io-coef \ FLOAT
 Logarithm intron length penalty (EXPERIMENTAL) [0.5]
