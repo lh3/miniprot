@@ -145,6 +145,10 @@ Sample k-mers at a rate
 Minimum ORF length to index [30]
 </TD></TR>
 <TR valign=top><TD width=10% nowrap>
+<B>-T</B><I> INT</I> </TD><TD valign=bottom>
+NCBI translation table (1 through 33 except 7-8 and 17-20) [1]
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
 <B>-b</B><I> INT</I> </TD><TD valign=bottom>
 Number of bits per bin [8]. Miniprot splits the genome into non-overlapping bins of 2^8 bp in size.
 </TD></TR>
@@ -248,6 +252,23 @@ exon and the poly-Y close to the acceptor may not be conserved in some species.
 The general model takes &#145;|GTR...YAG|&#146; as the optimal sequence. Both models also
 consider less frequent splice sites including &#145;G|GC...YAG|&#146; and &#145;|AT...AC|&#146;.
 </TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>--spsc</B><I> FILE</I> </TD><TD valign=bottom>
+Splice score file []. Each line is TAB-delimited, consisting of contig name,
+offset of the splice junction, strand (&#145;+&#146; or &#145;-&#146;), donor or acceptor (&#145;D&#146; or
+&#145;A&#146;) and an integer score. The score is added the donor/acceptor score function.
+It can be positive or negative and needs to be compatible with the scoring system.
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>--spsc0</B><I> INT</I> </TD><TD valign=bottom>
+Splice score for positions not in the
+<B>--spsc</B> file [-7]. This option has no effect if
+<B>--spsc</B> is not specified.
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>--io-coef</B><I> FLOAT</I> </TD></TR><TR valign=top><TD width=10%>&nbsp;</TD><TD>
+Logarithm intron length penalty (EXPERIMENTAL) [0.5]
+</TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
 <A name=7></A>
 
@@ -275,6 +296,14 @@ nucleotide sequence, &#145;##ATA&#146; for translated amino acid sequence and &#
 the query protein sequence. On a &#145;##ATA&#146; line, &#145;!&#146; denotes a frameshift
 insertion corresponding to the &#145;F&#146; CIGAR operator and &#145;$&#146; denotes a frameshift
 substitution corresponding to the &#145;G&#146; operator.
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>--trans</B> </TD><TD valign=bottom>
+Output translated protein sequences on &#145;##STA&#146; lines.
+</TD></TR>
+<TR valign=top><TD width=10% nowrap>
+<B>--no-cs</B> </TD><TD valign=bottom>
+Do not output the cs tag
 </TD></TR>
 <TR valign=top><TD colspan=2>
 <B>--max-intron-out</B><I> NUM</I> </TD></TR><TR valign=top><TD width=10%>&nbsp;</TD><TD>
@@ -422,6 +451,10 @@ format. Miniprot may output the following tags:
 <TR valign=top>
 <TD align=right>np</TD><TD align=center>i</TD><TD>Number of amino acid matches with positive scores</TD></TR>
 <TR valign=top>
+<TD align=right>fs</TD><TD align=center>i</TD><TD>Number of frameshifts</TD></TR>
+<TR valign=top>
+<TD align=right>st</TD><TD align=center>i</TD><TD>Number of in-frame stop codons</TD></TR>
+<TR valign=top>
 <TD align=right>da</TD><TD align=center>i</TD><TD>Distance to the nearest start codon</TD></TR>
 <TR valign=top>
 <TD align=right>do</TD><TD align=center>i</TD><TD>Distance to the nearest stop codon</TD></TR>
@@ -442,7 +475,7 @@ A protein CIGAR consists of the following operators:
 <TR valign=top>
 <TD align=right>nI</TD><TD>Insertion. Consuming n amino acids</TD></TR>
 <TR valign=top>
-<TD align=right>nD</TD><TD>Delection. Consuming n*3 nucleotides</TD></TR>
+<TD align=right>nD</TD><TD>Deletion. Consuming n*3 nucleotides</TD></TR>
 <TR valign=top>
 <TD align=right>nF</TD><TD>Frameshift deletion. Consuming n nucleotides</TD></TR>
 <TR valign=top>
@@ -494,4 +527,4 @@ Need to introduce more heuristics for improved accuracy.
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>miniprot-0.9 (r223)</I></TD> <TD width=33% align=center>miniprot (1)</TD> <TD align=right width=33%><I>9 March 2023</I></TD> </TR></TABLE></div></BODY></HTML>
+<TABLE width=100%><TR> <TD width=33%><I>miniprot-0.14 (r265)</I></TD> <TD width=33% align=center>miniprot (1)</TD> <TD align=right width=33%><I>7 March 2025</I></TD> </TR></TABLE></div></BODY></HTML>
