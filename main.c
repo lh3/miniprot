@@ -22,7 +22,7 @@ static ko_longopt_t long_options[] = {
 	{ "no-cs",           ko_no_argument,       316 },
 	{ "spsc",            ko_required_argument, 317 },
 	{ "spsc0",           ko_required_argument, 318 },
-	{ "bracket-aln",     ko_no_argument,       319 },
+	{ "bracket",         ko_no_argument,       319 },
 	{ "version",         ko_no_argument,       401 },
 	{ "no-kalloc",       ko_no_argument,       501 },
 	{ "dbg-qname",       ko_no_argument,       502 },
@@ -158,7 +158,7 @@ int main(int argc, char *argv[])
 		else if (c == 315) mo.flag |= MP_F_SHOW_TRANS; // --trans
 		else if (c == 316) mo.flag |= MP_F_NO_CS; // --no-cs
 		else if (c == 317) fn_spsc = o.arg; // --spsc
-		else if (c == 319) mo.flag |= MP_F_BRACKET_ALN; // --bracket-aln
+		else if (c == 319) mo.flag |= MP_F_BRACKET_ALN; // --bracket
 		else if (c == 501) mp_dbg_flag |= MP_DBG_NO_KALLOC; // --no-kalloc
 		else if (c == 502) mp_dbg_flag |= MP_DBG_QNAME; // --dbg-qname
 		else if (c == 503) mp_dbg_flag |= MP_DBG_NO_REFINE; // --dbg-no-refine

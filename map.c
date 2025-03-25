@@ -205,7 +205,7 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	if (!(mp_dbg_flag & MP_DBG_NO_REFINE)) {
 		int32_t nr = 0;
 		uint64_t *ext;
-		ext = mp_cal_max_ext(km, *n_reg, reg, a, 100, opt->max_ext);
+		ext = mp_cal_max_ext(km, 0, *n_reg, reg, a, 100, opt->max_ext);
 		for (i = 0; i < *n_reg; ++i) {
 			mp_refine_reg(km, mi, opt, seq, qlen, &reg[i], ext[i]>>32, (int32_t)ext[i]);
 			if (reg[i].cnt > 0)
@@ -224,7 +224,7 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 		int32_t k;
 		uint64_t *ext = 0;
 		if (opt->flag & MP_F_BRACKET_ALN)
-			ext = mp_cal_max_ext(km, *n_reg, reg, a, 100, opt->max_ext);
+			ext = mp_cal_max_ext(km, mi->nt, *n_reg, reg, a, 100, opt->max_ext);
 		for (i = k = 0; i < *n_reg; ++i) {
 			if (ext)
 				mp_align(km, opt, mi, qlen, seq, &reg[i], ext[i]>>32, (int32_t)ext[i]);

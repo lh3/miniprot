@@ -72,7 +72,7 @@ int32_t mp_cal_chn_sc_ungap(int32_t n_a, const uint64_t *a, int32_t kmer);
 void mp_sort_reg(void *km, int *n_regs, mp_reg1_t *r);
 void mp_set_parent(void *km, float mask_level, int mask_len, int n, mp_reg1_t *r, int sub_diff, int hard_mask_level);
 void mp_select_sub(void *km, float pri_ratio, int min_diff, int best_n, int *n_, mp_reg1_t *r);
-uint64_t *mp_cal_max_ext(void *km, int32_t n_reg, mp_reg1_t *reg, const uint64_t *a, int32_t min_ext, int32_t max_ext);
+uint64_t *mp_cal_max_ext(void *km, const mp_ntdb_t *db, int32_t n_reg, mp_reg1_t *reg, const uint64_t *a, int32_t min_ext, int32_t max_ext);
 uint64_t *mp_collate_a(void *km, int32_t n_reg, mp_reg1_t *reg);
 void mp_select_multi_exon(int32_t n, mp_reg1_t *r, int32_t single_penalty);
 
