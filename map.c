@@ -222,11 +222,18 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 	}
 	if (!(opt->flag & MP_F_NO_ALIGN)) {
 		int32_t k;
+		uint64_t *ext = 0;
+		if (opt->flag & MP_F_BRACKET_ALN)
+			ext = mp_cal_max_ext(km, *n_reg, reg, a, 100, opt->max_ext);
 		for (i = k = 0; i < *n_reg; ++i) {
-			mp_align(km, opt, mi, qlen, seq, &reg[i]);
+			if (ext)
+				mp_align(km, opt, mi, qlen, seq, &reg[i], ext[i]>>32, (int32_t)ext[i]);
+			else
+				mp_align(km, opt, mi, qlen, seq, &reg[i], 0, 0);
 			if (reg[i].p) reg[k++] = reg[i];
 		}
 		*n_reg = k;
+		if (ext) kfree(km, ext);
 		mp_sort_reg(km, n_reg, reg);
 		mp_select_multi_exon(*n_reg, reg, opt->io);
 		mp_set_parent(km, opt->mask_level, opt->mask_len, *n_reg, reg, mi->opt.kmer, 0);

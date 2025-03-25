@@ -86,7 +86,7 @@ mp_reg1_t *mp_reg_gen_from_block(void *km, const mp_idx_t *mi, int32_t n_u, cons
 void mp_write_output(kstring_t *s, void *km, const mp_idx_t *mi, const mp_bseq1_t *seq, const mp_reg1_t *r, const mp_mapopt_t *opt, int64_t id, int32_t hit_idx);
 
 // from align.c
-void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len, const char *seq, mp_reg1_t *r);
+void mp_align(void *km, const mp_mapopt_t *opt, const mp_idx_t *mi, int32_t len, const char *seq, mp_reg1_t *r, int32_t extl0, int32_t extr0);
 
 static inline float mp_log2(float x) // NB: this doesn't work when x<2
 {
