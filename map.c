@@ -224,7 +224,7 @@ mp_reg1_t *mp_map(const mp_idx_t *mi, int qlen, const char *seq, int *n_reg, mp_
 		int32_t k;
 		uint64_t *ext = 0;
 		if (opt->flag & MP_F_BRACKET_ALN)
-			ext = mp_cal_max_ext(km, mi->nt, *n_reg, reg, a, 100, opt->max_ext);
+			ext = mp_cal_max_ext(km, mi->nt, *n_reg, reg, a, 100, opt->max_intron/2); // opt->max_intron/2 for consistency with mp_align()
 		for (i = k = 0; i < *n_reg; ++i) {
 			if (ext)
 				mp_align(km, opt, mi, qlen, seq, &reg[i], ext[i]>>32, (int32_t)ext[i]);
