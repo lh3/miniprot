@@ -1,3 +1,17 @@
+Release 0.15-r270 (18 April 2025)
+---------------------------------
+
+Notable change:
+
+ * Improvement: better alignment in tandem gene duplications (#35). This
+   slightly improves overall junction accuracy on all test datasets in the
+   miniprot paper. Thank the NCBI EGAPx team for providing test cases and
+   explaining the relevance in gene annotation.
+
+(0.15: 18 April 2025, r270)
+
+
+
 Release 0.14-r265 (7 March 2025)
 --------------------------------
 
