@@ -76,6 +76,7 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 	mo->ie_coef = .5f;
 	mo->sp_model = NS_S_GENERIC;
 	mo->sp_null_bonus = -7;
+	mo->sp_max_bonus = 14;
 	mo->sp_scale = 1.0f;
 	mo->end_bonus = 5;
 	mo->xdrop = 100;

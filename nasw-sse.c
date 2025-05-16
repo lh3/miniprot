@@ -125,14 +125,17 @@ static uint8_t *ns_prep_seq(void *km, const char *ns, int32_t nl, const char *as
 		if (t == -1 || t == 0) acceptor[i] += penY;
 	}
 	if (ss) { // NB: ss[] uses the offset rule to specify a splice site; donor/acceptor[] uses a different rule. The ss[] way is better but too tricky to change now
+		int32_t max_spsc = (opt->io + 1) / 2 - 1;
 		for (i = 1; i < nl; ++i) {
+			int32_t spsc = (int8_t)(ss[i]>>1) - (int8_t)NS_SPSC_OFFSET;
+			if (spsc > max_spsc) spsc = max_spsc; // otherwise two strong signals may create an intron out of nothing
 			if (ss[i] == 0xff) { // score not set
 				donor[i-1] -= opt->sp_null_bonus;
 				acceptor[i-1] -= opt->sp_null_bonus;
 			} else if (ss[i]&1) { // acceptor
-				acceptor[i-1] -= (int8_t)(ss[i]>>1) - (int8_t)NS_SPSC_OFFSET;
+				acceptor[i-1] -= spsc;
 			} else { // donor
-				donor[i-1] -= (int8_t)(ss[i]>>1) - (int8_t)NS_SPSC_OFFSET;
+				donor[i-1] -= spsc;
 			}
 		}
 	}
@@ -173,14 +176,17 @@ static uint8_t *ns_prep_seq_left(void *km, const char *ns, int32_t nl, const cha
 		acceptor[i] = t < 0? 0 : opt->sp[t];
 	}
 	if (ss) {
+		int32_t max_spsc = (opt->io + 1) / 2 - 1;
 		for (i = 0; i < nl; ++i) {
+			int32_t spsc = (int8_t)(ss[i]>>1) - (int8_t)NS_SPSC_OFFSET;
+			if (spsc > max_spsc) spsc = max_spsc;
 			if (ss[i] == 0xff) {
 				donor[nl - i - 1] -= opt->sp_null_bonus;
 				acceptor[nl - i - 1] -= opt->sp_null_bonus;
 			} else if (ss[i]&1) {
-				donor[nl - i - 1] -= (int8_t)(ss[i]>>1) - (int8_t)NS_SPSC_OFFSET;
+				donor[nl - i - 1] -= spsc;
 			} else {
-				acceptor[nl - i - 1] -= (int8_t)(ss[i]>>1) - (int8_t)NS_SPSC_OFFSET;
+				acceptor[nl - i - 1] -= spsc;
 			}
 		}
 	}
