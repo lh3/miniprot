@@ -3,7 +3,7 @@
 
 #include <stdint.h>
 
-#define MP_VERSION "0.15-r271-dirty"
+#define MP_VERSION "0.15-r272-dirty"
 
 #define MP_F_NO_SPLICE    0x1
 #define MP_F_NO_ALIGN     0x2
@@ -249,6 +249,8 @@ mp_idx_t *mp_idx_restore(const char *fn);
  * @return 0 on success, or negative on failure
  */
 int32_t mp_ntseq_read_spsc(mp_ntdb_t *nt, const char *fn, int32_t max_sc);
+
+void mp_set_spsc(const char *fn, mp_idx_t *mi, mp_mapopt_t *mo, int32_t keep_io);
 
 /**
  * Align a protein sequence against the index

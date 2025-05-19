@@ -81,7 +81,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -F INT       penalty for frameshifts or in-frame stop codons [%d]\n", mo->fs);
 	fprintf(fp, "    -C FLOAT     weight of splice penalty; 0 to ignore splice signals [%g]\n", mo->sp_scale);
 	fprintf(fp, "    -B INT       bonus score for alignment reaching query ends [%d]\n", mo->end_bonus);
-	fprintf(fp, "    -j INT       splice model: 2=mammal, 1=general, 0=none (see manual) [%d]\n", mo->sp_model);
+	fprintf(fp, "    -j INT       splice model: 2=vertebrate/insect, 1=general, 0=none (see manual) [%d]\n", mo->sp_model);
 	fprintf(fp, "    --spsc=FILE  splice score file in format \"ctg offset +|- D|A score\" []\n");
 	fprintf(fp, "    --spsc0=INT  splice score for sites not in --spsc [%d]\n", mo->sp_null_bonus);
 	fprintf(fp, "  Input/output:\n");
@@ -100,7 +100,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 
 int main(int argc, char *argv[])
 {
-	int32_t c, i, set_I = 0, set_G = 0, n_threads = 4;
+	int32_t c, i, set_I = 0, set_G = 0, keep_io = 0, n_threads = 4;
 	ketopt_t o = KETOPT_INIT;
 	mp_mapopt_t mo;
 	mp_idxopt_t io;
@@ -131,7 +131,7 @@ int main(int argc, char *argv[])
 		else if (c == 'A') mo.flag |= MP_F_NO_ALIGN;
 		else if (c == 'O') mo.go = atoi(o.arg);
 		else if (c == 'E') mo.ge = atoi(o.arg);
-		else if (c == 'J') mo.io = atoi(o.arg);
+		else if (c == 'J') mo.io = atoi(o.arg), keep_io = 1;
 		else if (c == 'C') mo.sp_scale = atof(o.arg);
 		else if (c == 'F') mp_mapopt_set_fs(&mo, atoi(o.arg));
 		else if (c == 'B') mo.end_bonus = atoi(o.arg);
@@ -147,7 +147,7 @@ int main(int argc, char *argv[])
 		else if (c == 308) mo.out_sim = atof(o.arg); // --outs
 		else if (c == 304) mo.flag |= MP_F_GFF | MP_F_NO_PAF; // --gff-only
 		else if (c == 305) mo.gff_delim = o.arg[0]; // --gff-delim
-		else if (c == 306) mo.io_end = atoi(o.arg); // --J2
+		else if (c == 306) mo.io_end = atoi(o.arg), keep_io = 1; // --J2
 		else if (c == 307) mo.flag |= MP_F_GTF; // --gtf
 		else if (c == 309) mo.max_chn_max_skip = mp_parse_num(o.arg); // --max-skip
 		else if (c == 310) mo.flag |= MP_F_NO_PRE_CHAIN; // --no-pre-chain
@@ -198,12 +198,7 @@ int main(int argc, char *argv[])
 	if (set_I && !set_G) mp_mapopt_set_max_intron(&mo, mi->nt->l_seq);
 	if (mp_verbose >= 3) mp_idx_print_stat(mi, mo.max_occ);
 	if (fn_idx != 0) mp_idx_dump(fn_idx, mi);
-	if (fn_spsc != 0) {
-		int32_t max_sc = (mo.io + 1) / 2 - 1;
-		max_sc = max_sc > mo.io - mo.go? max_sc : mo.io - mo.go;
-		if (max_sc > mo.sp_max_bonus) max_sc = mo.sp_max_bonus;
-		mp_ntseq_read_spsc(mi->nt, fn_spsc, max_sc);
-	}
+	if (fn_spsc != 0) mp_set_spsc(fn_spsc, mi, &mo, keep_io);
 	for (i = o.ind + 1; i < argc; ++i) {
 		int32_t res = mp_map_file(mi, argv[i], &mo, n_threads);
 		if (res != 0) {

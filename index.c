@@ -235,3 +235,14 @@ mp_idx_t *mp_idx_load(const char *fn, const mp_idxopt_t *io, int32_t n_threads)
 	if (is_idx < 0) return 0;
 	return is_idx? mp_idx_restore(fn) : mp_idx_build(fn, io, n_threads);
 }
+
+void mp_set_spsc(const char *fn, mp_idx_t *mi, mp_mapopt_t *mo, int32_t keep_io)
+{
+	int32_t max_sc;
+	if (fn == 0) return;
+	if (!keep_io) mo->io += 10, mo->io_end += 10;
+	max_sc = (mo->io + 1) / 2 - 1;
+	if (max_sc > mo->io - mo->go) max_sc = mo->io - mo->go;
+	if (max_sc > mo->sp_max_bonus) max_sc = mo->sp_max_bonus;
+	mp_ntseq_read_spsc(mi->nt, fn, max_sc);
+}

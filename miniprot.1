@@ -1,4 +1,4 @@
-.TH miniprot 1 "18 April 2025" "miniprot-0.15 (r270)" "Bioinformatics tools"
+.TH miniprot 1 "18 April 2025" "miniprot-0.15-dirty (r272)" "Bioinformatics tools"
 .SH NAME
 .PP
 miniprot - protein-to-genome alignment with splicing and frameshifts
@@ -127,19 +127,24 @@ Weight of splicing penalty [1]. Set to 0 to ignore splicing signals.
 Bonus score for alignment reaching ends of proteins [5]
 .TP
 .BI -j \ INT
-Splice model for the target genome: 2=mammal, 1=general, 0=none [1]. The mammal
+Splice model for the target genome: 2=vertebrate/insect, 1=general, 0=none [1]. The vertebrate/insect
 model considers `G|GTR...YYYNYAG|' as the optimal splicing sequence and
 penalizes other sequences based on profiles in Sibley et al (2016). According
 to Irimia and Roy (2008) and Sheth et al (2006), the first `G' in the donor
 exon and the poly-Y close to the acceptor may not be conserved in some species.
 The general model takes `|GTR...YAG|' as the optimal sequence. Both models also
-consider less frequent splice sites including `G|GC...YAG|' and `|AT...AC|'.
+slightly prefer less frequent splice sites including `G|GC...YAG|' and `|AT...AC|'.
 .TP
 .BI --spsc \ FILE
 Splice score file []. Each line is TAB-delimited, consisting of contig name,
 offset of the splice junction, strand (`+' or `-'), donor or acceptor (`D' or
 `A') and an integer score. The score is added the donor/acceptor score function.
 It can be positive or negative and needs to be compatible with the scoring system.
+This option additionally increases
+.B -J
+and
+.B --J2
+by 10 unless they are specified on the command line.
 .TP
 .BI --spsc0 \ INT
 Splice score for positions not in the
@@ -151,7 +156,7 @@ is not specified.
 .BI --spsc-max \ INT
 Cap splice scores to
 .I INT
-[11].
+[14].
 .TP
 .BI --io-coef \ FLOAT
 Logarithm intron length penalty (EXPERIMENTAL) [0.5]
