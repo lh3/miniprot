@@ -1,3 +1,16 @@
+Release 0.16-r273 (22 May 2025)
+-------------------------------
+
+Notable changes:
+
+ * Improvement: `--spsc` now works with and optimized for minisplice output.
+
+This version produces alignment identical to v0.13 unless `--spsc` is used.
+
+(0.16: 22 May 2025, r273)
+
+
+
 Release 0.15-r270 (18 April 2025)
 ---------------------------------
 
