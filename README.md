@@ -18,6 +18,12 @@ cd miniprot && make
 ./miniprot -t16 -d genome.mpi genome.fna
 ./miniprot -Iut16 --gff genome.mpi protein.faa > aln.gff
 
+# minisplice integration with pre-trained model for vertebrate and insect
+wget https://zenodo.org/records/15492781/files/vi1-35k.kan
+wget https://zenodo.org/records/15492781/files/vi1-35k.kan.cali
+minisplice predict -t16 -c vi1-35k.kan.cali vi1-35k.kan genome.fa.gz > score.tsv
+miniprot -Iut16 --gff -j2 --spsc=score.tsv genome.fa.gz proteins.faa > align.gff
+
 # output format
 man ./miniprot.1
 ```
@@ -90,6 +96,16 @@ If you are aligning proteins to a whole genome, it is recommended to add option
 `-I` to let miniprot automatically set the maximum intron size. You can also
 use `-G` to explicitly specify the max intron size.
 
+Miniprot can optionally take splice scores computed with [minisplice][minisplice].
+For vertebrate and insect which have pre-trained minisplice models,
+you can compute splice scores with minisplice and feed the scores to miniprot:
+```sh
+wget https://zenodo.org/records/15492781/files/vi1-35k.kan
+wget https://zenodo.org/records/15492781/files/vi1-35k.kan.cali
+minisplice predict -t16 -c vi1-35k.kan.cali vi1-35k.kan genome.fa.gz > score.tsv
+miniprot -Iut16 --gff -j2 --spsc=score.tsv genome.fa.gz proteins.faa > align.gff
+```
+
 ### <a name="algo"></a>Algorithm overview
 
 1. Translate the reference genome to amino acids in six phases and filter out
@@ -143,3 +159,4 @@ evaluated miniprot-0.7. The latest version may report different numbers.
 [spaln]: https://github.com/ogotoh/spaln
 [spaln2]: https://pubmed.ncbi.nlm.nih.gov/22848105/
 [manpage]: https://lh3.github.io/miniprot/miniprot.html
+[minisplice]: https://github.com/lh3/minisplice
