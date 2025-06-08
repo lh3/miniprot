@@ -6,7 +6,7 @@ Notable changes:
  * Improvement: `--spsc` now works with and optimized for minisplice output.
    Note that depending on scoring in `--spsc`, miniprot may generate 1bp
    introns in extremely rare cases. This happens to 3 out of 4.6 million
-   aligned introns with the current minisplice human score file.
+   aligned introns with zebrafish minisplice scores.
 
 This version produces alignment identical to v0.13 unless `--spsc` is used.
 

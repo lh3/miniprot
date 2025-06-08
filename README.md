@@ -149,7 +149,7 @@ evaluated miniprot-0.7. The latest version may report different numbers.
 
 * Depending on scoring in `--spsc`, miniprot may generate 1bp introns in
   extremely rare cases. This happens to 3 out of 4.6 million aligned introns
-  with the current minisplice human score file.
+  with zebrafish minisplice scores.
 
 [exonerate]: https://pubmed.ncbi.nlm.nih.gov/15713233/
 [genewise]: https://pubmed.ncbi.nlm.nih.gov/15123596/
