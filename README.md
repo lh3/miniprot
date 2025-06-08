@@ -147,8 +147,9 @@ evaluated miniprot-0.7. The latest version may report different numbers.
 
 * Support for non-splicing alignment needs to be improved.
 
-* More manual inspection required for improved accuracy. For example, tandem
-  copies in segmental duplications could be handled more carefully.
+* Depending on scoring in `--spsc`, miniprot may generate 1bp introns in
+  extremely rare cases. This happens to 3 out of 4.6 million aligned introns
+  with the current minisplice human score file.
 
 [exonerate]: https://pubmed.ncbi.nlm.nih.gov/15713233/
 [genewise]: https://pubmed.ncbi.nlm.nih.gov/15123596/
