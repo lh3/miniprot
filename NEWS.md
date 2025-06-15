@@ -1,3 +1,14 @@
+Release 0.17-r279 (15 June 2025)
+--------------------------------
+
+Notable changes:
+
+ * Bugfix: older version may output overlapping exons with `--spsc`.
+
+(0.17: 15 June 2025, r279)
+
+
+
 Release 0.16-r273 (22 May 2025)
 -------------------------------
 
