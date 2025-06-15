@@ -343,6 +343,8 @@ _
 .SH LIMITATIONS
 .TP 2
 *
-Depending on scoring in `--spsc`, miniprot may generate 1bp introns in
-extremely rare cases. This happens to 3 out of 4.6 million aligned introns
-with zebrafish minisplice scores.
+The initial conditions of dynamic programming are not technically correct,
+which may result in suboptimal residue alignment in rare cases.
+.TP
+*
+Support for non-splicing alignment needs to be improved.

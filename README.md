@@ -19,9 +19,8 @@ cd miniprot && make
 ./miniprot -Iut16 --gff genome.mpi protein.faa > aln.gff
 
 # minisplice integration with pre-trained model for vertebrate and insect
-wget https://zenodo.org/records/15492781/files/vi1-35k.kan
-wget https://zenodo.org/records/15492781/files/vi1-35k.kan.cali
-minisplice predict -t16 -c vi1-35k.kan.cali vi1-35k.kan genome.fa.gz > score.tsv
+wget -O https://zenodo.org/records/15670304/files/vi2-7k.tgz | tar zxf -
+minisplice predict -t16 -c vi2-7k.kan.cali vi2-7k.kan genome.fa.gz > score.tsv
 miniprot -Iut16 --gff -j2 --spsc=score.tsv genome.fa.gz proteins.faa > align.gff
 
 # output format
@@ -100,9 +99,8 @@ Miniprot can optionally take splice scores computed with [minisplice][minisplice
 For vertebrate and insect which have pre-trained minisplice models,
 you can compute splice scores with minisplice and feed the scores to miniprot:
 ```sh
-wget https://zenodo.org/records/15492781/files/vi1-35k.kan
-wget https://zenodo.org/records/15492781/files/vi1-35k.kan.cali
-minisplice predict -t16 -c vi1-35k.kan.cali vi1-35k.kan genome.fa.gz > score.tsv
+wget -O https://zenodo.org/records/15670304/files/vi2-7k.tgz | tar zxf -
+minisplice predict -t16 -c vi2-7k.kan.cali vi2-7k.kan genome.fa.gz > score.tsv
 miniprot -Iut16 --gff -j2 --spsc=score.tsv genome.fa.gz proteins.faa > align.gff
 ```
 
@@ -146,10 +144,6 @@ evaluated miniprot-0.7. The latest version may report different numbers.
   which may result in suboptimal residue alignment in rare cases.
 
 * Support for non-splicing alignment needs to be improved.
-
-* Depending on scoring in `--spsc`, miniprot may generate 1bp introns in
-  extremely rare cases. This happens to 3 out of 4.6 million aligned introns
-  with zebrafish minisplice scores.
 
 [exonerate]: https://pubmed.ncbi.nlm.nih.gov/15713233/
 [genewise]: https://pubmed.ncbi.nlm.nih.gov/15123596/
