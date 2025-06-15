@@ -244,13 +244,13 @@ Bonus score for alignment reaching ends of proteins [5]
 </TD></TR>
 <TR valign=top><TD width=10% nowrap>
 <B>-j</B><I> INT</I> </TD><TD valign=bottom>
-Splice model for the target genome: 2=mammal, 1=general, 0=none [1]. The mammal
+Splice model for the target genome: 2=vertebrate/insect, 1=general, 0=none [1]. The vertebrate/insect
 model considers &#145;G|GTR...YYYNYAG|&#146; as the optimal splicing sequence and
 penalizes other sequences based on profiles in Sibley et al (2016). According
 to Irimia and Roy (2008) and Sheth et al (2006), the first &#145;G&#146; in the donor
 exon and the poly-Y close to the acceptor may not be conserved in some species.
 The general model takes &#145;|GTR...YAG|&#146; as the optimal sequence. Both models also
-consider less frequent splice sites including &#145;G|GC...YAG|&#146; and &#145;|AT...AC|&#146;.
+slightly prefer less frequent splice sites including &#145;G|GC...YAG|&#146; and &#145;|AT...AC|&#146;.
 </TD></TR>
 <TR valign=top><TD width=10% nowrap>
 <B>--spsc</B><I> FILE</I> </TD><TD valign=bottom>
@@ -258,12 +258,20 @@ Splice score file []. Each line is TAB-delimited, consisting of contig name,
 offset of the splice junction, strand (&#145;+&#146; or &#145;-&#146;), donor or acceptor (&#145;D&#146; or
 &#145;A&#146;) and an integer score. The score is added the donor/acceptor score function.
 It can be positive or negative and needs to be compatible with the scoring system.
+This option additionally increases
+<B>-J</B> and
+<B>--J2</B> by 10 unless they are specified on the command line.
 </TD></TR>
 <TR valign=top><TD width=10% nowrap>
 <B>--spsc0</B><I> INT</I> </TD><TD valign=bottom>
 Splice score for positions not in the
 <B>--spsc</B> file [-7]. This option has no effect if
 <B>--spsc</B> is not specified.
+</TD></TR>
+<TR valign=top><TD colspan=2>
+<B>--spsc-max</B><I> INT</I> </TD></TR><TR valign=top><TD width=10%>&nbsp;</TD><TD>
+Cap splice scores to
+<I>INT</I> [14].
 </TD></TR>
 <TR valign=top><TD colspan=2>
 <B>--io-coef</B><I> FLOAT</I> </TD></TR><TR valign=top><TD width=10%>&nbsp;</TD><TD>
@@ -518,13 +526,14 @@ The
 <TR valign=top><TD width=2% nowrap>
 *
 </TD><TD valign=bottom>
-The DP alignment score (the AS tag) is not accurate.
+The initial conditions of dynamic programming are not technically correct,
+which may result in suboptimal residue alignment in rare cases.
 </TD></TR>
 <TR valign=top><TD width=2% nowrap>
 *
 </TD><TD valign=bottom>
-Need to introduce more heuristics for improved accuracy.
+Support for non-splicing alignment needs to be improved.
 </TD></TR>
 <TR></TR></TABLE></BLOCKQUOTE>
 <P><HR>
-<TABLE width=100%><TR> <TD width=33%><I>miniprot-0.14 (r265)</I></TD> <TD width=33% align=center>miniprot (1)</TD> <TD align=right width=33%><I>7 March 2025</I></TD> </TR></TABLE></div></BODY></HTML>
+<TABLE width=100%><TR> <TD width=33%><I>miniprot-0.17 (r279)</I></TD> <TD width=33% align=center>miniprot (1)</TD> <TD align=right width=33%><I>15 June 2025</I></TD> </TR></TABLE></div></BODY></HTML>
