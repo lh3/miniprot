@@ -27,6 +27,16 @@ static __m128i *ns_alloc16(void *km, size_t n, uint8_t **mem)
 	return (__m128i*)(((size_t)(*mem) + 15) / 16 * 16);
 }
 
+static void ns_fix_tiny_UV(int32_t n_cigar, uint32_t *cigar) // with certain splice scores, it is possible to have 3828V1U which would lead to overlapping exons
+{
+	int32_t i;
+	for (i = 0; i < n_cigar; ++i) {
+		int32_t op = cigar[i]&0xf;
+		if ((op == NS_CIGAR_U || op == NS_CIGAR_V) && cigar[i]>>4 < 3)
+			cigar[i] = cigar[i]>>4<<4 | NS_CIGAR_G;
+	}
+}
+
 static void ns_backtrack(void *km, int32_t vs, const __m128i *tb, int32_t nl, int32_t al, uint32_t **cigar_, int32_t *n_cigar, int32_t *m_cigar)
 {
 	int32_t i = nl - 1, j = al - 1, last = 0, slen = (al + vs - 1) / vs;
@@ -74,6 +84,7 @@ static void ns_backtrack(void *km, int32_t vs, const __m128i *tb, int32_t nl, in
 	for (i = 0; i < (*n_cigar)>>1; ++i) // reverse CIGAR
 		tmp = cigar[i], cigar[i] = cigar[(*n_cigar) - 1 - i], cigar[(*n_cigar) - 1 - i] = tmp;
 	//fprintf(stderr, "%d\t", nl); for (i = 0; i < (*n_cigar); ++i) fprintf(stderr, "%d%c", cigar[i]>>4, NS_CIGAR_STR[cigar[i]&0xf]); fputc('\n', stderr);
+	ns_fix_tiny_UV(*n_cigar, cigar);
 	*cigar_ = cigar;
 }
 
