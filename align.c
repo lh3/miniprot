@@ -122,6 +122,11 @@ static void mp_extra_cal(mp_reg1_t *r, const mp_mapopt_t *opt, const uint8_t *nt
 			e->dp_max -= opt->go + opt->ge * len;
 			al += len, e->blen += len3;
 		} else if (op == NS_CIGAR_D) {
+			for (i = nl, l = 0; l < len; ++l, i += 3) { // we need to count in-frame stop codons in deletions
+				uint8_t codon = nt[i]<<4 | nt[i+1]<<2 | nt[i+2];
+				uint8_t nt_aa = nt[i] > 3 || nt[i+1] > 3 || nt[i+2] > 3? aa_ambi : ns_tab_codon[codon];
+				e->n_stop += (nt_aa == aa_stop);
+			}
 			e->dp_max -= opt->go + opt->ge * len;
 			nl += len3, e->blen += len3;
 		} else if (op == NS_CIGAR_F) {
