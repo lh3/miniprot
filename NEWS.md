@@ -1,3 +1,13 @@
+Release 0.18-r281 (11 July 2025)
+--------------------------------
+
+Older miniprot failed to count in-frame stop codons in deletions. This release
+fixes the issue (#75).
+
+(0.18: 11 July 2025, r281)
+
+
+
 Release 0.17-r279 (15 June 2025)
 --------------------------------
 
