@@ -1,6 +1,8 @@
 [![Release](https://img.shields.io/github/v/release/lh3/miniprot)](https://github.com/lh3/miniprot/releases)
-[![BioConda Install](https://img.shields.io/conda/dn/bioconda/miniprot.svg?style=flag&label=BioConda%20install)](https://anaconda.org/bioconda/miniprot)
+[![BioConda](https://img.shields.io/conda/dn/bioconda/miniprot.svg?style=flag&label=BioConda)](https://anaconda.org/bioconda/miniprot)
 [![Build Status](https://github.com/lh3/miniprot/actions/workflows/ci.yaml/badge.svg)](https://github.com/lh3/miniprot/actions)
+[![Paper](https://img.shields.io/badge/paper-10.1093/bioinformatics/btad014-blue)](https://doi.org/10.1093/bioinformatics/btad014)
+
 ## <a name="started"></a>Getting Started
 ```sh
 # download and compile
