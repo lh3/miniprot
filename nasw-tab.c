@@ -3,7 +3,7 @@
 #include <ctype.h>
 #include "nasw.h"
 
-char *ns_tab_nt_i2c = "ACGTN";
+char *ns_tab_nt_i2c = "ACGTN-";
 					// 01234
 
 char *ns_tab_aa_i2c = "ARNDCQEGHILKMFPSTWYV*X";

@@ -228,7 +228,7 @@ static void mp_write_residue(kstring_t *out, const mp_idx_t *mi, const mp_mapopt
 				nt_aa = nt[i] > 3 || nt[i+1] > 3 || nt[i+2] > 3? ns_tab_aa20['X'] : ns_tab_codon[codon];
 				aa_aa = ns_tab_aa20[(uint8_t)aa[j]];
 				s = opt->mat[nt_aa * opt->asize + aa_aa];
-				str[0][w] = "ACGTN"[nt[i]], str[0][w+1] = "ACGTN"[nt[i+1]], str[0][w+2] = "ACGTN"[nt[i+2]];
+				str[0][w] = "ACGTN-"[nt[i]], str[0][w+1] = "ACGTN-"[nt[i+1]], str[0][w+2] = "ACGTN-"[nt[i+2]];
 				str[1][w] = str[4][w4++] = ns_tab_aa_i2c[nt_aa], str[1][w+1] = str[1][w+2] = '.';
 				str[2][w] = nt_aa == aa_aa? '|' : s > 0? '+' : ' ', str[2][w+1] = ' ', str[2][w+2] = ' ';
 				str[3][w] = toupper(aa[j]), str[3][w+1] = str[3][w+2] = ' ';
@@ -246,7 +246,7 @@ static void mp_write_residue(kstring_t *out, const mp_idx_t *mi, const mp_mapopt
 			for (l = 0, i = nl; l < len; ++l, i += 3, w += 3) {
 				uint8_t nt_aa, codon = nt[i]<<4 | nt[i+1]<<2 | nt[i+2];
 				nt_aa = nt[i] > 3 || nt[i+1] > 3 || nt[i+2] > 3? ns_tab_aa20['X'] : ns_tab_codon[codon];
-				str[0][w] = "ACGTN"[nt[i]], str[0][w+1] = "ACGTN"[nt[i+1]], str[0][w+2] = "ACGTN"[nt[i+2]];
+				str[0][w] = "ACGTN-"[nt[i]], str[0][w+1] = "ACGTN-"[nt[i+1]], str[0][w+2] = "ACGTN-"[nt[i+2]];
 				str[1][w] = str[4][w4++] = ns_tab_aa_i2c[nt_aa], str[1][w+1] = str[1][w+2] = '.';
 				str[2][w] = str[2][w+1] = str[2][w+2] = ' ';
 				str[3][w] = '-', str[3][w+1] = str[3][w+2] = ' ';
@@ -254,11 +254,11 @@ static void mp_write_residue(kstring_t *out, const mp_idx_t *mi, const mp_mapopt
 			nl += len3;
 		} else if (op == NS_CIGAR_F) {
 			for (l = 0, i = nl; l < len; ++l, ++i, ++w)
-				str[0][w] = "ACGTN"[nt[i]], str[1][w] = '!', str[2][w] = str[3][w] = ' ';
+				str[0][w] = "ACGTN-"[nt[i]], str[1][w] = '!', str[2][w] = str[3][w] = ' ';
 			nl += len;
 		} else if (op == NS_CIGAR_G) {
 			for (l = 0, i = nl; l < len; ++l, ++i, ++w) {
-				str[0][w] = "ACGTN"[nt[i]], str[1][w] = '$', str[2][w] = ' ';
+				str[0][w] = "ACGTN-"[nt[i]], str[1][w] = '$', str[2][w] = ' ';
 				str[3][w] = l == 0? toupper(aa[al]) : ' ';
 			}
 			nl += len, ++al;
@@ -273,13 +273,13 @@ static void mp_write_residue(kstring_t *out, const mp_idx_t *mi, const mp_mapopt
 				nt_aa = n1 > 3 || n2 > 3 || n3 > 3? ns_tab_aa20['X'] : ns_tab_codon[codon];
 				aa_aa = ns_tab_aa20[(uint8_t)aa[al]];
 				s = opt->mat[nt_aa * opt->asize + aa_aa];
-				str[0][w] = "ACGTN"[nt[nl]];
+				str[0][w] = "ACGTN-"[nt[nl]];
 				str[1][w] = str[4][w4++] = ns_tab_aa_i2c[nt_aa];
 				str[2][w] = nt_aa == aa_aa? '|' : s > 0? '+' : ' ';
 				str[3][w] = toupper(aa[al]);
 				++w, ++nl;
 				if (op == NS_CIGAR_V) {
-					str[0][w] = "ACGTN"[nt[nl]], str[1][w] = '.', str[2][w] = str[3][w] = ' ';
+					str[0][w] = "ACGTN-"[nt[nl]], str[1][w] = '.', str[2][w] = str[3][w] = ' ';
 					++w, ++nl;
 				}
 				++al;
@@ -301,10 +301,10 @@ static void mp_write_residue(kstring_t *out, const mp_idx_t *mi, const mp_mapopt
 			}
 			nl += intron_len;
 			if (op == NS_CIGAR_U || op == NS_CIGAR_V) { // phase-1 or phase-2 intron; print the second half of split codon
-				str[0][w] = "ACGTN"[nt[nl]], str[1][w] = '.', str[2][w] = str[3][w] = ' ';
+				str[0][w] = "ACGTN-"[nt[nl]], str[1][w] = '.', str[2][w] = str[3][w] = ' ';
 				++w, ++nl;
 				if (op == NS_CIGAR_U) {
-					str[0][w] = "ACGTN"[nt[nl]], str[1][w] = '.', str[2][w] = str[3][w] = ' ';
+					str[0][w] = "ACGTN-"[nt[nl]], str[1][w] = '.', str[2][w] = str[3][w] = ' ';
 					++w, ++nl;
 				}
 			}
@@ -315,7 +315,7 @@ static void mp_write_residue(kstring_t *out, const mp_idx_t *mi, const mp_mapopt
 		uint8_t n1 = nt[nl], n2 = nt[nl + 1], n3 = nt[nl + 2], nt_aa, codon;
 		codon = n1<<4 | n2<<2 | n3;
 		nt_aa = n1 > 3 || n2 > 3 || n3 > 3? ns_tab_aa20['X'] : ns_tab_codon[codon];
-		str[0][w] = "ACGTN"[n1], str[0][w+1] = "ACGTN"[n2], str[0][w+2] = "ACGTN"[n3];
+		str[0][w] = "ACGTN-"[n1], str[0][w+1] = "ACGTN-"[n2], str[0][w+2] = "ACGTN-"[n3];
 		str[1][w] = str[4][w4++] = ns_tab_aa_i2c[nt_aa], str[1][w+1] = str[1][w+2] = '.';
 		str[2][w] = str[2][w+1] = str[2][w+2] = ' ';
 		str[3][w] = str[3][w+1] = str[3][w+2] = ' ';
