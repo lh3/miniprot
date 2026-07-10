@@ -300,8 +300,9 @@ static void *worker_pipeline(void *shared, int step, void *in)
 		s->seq = mp_bseq_read(p->fp, p->opt->mini_batch_size, 0, &s->n_seq);
 		if (s->seq) {
 			if (p->id == 0 && mp_check_dna_in_protein(s->n_seq, s->seq)) {
-				fprintf(stderr, "[ERROR]\033[1;31m query file appears to contain DNA, not protein sequences. "
-				                "Did you swap the arguments? Usage: miniprot <ref.fa> <query.faa>\033[0m\n");
+				fprintf(stderr, "[ERROR]%s query file appears to contain DNA, not protein sequences. "
+				                "Did you swap the arguments? Usage: miniprot <ref.fa> <query.faa>%s\n",
+				                MP_COLOR_RED, MP_COLOR_RESET);
 				p->failed = 1;
 				{ int32_t ii; for (ii = 0; ii < s->n_seq; ++ii) { free(s->seq[ii].seq); free(s->seq[ii].name); if (s->seq[ii].comment) free(s->seq[ii].comment); } }
 				free(s->seq); free(s);

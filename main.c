@@ -3,6 +3,39 @@
 #include "mppriv.h"
 #include "ketopt.h"
 
+/* ── Argument validation helpers ──────────────────────────────────────── */
+
+static int mp_check_int(const char *arg, const char *name)
+{
+	char *end;
+	(void)strtol(arg, &end, 10);
+	/* allow k/K/m/M/g/G suffix (handled by mp_parse_num) */
+	if (*end != '\0' && *end != 'k' && *end != 'K'
+	               && *end != 'm' && *end != 'M'
+	               && *end != 'g' && *end != 'G') {
+		fprintf(stderr, "[ERROR]%s invalid integer value '%s' for %s%s\n",
+		        MP_COLOR_RED, arg, name, MP_COLOR_RESET);
+		return -1;
+	}
+	return 0;
+}
+
+static int mp_check_float(const char *arg, const char *name)
+{
+	char *end;
+	(void)strtod(arg, &end);
+	if (*end != '\0') {
+		fprintf(stderr, "[ERROR]%s invalid numeric value '%s' for %s%s\n",
+		        MP_COLOR_RED, arg, name, MP_COLOR_RESET);
+		return -1;
+	}
+	return 0;
+}
+
+/* Macro: validate and abort on bad value */
+#define CHECK_INT(arg, name)   do { if (mp_check_int((arg), (name))   < 0) return 1; } while(0)
+#define CHECK_FLOAT(arg, name) do { if (mp_check_float((arg), (name)) < 0) return 1; } while(0)
+
 static ko_longopt_t long_options[] = {
 	{ "gff",             ko_no_argument,       301 },
 	{ "xdrop",           ko_required_argument, 302 },
@@ -58,7 +91,7 @@ static void print_usage(FILE *fp, const mp_idxopt_t *io, const mp_mapopt_t *mo, 
 	fprintf(fp, "    -k INT       k-mer size [%d]\n", io->kmer);
 	fprintf(fp, "    -M INT       modimisers bit (sample rate = 1/2**M) [%d]\n", io->mod_bit);
 	fprintf(fp, "    -L INT       min ORF length to index [%d]\n", io->min_aa_len);
-	fprintf(fp, "    -T INT       NCBI translation table (1 through 33) [%d]\n", io->trans_code);
+	fprintf(fp, "    -T INT       NCBI translation table (1 through 33) [%u]\n", io->trans_code);
 	fprintf(fp, "    -b INT       bits per block [%d]\n", io->bbit);
 	fprintf(fp, "    -d FILE      save index to FILE []\n");
 	fprintf(fp, "  Mapping:\n");
@@ -111,54 +144,54 @@ int main(int argc, char *argv[])
 	mp_mapopt_init(&mo);
 	mp_idxopt_init(&io);
 	while ((c = ketopt(&o, argc, argv, 1, "k:M:L:s:l:b:T:t:d:c:n:m:K:p:N:SAO:E:J:C:F:G:e:uB:P:w:j:g:I", long_options)) >= 0) {
-		if (c == 'k') io.kmer = atoi(o.arg);
-		else if (c == 'M') io.mod_bit = atoi(o.arg);
-		else if (c == 'L') io.min_aa_len = atoi(o.arg);
-		else if (c == 'b') io.bbit = atoi(o.arg);
-		else if (c == 'T') io.trans_code = atoi(o.arg);
+		if (c == 'k') { CHECK_INT(o.arg, "-k"); io.kmer = atoi(o.arg); }
+		else if (c == 'M') { CHECK_INT(o.arg, "-M"); io.mod_bit = atoi(o.arg); }
+		else if (c == 'L') { CHECK_INT(o.arg, "-L"); io.min_aa_len = atoi(o.arg); }
+		else if (c == 'b') { CHECK_INT(o.arg, "-b"); io.bbit = atoi(o.arg); }
+		else if (c == 'T') { CHECK_INT(o.arg, "-T"); io.trans_code = atoi(o.arg); }
 		else if (c == 'd') fn_idx = o.arg;
-		else if (c == 't') n_threads = atoi(o.arg);
-		else if (c == 'l') mo.kmer2 = atoi(o.arg);
-		else if (c == 'c') mo.max_occ = mp_parse_num(o.arg);
-		else if (c == 'G') mo.bw = mo.max_intron = mp_parse_num(o.arg), set_G = 1;
+		else if (c == 't') { CHECK_INT(o.arg, "-t"); n_threads = atoi(o.arg); }
+		else if (c == 'l') { CHECK_INT(o.arg, "-l"); mo.kmer2 = atoi(o.arg); }
+		else if (c == 'c') { CHECK_INT(o.arg, "-c"); mo.max_occ = mp_parse_num(o.arg); }
+		else if (c == 'G') { CHECK_INT(o.arg, "-G"); mo.bw = mo.max_intron = mp_parse_num(o.arg); set_G = 1; }
 		else if (c == 'I') set_I = 1;
-		else if (c == 'n') mo.min_chn_cnt = mp_parse_num(o.arg);
-		else if (c == 'm') mo.min_chn_sc = mp_parse_num(o.arg);
-		else if (c == 'K') mo.mini_batch_size = mp_parse_num(o.arg);
-		else if (c == 'p') mo.pri_ratio = atof(o.arg);
-		else if (c == 'N') mo.best_n = mp_parse_num(o.arg);
+		else if (c == 'n') { CHECK_INT(o.arg, "-n"); mo.min_chn_cnt = mp_parse_num(o.arg); }
+		else if (c == 'm') { CHECK_INT(o.arg, "-m"); mo.min_chn_sc = mp_parse_num(o.arg); }
+		else if (c == 'K') { CHECK_INT(o.arg, "-K"); mo.mini_batch_size = mp_parse_num(o.arg); }
+		else if (c == 'p') { CHECK_FLOAT(o.arg, "-p"); mo.pri_ratio = atof(o.arg); }
+		else if (c == 'N') { CHECK_INT(o.arg, "-N"); mo.best_n = mp_parse_num(o.arg); }
 		else if (c == 'S') mo.flag |= MP_F_NO_SPLICE, mo.bw = mo.max_intron = mo.max_ext = 1000, mo.io = mo.io_end = 10000, set_G = 1;
 		else if (c == 'A') mo.flag |= MP_F_NO_ALIGN;
-		else if (c == 'O') mo.go = atoi(o.arg);
-		else if (c == 'E') mo.ge = atoi(o.arg);
-		else if (c == 'J') mo.io = atoi(o.arg), keep_io = 1;
-		else if (c == 'C') mo.sp_scale = atof(o.arg);
-		else if (c == 'F') mp_mapopt_set_fs(&mo, atoi(o.arg));
-		else if (c == 'B') mo.end_bonus = atoi(o.arg);
-		else if (c == 'e') mo.max_ext = mp_parse_num(o.arg);
+		else if (c == 'O') { CHECK_INT(o.arg, "-O"); mo.go = atoi(o.arg); }
+		else if (c == 'E') { CHECK_INT(o.arg, "-E"); mo.ge = atoi(o.arg); }
+		else if (c == 'J') { CHECK_INT(o.arg, "-J"); mo.io = atoi(o.arg); keep_io = 1; }
+		else if (c == 'C') { CHECK_FLOAT(o.arg, "-C"); mo.sp_scale = atof(o.arg); }
+		else if (c == 'F') { CHECK_INT(o.arg, "-F"); mp_mapopt_set_fs(&mo, atoi(o.arg)); }
+		else if (c == 'B') { CHECK_INT(o.arg, "-B"); mo.end_bonus = atoi(o.arg); }
+		else if (c == 'e') { CHECK_INT(o.arg, "-e"); mo.max_ext = mp_parse_num(o.arg); }
 		else if (c == 'P') mo.gff_prefix = o.arg;
 		else if (c == 'u') mo.flag |= MP_F_SHOW_UNMAP;
-		else if (c == 'w') mo.chn_coef_log = atof(o.arg);
-		else if (c == 'j') mo.sp_model = atoi(o.arg);
-		else if (c == 'g') mo.max_gap = mp_parse_num(o.arg);
+		else if (c == 'w') { CHECK_FLOAT(o.arg, "-w"); mo.chn_coef_log = atof(o.arg); }
+		else if (c == 'j') { CHECK_INT(o.arg, "-j"); mo.sp_model = atoi(o.arg); }
+		else if (c == 'g') { CHECK_INT(o.arg, "-g"); mo.max_gap = mp_parse_num(o.arg); }
 		else if (c == 301) mo.flag |= MP_F_GFF; // --gff
-		else if (c == 302) mo.xdrop = atoi(o.arg); // --xdrop
-		else if (c == 303) mo.out_n = mp_parse_num(o.arg); // --outn
-		else if (c == 308) mo.out_sim = atof(o.arg); // --outs
+		else if (c == 302) { CHECK_INT(o.arg, "--xdrop"); mo.xdrop = atoi(o.arg); } // --xdrop
+		else if (c == 303) { CHECK_INT(o.arg, "--outn"); mo.out_n = mp_parse_num(o.arg); } // --outn
+		else if (c == 308) { CHECK_FLOAT(o.arg, "--outs"); mo.out_sim = atof(o.arg); } // --outs
 		else if (c == 304) mo.flag |= MP_F_GFF | MP_F_NO_PAF; // --gff-only
 		else if (c == 305) mo.gff_delim = o.arg[0]; // --gff-delim
-		else if (c == 306) mo.io_end = atoi(o.arg), keep_io = 1; // --J2
+		else if (c == 306) { CHECK_INT(o.arg, "--J2"); mo.io_end = atoi(o.arg); keep_io = 1; } // --J2
 		else if (c == 307) mo.flag |= MP_F_GTF; // --gtf
-		else if (c == 309) mo.max_chn_max_skip = mp_parse_num(o.arg); // --max-skip
+		else if (c == 309) { CHECK_INT(o.arg, "--max-skip"); mo.max_chn_max_skip = mp_parse_num(o.arg); } // --max-skip
 		else if (c == 310) mo.flag |= MP_F_NO_PRE_CHAIN; // --no-pre-chain
 		else if (c == 311) mo.flag |= MP_F_SHOW_RESIDUE; // --aln
-		else if (c == 312) mo.max_intron_flank = (mp_parse_num(o.arg) + 1) / 2; // --max-intron-out
-		else if (c == 313) mo.out_cov = atof(o.arg); // --outc
-		else if (c == 314) mo.ie_coef = atof(o.arg); // --ie-coef
+		else if (c == 312) { CHECK_INT(o.arg, "--max-intron-out"); mo.max_intron_flank = (mp_parse_num(o.arg) + 1) / 2; } // --max-intron-out
+		else if (c == 313) { CHECK_FLOAT(o.arg, "--outc"); mo.out_cov = atof(o.arg); } // --outc
+		else if (c == 314) { CHECK_FLOAT(o.arg, "--ie-coef"); mo.ie_coef = atof(o.arg); } // --ie-coef
 		else if (c == 315) mo.flag |= MP_F_SHOW_TRANS; // --trans
 		else if (c == 316) mo.flag |= MP_F_NO_CS; // --no-cs
 		else if (c == 317) fn_spsc = o.arg; // --spsc
-		else if (c == 319) mo.sp_max_bonus = atoi(o.arg); // --spsc-max
+		else if (c == 319) { CHECK_INT(o.arg, "--spsc-max"); mo.sp_max_bonus = atoi(o.arg); } // --spsc-max
 		else if (c == 501) mp_dbg_flag |= MP_DBG_NO_KALLOC; // --no-kalloc
 		else if (c == 502) mp_dbg_flag |= MP_DBG_QNAME; // --dbg-qname
 		else if (c == 503) mp_dbg_flag |= MP_DBG_NO_REFINE; // --dbg-no-refine
@@ -166,33 +199,43 @@ int main(int argc, char *argv[])
 		else if (c == 505) mp_dbg_flag |= MP_DBG_ANCHOR; // --dbg-anchor
 		else if (c == 506) mp_dbg_flag |= MP_DBG_CHAIN; // --dbg-chain
 		else if (c == 318) { // --spsc0
-			int32_t s;
+			int32_t s; CHECK_INT(o.arg, "--spsc0");
 			s = atoi(o.arg);
 			mo.sp_null_bonus = s < 0? s : -s;
 		} else if (c == 's') {
-			fprintf(stderr, "Option '-s' is deprecated.\n");
+			fprintf(stderr, "[ERROR]%s option '-s' is deprecated and no longer supported.%s\n",
+			        MP_COLOR_RED, MP_COLOR_RESET);
+			return 1;
 		} else if (c == 401) {
 			printf("%s\n", MP_VERSION);
 			return 0;
 		} else {
-			fprintf(stderr, "[WARNING]\033[1;31m unrecognized option: %s\033[0m\n", argv[o.i-1]);
+			fprintf(stderr, "[ERROR]%s unrecognized option: %s%s\n",
+			        MP_COLOR_RED, argv[o.i-1], MP_COLOR_RESET);
+			return 1;
 		}
 	}
 	if (mp_mapopt_check(&mo) < 0) return 1;
 	if (argc - o.ind == 0 || (argc - o.ind == 1 && fn_idx == 0)) {
+		fprintf(stderr, "[ERROR]%s %s%s\n", MP_COLOR_RED,
+		        argc - o.ind == 1 ? "missing query protein file. Usage: miniprot <ref.fa> <query.faa>"
+		                          : "missing arguments. Usage: miniprot <ref.fa> <query.faa>",
+		        MP_COLOR_RESET);
 		print_usage(stderr, &io, &mo, n_threads);
 		return 1;
 	}
 
 	if (ns_make_tables(io.trans_code) < 0) {
 		if (mp_verbose >= 1)
-			fprintf(stderr, "[ERROR]\033[1;31m failed to find translation table %d\033[0m\n", io.trans_code);
+			fprintf(stderr, "[ERROR]%s failed to find translation table %u%s\n",
+			        MP_COLOR_RED, io.trans_code, MP_COLOR_RESET);
 		return 1;
 	}
 	mi = mp_idx_load(argv[o.ind], &io, n_threads);
 	if (mi == 0) {
 		if (mp_verbose >= 1)
-			fprintf(stderr, "[ERROR]\033[1;31m failed to open/build the index\033[0m\n");
+			fprintf(stderr, "[ERROR]%s failed to open/build the index for '%s'%s\n",
+			        MP_COLOR_RED, argv[o.ind], MP_COLOR_RESET);
 		return 1;
 	}
 	if (set_I && !set_G) mp_mapopt_set_max_intron(&mo, mi->nt->l_seq);
@@ -202,7 +245,9 @@ int main(int argc, char *argv[])
 	for (i = o.ind + 1; i < argc; ++i) {
 		int32_t res = mp_map_file(mi, argv[i], &mo, n_threads);
 		if (res != 0) {
-			fprintf(stderr, "[M::%s] ERROR during mapping %s (check files exists and are amino acid fastas)\n", __func__, argv[i]);
+			fprintf(stderr, "[ERROR]%s mapping failed for '%s'. Check the file exists and contains amino acid sequences (not DNA).%s\n",
+			        MP_COLOR_RED, argv[i], MP_COLOR_RESET);
+			mp_idx_destroy(mi);
 			return 1;
 		}
 	}

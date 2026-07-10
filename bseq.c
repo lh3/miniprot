@@ -43,7 +43,7 @@ static inline char *kstrdup(const kstring_t *s)
 static inline void kseq2bseq(kseq_t *ks, mp_bseq1_t *s, int with_comment)
 {
 	if (ks->name.l == 0)
-		fprintf(stderr, "[WARNING]\033[1;31m empty sequence name in the input.\033[0m\n");
+		fprintf(stderr, "[WARNING]%s empty sequence name in the input.%s\n", MP_COLOR_RED, MP_COLOR_RESET);
 	s->name = kstrdup(&ks->name);
 	s->seq = kstrdup(&ks->seq);
 	s->comment = with_comment && ks->comment.l? kstrdup(&ks->comment) : 0;
@@ -74,8 +74,8 @@ mp_bseq1_t *mp_bseq_read(mp_bseq_file_t *fp, int64_t chunk_size, int with_commen
 			break;
 	}
 	if (ret < -1) {
-		if (a.n) fprintf(stderr, "[WARNING]\033[1;31m failed to parse the FASTA/FASTQ record next to '%s'. Continue anyway.\033[0m\n", a.a[a.n-1].name);
-		else fprintf(stderr, "[WARNING]\033[1;31m failed to parse the first FASTA/FASTQ record. Continue anyway.\033[0m\n");
+		if (a.n) fprintf(stderr, "[WARNING]%s failed to parse the FASTA/FASTQ record next to '%s'. Continue anyway.%s\n", MP_COLOR_RED, a.a[a.n-1].name, MP_COLOR_RESET);
+		else fprintf(stderr, "[WARNING]%s failed to parse the first FASTA/FASTQ record. Continue anyway.%s\n", MP_COLOR_RED, MP_COLOR_RESET);
 	}
 	*n_ = a.n;
 	return a.a;

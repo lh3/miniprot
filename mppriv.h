@@ -6,6 +6,18 @@
 #include "nasw.h"
 #include "kseq.h"
 
+/*
+ * NO_COLOR support (https://no-color.org/)
+ *
+ * When the NO_COLOR environment variable is set (to any value), or when
+ * stderr is not a terminal, ANSI color escapes are suppressed.
+ * mp_use_color() is implemented in sys.c.
+ */
+int mp_use_color(void);
+
+#define MP_COLOR_RED   (mp_use_color() ? "\033[1;31m" : "")
+#define MP_COLOR_RESET (mp_use_color() ? "\033[0m"    : "")
+
 #define MP_DBG_NO_KALLOC   0x1
 #define MP_DBG_QNAME       0x2
 #define MP_DBG_NO_REFINE   0x4

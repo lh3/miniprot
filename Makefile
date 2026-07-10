@@ -1,8 +1,8 @@
-CC=			gcc
-CXX=		g++
-CFLAGS=		-std=c99 -g -Wall -O3
-CXXFLAGS=	$(CFLAGS)
-CPPFLAGS=
+CC?=			gcc
+CXX?=		g++
+CFLAGS?=		-std=c99 -g -Wall -O3 -march=native
+CXXFLAGS?=	$(CFLAGS)
+CPPFLAGS?=
 INCLUDES=
 OBJS=		kalloc.o kthread.o nasw-sse.o nasw-tab.o sys.o misc.o options.o ntseq.o sketch.o \
 			index.o bseq.o chain.o hit.o format.o map.o align.o
@@ -57,6 +57,6 @@ misc.o: mppriv.h miniprot.h nasw.h kalloc.h kseq.h ksort.h
 nasw-sse.o: nasw.h kalloc.h
 nasw-tab.o: nasw.h kalloc.h
 ntseq.o: mppriv.h miniprot.h nasw.h kalloc.h kseq.h khashl-km.h
-options.o: miniprot.h nasw.h kalloc.h
+options.o: mppriv.h miniprot.h nasw.h kalloc.h kseq.h
 sketch.o: mppriv.h miniprot.h nasw.h kalloc.h kseq.h kvec-km.h
 sys.o: mppriv.h miniprot.h nasw.h kalloc.h kseq.h

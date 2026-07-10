@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <assert.h>
 #include <math.h>
-#include "miniprot.h"
+#include "mppriv.h"
 #include "nasw.h"
 
 #define MP_MAX_INTRON_COEF 3.6 // max_intron = sqrt(genome_size) * coef
@@ -92,7 +92,7 @@ void mp_mapopt_init(mp_mapopt_t *mo)
 int32_t mp_mapopt_check(const mp_mapopt_t *mo)
 {
 	if (mo->sp_model < 0 || mo->sp_model > 2) {
-		fprintf(stderr, "[ERROR]\033[1;31m option -j should be between 0 and 2\033[0m\n");
+		fprintf(stderr, "[ERROR]%s option -j should be between 0 and 2%s\n", MP_COLOR_RED, MP_COLOR_RESET);
 		return -1;
 	}
 	return 0;
