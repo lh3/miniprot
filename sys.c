@@ -1,6 +1,17 @@
+#if !defined(WIN32) && !defined(_WIN32) && !defined(_POSIX_C_SOURCE)
+#define _POSIX_C_SOURCE 200809L /* for fileno()/isatty() under -std=c99 */
+#endif
+
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
 #include "mppriv.h"
+
+#if defined(WIN32) || defined(_WIN32)
+#include <io.h>
+#else
+#include <unistd.h>
+#endif
 
 #if defined(WIN32) || defined(_WIN32)
 #include <windows.h>
@@ -124,4 +135,19 @@ double mp_realtime(void)
 double mp_percent_cpu(void)
 {
 	return (mp_cputime() + 1e-6) / (mp_realtime() + 1e-6);
+}
+
+/*
+ * NO_COLOR support (https://no-color.org/): suppress ANSI color escapes
+ * when the NO_COLOR environment variable is set (to any value, per spec)
+ * or when stderr is not a terminal (e.g. redirected to a log file).
+ */
+int mp_use_color(void)
+{
+	if (getenv("NO_COLOR") != 0) return 0;
+#if defined(WIN32) || defined(_WIN32)
+	return _isatty(_fileno(stderr));
+#else
+	return isatty(fileno(stderr));
+#endif
 }

@@ -250,6 +250,7 @@ typedef struct {
 	mp_bseq_file_t *fp;
 	const mp_idx_t *mi;
 	kstring_t str;
+	int32_t failed; // non-zero if a fatal error was detected
 } pipeline_t;
 
 typedef struct {
@@ -270,6 +271,25 @@ static void worker_for(void *_data, long i, int tid) // kt_for() callback
 	s->reg[i] = mp_map(s->p->mi, seq->l_seq, seq->seq, &s->n_reg[i], s->buf[tid], s->p->opt, seq->name);
 }
 
+// Check if query sequences look like DNA rather than protein.
+// Returns 1 if >80% of residues in the batch are A/C/G/T/N.
+static int32_t mp_check_dna_in_protein(int32_t n_seq, const mp_bseq1_t *seq)
+{
+	int64_t n_dna = 0, n_tot = 0;
+	int32_t i;
+	for (i = 0; i < n_seq; ++i) {
+		int32_t j;
+		for (j = 0; j < seq[i].l_seq; ++j) {
+			char c = seq[i].seq[j];
+			if (c >= 'a' && c <= 'z') c -= 32; // toupper
+			if (c == 'A' || c == 'C' || c == 'G' || c == 'T' || c == 'N')
+				++n_dna;
+			++n_tot;
+		}
+	}
+	return n_tot > 0 && (double)n_dna / n_tot > 0.8;
+}
+
 static void *worker_pipeline(void *shared, int step, void *in)
 {
 	int32_t i;
@@ -279,6 +299,15 @@ static void *worker_pipeline(void *shared, int step, void *in)
         s = Kcalloc(0, step_t, 1);
 		s->seq = mp_bseq_read(p->fp, p->opt->mini_batch_size, 0, &s->n_seq);
 		if (s->seq) {
+			if (p->id == 0 && mp_check_dna_in_protein(s->n_seq, s->seq)) {
+				fprintf(stderr, "[ERROR]%s query file appears to contain DNA, not protein sequences. "
+				                "Did you swap the arguments? Usage: miniprot <ref.fa> <query.faa>%s\n",
+				                MP_COLOR_RED, MP_COLOR_RESET);
+				p->failed = 1;
+				{ int32_t ii; for (ii = 0; ii < s->n_seq; ++ii) { free(s->seq[ii].seq); free(s->seq[ii].name); if (s->seq[ii].comment) free(s->seq[ii].comment); } }
+				free(s->seq); free(s);
+				return 0;
+			}
 			s->p = p;
 			s->buf = Kcalloc(0, mp_tbuf_t*, p->n_threads);
 			for (i = 0; i < p->n_threads; ++i)
@@ -339,5 +368,5 @@ int32_t mp_map_file(const mp_idx_t *idx, const char *fn, const mp_mapopt_t *opt,
 	kt_pipeline(2, worker_pipeline, &pl, 3);
 	free(pl.str.s);
 	mp_bseq_close(pl.fp);
-	return 0;
+	return pl.failed? -2 : 0;
 }
